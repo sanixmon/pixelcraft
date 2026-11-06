@@ -13,6 +13,7 @@ class ProjectStorage(private val projectsDirProvider: () -> File) {
 
     private val json = Json {
         ignoreUnknownKeys = true
+        coerceInputValues = true
         prettyPrint = true
     }
 

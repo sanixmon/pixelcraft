@@ -18,6 +18,7 @@ enum class AlignmentAction {
 
 enum class ActiveSubTool {
     NONE,
+    TEXT_FONT,
     TEXT_POSITION,
     TEXT_RELATIVE_POSITION,
     TEXT_SIZE,
@@ -31,10 +32,11 @@ enum class ActiveSubTool {
     TEXT_3D,
     TEXT_REFLECTION,
 
-    // Object Subtools
+    // Object / PicSay Pro Shape Subtools
     SHAPE_TYPE,
     SHAPE_COLOR,
     SHAPE_STROKE,
+    SHAPE_SHADOW,
     SHAPE_OPACITY,
     OBJECT_SIZE,
     OBJECT_ROTATE
@@ -48,12 +50,12 @@ data class PixelCraftUiState(
     val activeSubTool: ActiveSubTool = ActiveSubTool.NONE,
     val activeDialog: ActiveDialog? = null,
 
-    // Grid & Snapping
+    // Grid & Snapping (anchors active ONLY when isGridEnabled == true)
     val isGridEnabled: Boolean = false,
     val gridColumns: Int = 3,
     val gridRows: Int = 3,
-    val showVerticalGuide: Boolean = false,
-    val showHorizontalGuide: Boolean = false,
+    val activeVerticalGuideX: Float? = null,
+    val activeHorizontalGuideY: Float? = null,
 
     // Layers Drawer
     val isLayersDrawerOpen: Boolean = false,
@@ -75,4 +77,10 @@ data class PixelCraftUiState(
 ) {
     val selectedLayer: Layer?
         get() = layers.find { it.id == selectedLayerId }
+
+    val showVerticalGuide: Boolean
+        get() = activeVerticalGuideX != null
+
+    val showHorizontalGuide: Boolean
+        get() = activeHorizontalGuideY != null
 }

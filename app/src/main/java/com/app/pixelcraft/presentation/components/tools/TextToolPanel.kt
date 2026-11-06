@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,11 +29,13 @@ import androidx.compose.material.icons.filled.AlignVerticalCenter
 import androidx.compose.material.icons.filled.AlignVerticalTop
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.BorderStyle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.FormatSize
@@ -64,13 +65,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.TextAlignment
+import com.app.pixelcraft.data.presets.FontCatalog
 import com.app.pixelcraft.presentation.ActiveSubTool
 import com.app.pixelcraft.presentation.AlignmentAction
+import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 
 private val TextColorPalette = listOf(
     0xFFFFFFFF, 0xFF000000, 0xFFFF0055, 0xFFFF5722, 0xFFFFEB3B,
@@ -98,7 +102,7 @@ fun TextToolPanel(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(60.dp)
                 .background(Color(0xFF232730)),
             contentAlignment = Alignment.Center
         ) {
@@ -147,40 +151,10 @@ fun TextToolPanel(
                 onClick = { onOpenEditDialog() }
             )
             ToolButton(
-                icon = Icons.Default.Delete,
-                label = "Delete",
-                isActive = false,
-                onClick = { onDeleteLayer() }
-            )
-            ToolButton(
-                icon = Icons.Default.ContentCopy,
-                label = "Copy",
-                isActive = false,
-                onClick = { onDuplicateLayer() }
-            )
-            ToolButton(
-                icon = Icons.Default.Layers,
-                label = "To Front",
-                isActive = false,
-                onClick = { onBringToFront() }
-            )
-            ToolButton(
-                icon = Icons.Default.Layers,
-                label = "To Back",
-                isActive = false,
-                onClick = { onSendToBack() }
-            )
-            ToolButton(
-                icon = Icons.Default.ArrowUpward,
-                label = "Position",
-                isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
-            )
-            ToolButton(
-                icon = Icons.Default.AlignHorizontalCenter,
-                label = "Relative Pos",
-                isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
+                icon = Icons.Default.FontDownload,
+                label = "Font",
+                isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
             )
             ToolButton(
                 icon = Icons.Default.FormatSize,
@@ -195,16 +169,10 @@ fun TextToolPanel(
                 onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
             )
             ToolButton(
-                icon = Icons.Default.Opacity,
-                label = "Opacity",
-                isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
-            )
-            ToolButton(
-                icon = Icons.Default.Rotate90DegreesCcw,
-                label = "Rotate",
-                isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
+                icon = Icons.Default.BorderStyle,
+                label = "Stroke",
+                isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
             )
             ToolButton(
                 icon = Icons.Default.FormatBold,
@@ -213,22 +181,16 @@ fun TextToolPanel(
                 onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
             )
             ToolButton(
-                icon = Icons.Default.FormatColorFill,
-                label = "Background",
-                isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
-            )
-            ToolButton(
-                icon = Icons.Default.ColorLens,
-                label = "Stroke",
-                isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
-            )
-            ToolButton(
                 icon = Icons.Default.Lightbulb,
                 label = "Shadow",
                 isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
                 onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
+            )
+            ToolButton(
+                icon = Icons.Default.FormatColorFill,
+                label = "Background",
+                isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
             )
             ToolButton(
                 icon = Icons.Default.ViewInAr,
@@ -241,6 +203,54 @@ fun TextToolPanel(
                 label = "Reflection",
                 isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
                 onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
+            )
+            ToolButton(
+                icon = Icons.Default.Opacity,
+                label = "Opacity",
+                isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
+            )
+            ToolButton(
+                icon = Icons.Default.Rotate90DegreesCcw,
+                label = "Rotate",
+                isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
+            )
+            ToolButton(
+                icon = Icons.Default.ArrowUpward,
+                label = "Position",
+                isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
+            )
+            ToolButton(
+                icon = Icons.Default.AlignHorizontalCenter,
+                label = "Relative Pos",
+                isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
+            )
+            ToolButton(
+                icon = Icons.Default.Layers,
+                label = "To Front",
+                isActive = false,
+                onClick = { onBringToFront() }
+            )
+            ToolButton(
+                icon = Icons.Default.Layers,
+                label = "To Back",
+                isActive = false,
+                onClick = { onSendToBack() }
+            )
+            ToolButton(
+                icon = Icons.Default.ContentCopy,
+                label = "Copy",
+                isActive = false,
+                onClick = { onDuplicateLayer() }
+            )
+            ToolButton(
+                icon = Icons.Default.Delete,
+                label = "Delete",
+                isActive = false,
+                onClick = { onDeleteLayer() }
             )
         }
     }
@@ -293,7 +303,7 @@ private fun SubToolInspector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 220.dp)
+            .heightIn(max = 225.dp)
             .background(Color(0xFF1B1D24))
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
@@ -317,6 +327,63 @@ private fun SubToolInspector(
         Spacer(modifier = Modifier.height(8.dp))
 
         when (subTool) {
+            ActiveSubTool.TEXT_FONT -> {
+                Text(
+                    text = "Bundled Free Fonts (${FontCatalog.fonts.size})",
+                    color = Color(0xFFCCCCCC),
+                    fontSize = 11.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    for (font in FontCatalog.fonts) {
+                        val isSelected = layer.fontKey == font.key
+                        val composeFamily = remember(font.key) {
+                            FontCatalog.resolveComposeFontFamily(font.key)
+                        }
+                        Column(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) Color(0xFF283344) else Color(0xFF14161D))
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF333742),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .clickable { onUpdate(false) { it.copy(fontKey = font.key) } }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Abc",
+                                fontFamily = composeFamily,
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                text = font.displayName,
+                                color = if (isSelected) Color(0xFF00E5FF) else Color(0xFFBBBBBB),
+                                fontSize = 10.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = font.category,
+                                color = Color(0xFF777777),
+                                fontSize = 9.sp,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+
             ActiveSubTool.TEXT_POSITION -> {
                 var stepPx by remember { mutableFloatStateOf(10f) }
                 Text("Step: ${stepPx.toInt()} px", color = Color.White, fontSize = 12.sp)
@@ -376,19 +443,21 @@ private fun SubToolInspector(
             ActiveSubTool.TEXT_SIZE -> {
                 Text("Size: ${layer.fontSize.toInt()} sp", color = Color.White, fontSize = 12.sp)
                 Slider(
-                    value = layer.fontSize.coerceIn(12f, 160f),
+                    value = layer.fontSize.coerceIn(12f, 180f),
                     onValueChange = { newSize -> onUpdate(true) { it.copy(fontSize = newSize) } },
                     onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 12f..160f
+                    valueRange = 12f..180f
                 )
             }
 
             ActiveSubTool.TEXT_COLOR -> {
-                Text("Color Palette", color = Color.White, fontSize = 12.sp)
-                ColorSwatchRow(
+                Text("Text Color (Palette / Wheel / Hex)", color = Color.White, fontSize = 12.sp)
+                ColorPaletteRow(
                     colors = TextColorPalette,
                     selectedColor = layer.textColor,
-                    onSelect = { colorValue -> onUpdate(false) { it.copy(textColor = colorValue) } }
+                    onSelectColor = { colorValue -> onUpdate(false) { it.copy(textColor = colorValue) } },
+                    allowAlpha = true,
+                    pickerTitle = "Text Color"
                 )
             }
 
@@ -461,6 +530,14 @@ private fun SubToolInspector(
                         )
                     }
                 }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("Line Spacing: ${"%.2f".format(layer.lineHeightMultiplier)}x", color = Color.White, fontSize = 11.sp)
+                Slider(
+                    value = layer.lineHeightMultiplier.coerceIn(0.85f, 2.0f),
+                    onValueChange = { lh -> onUpdate(true) { it.copy(lineHeightMultiplier = lh) } },
+                    onValueChangeFinished = onFinishContinuousEdit,
+                    valueRange = 0.85f..2.0f
+                )
             }
 
             ActiveSubTool.TEXT_BACKGROUND -> {
@@ -474,20 +551,22 @@ private fun SubToolInspector(
                         checked = layer.textBackgroundColor != null,
                         onCheckedChange = { enable ->
                             onUpdate(false) {
-                                it.copy(textBackgroundColor = if (enable) 0xCC000000 else null)
+                                it.copy(textBackgroundColor = if (enable) 0xCC000000L else null)
                             }
                         }
                     )
                 }
                 if (layer.textBackgroundColor != null) {
                     val bgPalette = listOf(
-                        0xCC000000, 0xCCFFFFFF, 0xCCFF0055, 0xCC00E5FF,
-                        0xCC651FFF, 0xCCFFEB3B, 0xCC00C853
+                        0xCC000000L, 0xCCFFFFFFL, 0xCCFF0055L, 0xCC00E5FFL,
+                        0xCC651FFFL, 0xCCFFEB3BL, 0xCC00C853L
                     )
-                    ColorSwatchRow(
+                    ColorPaletteRow(
                         colors = bgPalette,
                         selectedColor = layer.textBackgroundColor,
-                        onSelect = { c -> onUpdate(false) { it.copy(textBackgroundColor = c) } }
+                        onSelectColor = { c -> onUpdate(false) { it.copy(textBackgroundColor = c) } },
+                        allowAlpha = true,
+                        pickerTitle = "Text Background Color"
                     )
                     Text("Padding: ${layer.textBackgroundPadding.toInt()} px", color = Color.White, fontSize = 12.sp)
                     Slider(
@@ -507,33 +586,35 @@ private fun SubToolInspector(
             }
 
             ActiveSubTool.TEXT_STROKE -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable Stroke", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.strokeWidth > 0f,
-                        onCheckedChange = { enable ->
-                            onUpdate(false) { it.copy(strokeWidth = if (enable) 4f else 0f) }
-                        }
-                    )
-                }
-                if (layer.strokeWidth > 0f) {
-                    ColorSwatchRow(
-                        colors = TextColorPalette,
-                        selectedColor = layer.strokeColor,
-                        onSelect = { c -> onUpdate(false) { it.copy(strokeColor = c) } }
-                    )
-                    Text("Width: ${layer.strokeWidth.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.strokeWidth.coerceIn(1f, 30f),
-                        onValueChange = { w -> onUpdate(true) { it.copy(strokeWidth = w) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 1f..30f
-                    )
-                }
+                IvyStrokeInspector(
+                    strokeWidth = layer.strokeWidth,
+                    maxStrokeWidth = 36f,
+                    defaultEnableWidth = 4f,
+                    strokeColor = layer.strokeColor,
+                    strokePosition = layer.strokePosition,
+                    strokePattern = layer.strokePattern,
+                    dashLength = layer.strokeDashLength,
+                    dashGap = layer.strokeDashGap,
+                    dashPhase = layer.strokePhase,
+                    strokeJoin = layer.strokeJoin,
+                    miterLimit = layer.strokeMiterLimit,
+                    strokeCap = layer.strokeCap,
+                    palette = TextColorPalette,
+                    onToggleEnable = { _, width ->
+                        onUpdate(false) { it.copy(strokeWidth = width) }
+                    },
+                    onWidthChange = { w -> onUpdate(true) { it.copy(strokeWidth = w) } },
+                    onColorChange = { c -> onUpdate(false) { it.copy(strokeColor = c) } },
+                    onPositionChange = { pos -> onUpdate(false) { it.copy(strokePosition = pos) } },
+                    onPatternChange = { pat -> onUpdate(false) { it.copy(strokePattern = pat) } },
+                    onDashLengthChange = { d -> onUpdate(true) { it.copy(strokeDashLength = d) } },
+                    onDashGapChange = { g -> onUpdate(true) { it.copy(strokeDashGap = g) } },
+                    onDashPhaseChange = { p -> onUpdate(true) { it.copy(strokePhase = p) } },
+                    onJoinChange = { j -> onUpdate(false) { it.copy(strokeJoin = j) } },
+                    onMiterLimitChange = { m -> onUpdate(true) { it.copy(strokeMiterLimit = m) } },
+                    onCapChange = { c -> onUpdate(false) { it.copy(strokeCap = c) } },
+                    onFinishContinuousEdit = onFinishContinuousEdit
+                )
             }
 
             ActiveSubTool.TEXT_SHADOW -> {
@@ -549,21 +630,32 @@ private fun SubToolInspector(
                     )
                 }
                 if (layer.shadowEnabled) {
-                    Text("Blur Radius: ${layer.shadowRadius.toInt()}", color = Color.White, fontSize = 12.sp)
+                    Text("Shadow Color", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+                    ColorPaletteRow(
+                        colors = listOf(
+                            0xAA000000L, 0xFF000000L, 0xCCFFFFFFL, 0xFFFF0055L,
+                            0xFF00E5FFL, 0xFFFFEB3BL, 0xFF651FFFL
+                        ),
+                        selectedColor = layer.shadowColor,
+                        onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
+                        allowAlpha = true,
+                        pickerTitle = "Text Shadow Color"
+                    )
+                    Text("Blur Radius: ${layer.shadowRadius.toInt()} px", color = Color.White, fontSize = 12.sp)
                     Slider(
                         value = layer.shadowRadius.coerceIn(1f, 40f),
                         onValueChange = { r -> onUpdate(true) { it.copy(shadowRadius = r) } },
                         onValueChangeFinished = onFinishContinuousEdit,
                         valueRange = 1f..40f
                     )
-                    Text("Offset X: ${layer.shadowDx.toInt()}", color = Color.White, fontSize = 12.sp)
+                    Text("Offset X: ${layer.shadowDx.toInt()} px", color = Color.White, fontSize = 12.sp)
                     Slider(
                         value = layer.shadowDx.coerceIn(-30f, 30f),
                         onValueChange = { dx -> onUpdate(true) { it.copy(shadowDx = dx) } },
                         onValueChangeFinished = onFinishContinuousEdit,
                         valueRange = -30f..30f
                     )
-                    Text("Offset Y: ${layer.shadowDy.toInt()}", color = Color.White, fontSize = 12.sp)
+                    Text("Offset Y: ${layer.shadowDy.toInt()} px", color = Color.White, fontSize = 12.sp)
                     Slider(
                         value = layer.shadowDy.coerceIn(-30f, 30f),
                         onValueChange = { dy -> onUpdate(true) { it.copy(shadowDy = dy) } },
@@ -608,6 +700,26 @@ private fun SubToolInspector(
                         valueRange = 0f..360f
                     )
                 }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Floor Shadow", color = Color.White, fontSize = 12.sp)
+                    Switch(
+                        checked = layer.shadow3DEnabled,
+                        onCheckedChange = { en -> onUpdate(false) { it.copy(shadow3DEnabled = en) } }
+                    )
+                }
+                if (layer.shadow3DEnabled) {
+                    ColorPaletteRow(
+                        colors = listOf(0x66000000L, 0xAA000000L, 0x6600E5FFL, 0x66FF007FL),
+                        selectedColor = layer.shadow3DColor,
+                        onSelectColor = { c -> onUpdate(false) { it.copy(shadow3DColor = c) } },
+                        allowAlpha = true,
+                        pickerTitle = "3D Floor Shadow Color"
+                    )
+                }
             }
 
             ActiveSubTool.TEXT_REFLECTION -> {
@@ -641,37 +753,6 @@ private fun SubToolInspector(
             }
 
             else -> {}
-        }
-    }
-}
-
-@Composable
-private fun ColorSwatchRow(
-    colors: List<Long>,
-    selectedColor: Long,
-    onSelect: (Long) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        for (colorValue in colors) {
-            val isSelected = selectedColor == colorValue
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Color(colorValue))
-                    .border(
-                        width = if (isSelected) 2.5.dp else 1.dp,
-                        color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF555555),
-                        shape = CircleShape
-                    )
-                    .clickable { onSelect(colorValue) }
-            )
         }
     }
 }

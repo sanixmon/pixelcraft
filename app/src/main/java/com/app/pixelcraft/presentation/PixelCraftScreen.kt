@@ -9,7 +9,6 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,8 +23,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.app.pixelcraft.data.model.ActiveDialog
 import com.app.pixelcraft.data.model.BottomNavTab
@@ -37,16 +38,17 @@ import com.app.pixelcraft.presentation.components.PixelCraftTopBar
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftAboutDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftExportDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftImageSizeDialog
-import com.app.pixelcraft.presentation.components.dialogs.PixelCraftQuotesDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftSaveProjectDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftShapeDialog
-import com.app.pixelcraft.presentation.components.dialogs.PixelCraftStickerDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftTextEditDialog
 import com.app.pixelcraft.presentation.components.tools.BackgroundToolPanel
 import com.app.pixelcraft.presentation.components.tools.FilterToolPanel
 import com.app.pixelcraft.presentation.components.tools.ObjectToolPanel
 import com.app.pixelcraft.presentation.components.tools.PresetsToolPanel
 import com.app.pixelcraft.presentation.components.tools.TextToolPanel
+
+/** Constant bottom reserve so the canvas position & scale stay 100% fixed across all tools/inspectors. */
+private val FixedCanvasBottomReserve = 184.dp
 
 @Composable
 fun PixelCraftScreen(
@@ -109,7 +111,6 @@ fun PixelCraftScreen(
                 state = state,
                 onAddText = { viewModel.addTextLayer() },
                 onAddDate = { viewModel.addCurrentDateLayer() },
-                onAddSticker = { viewModel.openDialog(ActiveDialog.ADD_STICKER) },
                 onAddShape = { viewModel.openDialog(ActiveDialog.ADD_SHAPE) },
                 onAddImage = { pickLayerImage.launch(imagesOnly) },
                 onOpenDialog = { viewModel.openDialog(it) },
@@ -120,7 +121,37 @@ fun PixelCraftScreen(
             )
         },
         bottomBar = {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            // Constant-height icon-only bottom navigation bar so innerPadding never fluctuates
+            PixelCraftBottomNavigation(
+                activeTab = state.activeTab,
+                onTabSelected = { viewModel.setActiveTab(it) }
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(Color(0xFF14161D))
+        ) {
+            // 1. Fixed Canvas Slot: never shifts or resizes when tabs or subtool inspectors open/close
+            PixelCraftCanvas(
+                state = state,
+                onSelectLayer = { viewModel.selectLayer(it) },
+                onDragDelta = { dx, dy -> viewModel.updateLayerPositionWithSnapping(dx, dy) },
+                onDragEnd = { viewModel.clearSnappingGuides() },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = FixedCanvasBottomReserve)
+            )
+
+            // 2. Active Tool Panel & Inspector Overlay anchored at BottomCenter
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .shadow(10.dp)
+            ) {
                 when (state.activeTab) {
                     BottomNavTab.PRESETS -> {
                         PresetsToolPanel(
@@ -172,6 +203,7 @@ fun PixelCraftScreen(
 
                     BottomNavTab.BACKGROUND -> {
                         BackgroundToolPanel(
+                            canvasConfig = state.canvasConfig,
                             onSetColor = { viewModel.setBackgroundColor(it) },
                             onSetGradient = { colors, angle -> viewModel.setBackgroundGradient(colors, angle) },
                             onSetTransparent = { viewModel.setBackgroundTransparent() },
@@ -190,27 +222,9 @@ fun PixelCraftScreen(
                         )
                     }
                 }
-
-                PixelCraftBottomNavigation(
-                    activeTab = state.activeTab,
-                    onTabSelected = { viewModel.setActiveTab(it) }
-                )
             }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(Color(0xFF14161D))
-        ) {
-            PixelCraftCanvas(
-                state = state,
-                onSelectLayer = { viewModel.selectLayer(it) },
-                onDragDelta = { dx, dy -> viewModel.updateLayerPositionWithSnapping(dx, dy) },
-                onDragEnd = { viewModel.clearSnappingGuides() }
-            )
 
+            // 3. Floating Layers Drawer
             if (state.isLayersDrawerOpen) {
                 PixelCraftLayersSheet(
                     layers = state.layers,
@@ -245,16 +259,6 @@ fun PixelCraftScreen(
             }
         }
 
-        ActiveDialog.QUOTES -> {
-            PixelCraftQuotesDialog(
-                onQuoteSelected = { quote ->
-                    viewModel.addQuoteLayer(quote)
-                    viewModel.closeDialog()
-                },
-                onDismiss = { viewModel.closeDialog() }
-            )
-        }
-
         ActiveDialog.IMAGE_SIZE -> {
             PixelCraftImageSizeDialog(
                 currentPreset = state.canvasConfig.preset,
@@ -285,16 +289,6 @@ fun PixelCraftScreen(
             PixelCraftShapeDialog(
                 onSelectShape = { shape ->
                     viewModel.addShapeLayer(shape)
-                    viewModel.closeDialog()
-                },
-                onDismiss = { viewModel.closeDialog() }
-            )
-        }
-
-        ActiveDialog.ADD_STICKER -> {
-            PixelCraftStickerDialog(
-                onSelectSticker = { stickerKey ->
-                    viewModel.addStickerLayer(stickerKey)
                     viewModel.closeDialog()
                 },
                 onDismiss = { viewModel.closeDialog() }

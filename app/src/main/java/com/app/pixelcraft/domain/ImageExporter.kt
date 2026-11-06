@@ -1,9 +1,11 @@
 package com.app.pixelcraft.domain
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import com.app.pixelcraft.data.model.CanvasConfig
 import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.data.presets.FontCatalog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -29,7 +31,7 @@ data class ExportOptions(
     val jpegQuality: Int = 95
 )
 
-class ImageExporter {
+class ImageExporter(private val context: Context? = null) {
 
     companion object {
         const val MAX_EXPORT_DIMENSION = 8192
@@ -74,12 +76,24 @@ class ImageExporter {
             bitmapLookup = ImageStore::loadBitmap,
             drawCheckerboardWhenTransparent = false
         )
-        CanvasRenderer.renderLayers(
-            canvas = canvas,
-            config = canvasConfig,
-            layers = layers,
-            bitmapLookup = ImageStore::loadBitmap
-        )
+        if (context != null) {
+            CanvasRenderer.renderLayers(
+                canvas = canvas,
+                config = canvasConfig,
+                layers = layers,
+                bitmapLookup = ImageStore::loadBitmap,
+                typefaceResolver = { fontKey, isBold, isItalic ->
+                    FontCatalog.resolveTypeface(context, fontKey, isBold, isItalic)
+                }
+            )
+        } else {
+            CanvasRenderer.renderLayers(
+                canvas = canvas,
+                config = canvasConfig,
+                layers = layers,
+                bitmapLookup = ImageStore::loadBitmap
+            )
+        }
         CanvasRenderer.renderFilters(
             canvas = canvas,
             config = canvasConfig

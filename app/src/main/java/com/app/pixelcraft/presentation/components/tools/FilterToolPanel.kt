@@ -22,6 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.CanvasFilters
+import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
+
+private val VignettePalette = listOf(
+    0xFF000000L, 0xFF0A0A18L, 0xFF2B091BL, 0xFF06232EL, 0xFFFFFFFFL
+)
 
 @Composable
 fun FilterToolPanel(
@@ -33,7 +38,7 @@ fun FilterToolPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 220.dp)
+            .heightIn(max = 225.dp)
             .background(Color(0xFF232730))
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
@@ -55,6 +60,14 @@ fun FilterToolPanel(
             )
         }
         if (filters.vignetteEnabled) {
+            Text("Vignette Color", color = Color(0xFFBBBBBB), fontSize = 11.sp)
+            ColorPaletteRow(
+                colors = VignettePalette,
+                selectedColor = filters.vignetteColor,
+                onSelectColor = { c -> onUpdateFilters(false) { it.copy(vignetteColor = c) } },
+                allowAlpha = true,
+                pickerTitle = "Vignette Color"
+            )
             Text("Intensity: ${(filters.vignetteIntensity * 100).toInt()}%", color = Color(0xFFBBBBBB), fontSize = 11.sp)
             Slider(
                 value = filters.vignetteIntensity.coerceIn(0.1f, 0.9f),

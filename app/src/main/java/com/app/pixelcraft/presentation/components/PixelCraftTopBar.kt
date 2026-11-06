@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MoreVert
@@ -42,7 +41,6 @@ fun PixelCraftTopBar(
     state: PixelCraftUiState,
     onAddText: () -> Unit,
     onAddDate: () -> Unit,
-    onAddSticker: () -> Unit,
     onAddShape: () -> Unit,
     onAddImage: () -> Unit,
     onOpenDialog: (ActiveDialog) -> Unit,
@@ -94,31 +92,17 @@ fun PixelCraftTopBar(
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Photo") },
-                    onClick = {
-                        addMenuExpanded = false
-                        onAddImage()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Sticker") },
-                    onClick = {
-                        addMenuExpanded = false
-                        onAddSticker()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Shapes") },
+                    text = { Text("Shapes & Balloons") },
                     onClick = {
                         addMenuExpanded = false
                         onAddShape()
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Quotes") },
+                    text = { Text("Photo") },
                     onClick = {
                         addMenuExpanded = false
-                        onOpenDialog(ActiveDialog.QUOTES)
+                        onAddImage()
                     }
                 )
             }
@@ -163,16 +147,7 @@ fun PixelCraftTopBar(
             )
         }
 
-        // 4. Quotes Button
-        IconButton(onClick = { onOpenDialog(ActiveDialog.QUOTES) }) {
-            Icon(
-                imageVector = Icons.Default.FormatQuote,
-                contentDescription = "Quotes",
-                tint = Color.White
-            )
-        }
-
-        // 5. Undo & Redo
+        // 4. Undo & Redo
         IconButton(
             onClick = onUndo,
             enabled = state.canUndo
@@ -195,16 +170,16 @@ fun PixelCraftTopBar(
             )
         }
 
-        // 6. Grid Overlay
+        // 5. Grid Overlay & Magnetic Anchor Toggle
         IconButton(onClick = onToggleGrid) {
             Icon(
                 imageVector = Icons.Default.GridView,
-                contentDescription = "Grid",
+                contentDescription = "Grid & Snap Anchors",
                 tint = if (state.isGridEnabled) Color(0xFF00E5FF) else Color.White
             )
         }
 
-        // 7. Layers Panel Toggle
+        // 6. Layers Panel Toggle
         IconButton(onClick = onToggleLayers) {
             Icon(
                 imageVector = Icons.Default.Layers,
@@ -213,7 +188,7 @@ fun PixelCraftTopBar(
             )
         }
 
-        // 8. More Menu
+        // 7. More Menu
         Box {
             IconButton(onClick = { moreMenuExpanded = true }) {
                 Icon(

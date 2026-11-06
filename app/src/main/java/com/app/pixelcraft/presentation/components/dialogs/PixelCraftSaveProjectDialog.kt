@@ -86,22 +86,20 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "PixelCraft - Photo & text editor built with Jetpack Compose & Material 3.",
+                    text = "PixelCraft - Typography & vector graphic photo editor built with Jetpack Compose & Material 3.",
                     color = Color.White,
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "Features:\n" +
-                            "• 3D text with depth extrusion, darken factor, and angle\n" +
-                            "• Mirror reflections & floor shadows\n" +
-                            "• Stroke, multi-line typography, and drop shadows\n" +
-                            "• Photo layers & backgrounds, geometric shapes, and stickers\n" +
-                            "• Canvas aspect ratio presets (YouTube Thumbnail, Story, etc.)\n" +
-                            "• Multi-layer stack with re-ordering, locking & visibility\n" +
-                            "• Grid overlay and center-axis magnetic snapping\n" +
-                            "• High-resolution PNG & JPEG export up to 4K Ultra HD\n" +
-                            "• Project saving and undo/redo history",
+                            "• 15 bundled open-source fonts (SIL OFL 1.1 & Apache 2.0)\n" +
+                            "• Vector path strokes (Outside / Center / Inside, Dash patterns, Join & Cap)\n" +
+                            "• 24 vector shapes, word balloons, thought clouds, arrows & badges with Flip H/V\n" +
+                            "• 2D HSV Color Wheel + Brightness/Alpha + Hex (#RRGGBB / #AARRGGBB) across all palettes\n" +
+                            "• 3D text extrusion, mirror reflections & drop shadows\n" +
+                            "• Pure freemove by default; magnetic snap anchors when Grid is enabled\n" +
+                            "• High-resolution PNG & JPEG export up to 4K Ultra HD",
                     color = Color(0xFFCCCCCC),
                     fontSize = 12.sp
                 )

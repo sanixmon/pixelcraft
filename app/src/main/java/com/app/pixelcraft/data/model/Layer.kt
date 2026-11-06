@@ -6,21 +6,55 @@ import kotlinx.serialization.Serializable
 enum class LayerType {
     TEXT,
     SHAPE,
-    STICKER,
     IMAGE
 }
 
 @Serializable
-enum class ShapeType {
-    RECTANGLE,
-    ROUNDED_RECTANGLE,
-    CIRCLE,
-    STAR,
-    TRIANGLE,
-    HEART,
-    HEXAGON,
-    SPEECH_BUBBLE,
-    ARROW
+enum class ShapeCategory(val label: String) {
+    BASIC("Basic"),
+    BALLOONS("Balloons"),
+    ARROWS("Arrows"),
+    BADGES("Badges")
+}
+
+@Serializable
+enum class ShapeType(
+    val label: String,
+    val category: ShapeCategory,
+    val defaultWidth: Float = 320f,
+    val defaultHeight: Float = 320f
+) {
+    // Basic Shapes
+    RECTANGLE("Rectangle", ShapeCategory.BASIC, 340f, 240f),
+    ROUNDED_RECTANGLE("Rounded Rect", ShapeCategory.BASIC, 340f, 240f),
+    CIRCLE("Circle / Oval", ShapeCategory.BASIC, 300f, 300f),
+    TRIANGLE("Triangle", ShapeCategory.BASIC, 300f, 280f),
+    DIAMOND("Diamond", ShapeCategory.BASIC, 300f, 300f),
+    PENTAGON("Pentagon", ShapeCategory.BASIC, 300f, 300f),
+    HEXAGON("Hexagon", ShapeCategory.BASIC, 300f, 300f),
+    OCTAGON("Octagon", ShapeCategory.BASIC, 300f, 300f),
+
+    // PicSay Pro Word Balloons
+    SPEECH_ROUND("Oval Balloon", ShapeCategory.BALLOONS, 380f, 280f),
+    SPEECH_BUBBLE("Speech Box", ShapeCategory.BALLOONS, 380f, 280f),
+    THOUGHT_CLOUD("Thought Cloud", ShapeCategory.BALLOONS, 400f, 300f),
+    SHOUT_BURST("Shout Burst", ShapeCategory.BALLOONS, 420f, 340f),
+
+    // Arrows & Pointers
+    ARROW("Block Arrow", ShapeCategory.ARROWS, 360f, 220f),
+    ARROW_DOUBLE("Double Arrow", ShapeCategory.ARROWS, 400f, 200f),
+    CHEVRON("Chevron", ShapeCategory.ARROWS, 320f, 220f),
+    LOCATION_PIN("Callout Pin", ShapeCategory.ARROWS, 260f, 340f),
+
+    // Badges & Symbols
+    STAR("5-Point Star", ShapeCategory.BADGES, 300f, 300f),
+    STARBURST("Starburst", ShapeCategory.BADGES, 340f, 340f),
+    HEART("Heart", ShapeCategory.BADGES, 300f, 280f),
+    SHIELD("Shield", ShapeCategory.BADGES, 280f, 340f),
+    RIBBON_BANNER("Ribbon", ShapeCategory.BADGES, 440f, 180f),
+    CROWN("Crown", ShapeCategory.BADGES, 300f, 220f),
+    LIGHTNING("Lightning", ShapeCategory.BADGES, 240f, 360f),
+    CROSS("Cross", ShapeCategory.BADGES, 280f, 280f)
 }
 
 @Serializable
@@ -28,6 +62,35 @@ enum class TextAlignment {
     LEFT,
     CENTER,
     RIGHT
+}
+
+@Serializable
+enum class StrokePosition(val label: String) {
+    OUTSIDE("Outside"),
+    CENTER("Center"),
+    INSIDE("Inside")
+}
+
+@Serializable
+enum class StrokeJoinStyle(val label: String) {
+    ROUND("Round"),
+    MITER("Miter"),
+    BEVEL("Bevel")
+}
+
+@Serializable
+enum class StrokeCapStyle(val label: String) {
+    ROUND("Round"),
+    BUTT("Butt"),
+    SQUARE("Square")
+}
+
+@Serializable
+enum class StrokePattern(val label: String) {
+    SOLID("Solid"),
+    DASHED("Dashed"),
+    DOTTED("Dotted"),
+    DASH_DOT("Dash-Dot")
 }
 
 @Serializable
@@ -50,6 +113,8 @@ data class Layer(
     val rotation: Float = 0f,
     val opacity: Float = 1f,
     val zIndex: Int = 0,
+    val flipHorizontal: Boolean = false,
+    val flipVertical: Boolean = false,
 
     // Base dimensions for non-text or bounding boxes
     val width: Float = 300f,
@@ -57,6 +122,7 @@ data class Layer(
 
     // Text Attributes
     val text: String = "New Text",
+    val fontKey: String = "default",
     val fontSize: Float = 42f,
     val textColor: Long = 0xFFFFFFFF,
     val isBold: Boolean = false,
@@ -70,9 +136,17 @@ data class Layer(
     val textBackgroundPadding: Float = 16f,
     val textBackgroundRadius: Float = 8f,
 
-    // Stroke / Outline
+    // Ivy Draw Vector Stroke / Outline (shared parameters across Text & Shape)
     val strokeColor: Long = 0xFF000000,
     val strokeWidth: Float = 0f,
+    val strokePosition: StrokePosition = StrokePosition.OUTSIDE,
+    val strokeJoin: StrokeJoinStyle = StrokeJoinStyle.ROUND,
+    val strokeCap: StrokeCapStyle = StrokeCapStyle.ROUND,
+    val strokePattern: StrokePattern = StrokePattern.SOLID,
+    val strokeDashLength: Float = 16f,
+    val strokeDashGap: Float = 10f,
+    val strokePhase: Float = 0f,
+    val strokeMiterLimit: Float = 4f,
 
     // Drop Shadow
     val shadowEnabled: Boolean = false,
@@ -98,14 +172,16 @@ data class Layer(
     val reflectionDistance: Float = 4f,
     val reflectionOpacity: Float = 0.35f,
 
-    // Shape Attributes
+    // PicSay Pro Shape Attributes
     val shapeType: ShapeType = ShapeType.ROUNDED_RECTANGLE,
     val shapeFillColor: Long = 0xFF00B0FF,
+    val shapeGradientEnabled: Boolean = false,
+    val shapeGradientEndColor: Long = 0xFF651FFF,
+    val shapeGradientAngle: Float = 90f,
     val shapeStrokeColor: Long = 0xFFFFFFFF,
     val shapeStrokeWidth: Float = 0f,
     val shapeCornerRadius: Float = 24f,
 
-    // Sticker / Image Attributes
-    val stickerKey: String = "star",
+    // Image Attributes
     val imageLocalPath: String? = null
 )

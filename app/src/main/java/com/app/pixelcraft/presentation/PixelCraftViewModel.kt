@@ -14,8 +14,9 @@ import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PointF
 import com.app.pixelcraft.data.model.ProjectData
-import com.app.pixelcraft.data.model.Quote
+import com.app.pixelcraft.data.model.ShapeCategory
 import com.app.pixelcraft.data.model.ShapeType
+import com.app.pixelcraft.data.model.StrokePosition
 import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.presets.DefaultPresets
 import com.app.pixelcraft.domain.ExportOptions
@@ -48,7 +49,7 @@ class PixelCraftViewModel internal constructor(
         const val MAX_CANVAS_DIMENSION = 4096
     }
 
-    private val imageExporter = ImageExporter()
+    private val imageExporter = ImageExporter(application)
     private val imageStore = ImageStore(application)
     private val gallerySaver = GallerySaver(application)
 
@@ -59,10 +60,19 @@ class PixelCraftViewModel internal constructor(
     private val redoStack = mutableListOf<EditorSnapshot>()
     private var isContinuousEditing = false
 
+    // Tracks true un-snapped finger trajectory during active drag so Grid snapping never sticks
+    private var rawDragPosition: PointF? = null
+    private var rawDragLayerId: String? = null
+
     init {
         val defaultPreset = DefaultPresets.presets.first()
         applyPreset(defaultPreset, recordHistory = false)
         refreshSavedProjects()
+    }
+
+    private fun resetDragTracking() {
+        rawDragPosition = null
+        rawDragLayerId = null
     }
 
     private fun normalizeZIndices(layers: List<Layer>): List<Layer> {
@@ -116,6 +126,7 @@ class PixelCraftViewModel internal constructor(
 
     fun undo() {
         isContinuousEditing = false
+        resetDragTracking()
         if (undoStack.isEmpty()) return
         val currentState = takeSnapshot()
         redoStack.add(currentState)
@@ -125,7 +136,9 @@ class PixelCraftViewModel internal constructor(
             it.copy(
                 layers = previousState.layers,
                 canvasConfig = previousState.canvasConfig,
-                selectedLayerId = previousState.selectedLayerId
+                selectedLayerId = previousState.selectedLayerId,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
             )
         }
         updateHistoryFlags()
@@ -133,6 +146,7 @@ class PixelCraftViewModel internal constructor(
 
     fun redo() {
         isContinuousEditing = false
+        resetDragTracking()
         if (redoStack.isEmpty()) return
         val currentState = takeSnapshot()
         undoStack.add(currentState)
@@ -142,7 +156,9 @@ class PixelCraftViewModel internal constructor(
             it.copy(
                 layers = nextState.layers,
                 canvasConfig = nextState.canvasConfig,
-                selectedLayerId = nextState.selectedLayerId
+                selectedLayerId = nextState.selectedLayerId,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
             )
         }
         updateHistoryFlags()
@@ -180,18 +196,27 @@ class PixelCraftViewModel internal constructor(
     // --- Grid ---
 
     fun toggleGrid() {
-        _uiState.update { it.copy(isGridEnabled = !it.isGridEnabled) }
+        resetDragTracking()
+        _uiState.update { state ->
+            val nextGrid = !state.isGridEnabled
+            state.copy(
+                isGridEnabled = nextGrid,
+                activeVerticalGuideX = if (nextGrid) state.activeVerticalGuideX else null,
+                activeHorizontalGuideY = if (nextGrid) state.activeHorizontalGuideY else null
+            )
+        }
     }
 
     // --- Layer Selection & Navigation ---
 
     fun selectLayer(layerId: String?) {
         isContinuousEditing = false
+        resetDragTracking()
         _uiState.update { state ->
             val layer = state.layers.find { it.id == layerId }
             val newTab = when (layer?.type) {
                 LayerType.TEXT -> BottomNavTab.TEXT
-                LayerType.SHAPE, LayerType.STICKER, LayerType.IMAGE -> BottomNavTab.OBJECTS
+                LayerType.SHAPE, LayerType.IMAGE -> BottomNavTab.OBJECTS
                 null -> state.activeTab
             }
             val nextSubTool = if (newTab != state.activeTab || layer?.type != state.selectedLayer?.type) {
@@ -202,7 +227,9 @@ class PixelCraftViewModel internal constructor(
             state.copy(
                 selectedLayerId = layerId,
                 activeTab = newTab,
-                activeSubTool = nextSubTool
+                activeSubTool = nextSubTool,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
             )
         }
     }
@@ -211,6 +238,7 @@ class PixelCraftViewModel internal constructor(
 
     fun addTextLayer(initialText: String = "New Text") {
         beginHistoryStep(continuous = false)
+        resetDragTracking()
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val labelIndex = _uiState.value.layers.count { it.type == LayerType.TEXT } + 1
         val newLayer = TextSizing.withEstimatedBounds(
@@ -219,6 +247,7 @@ class PixelCraftViewModel internal constructor(
                 name = "Text $labelIndex",
                 type = LayerType.TEXT,
                 text = initialText,
+                fontKey = "poppins",
                 fontSize = 44f,
                 textColor = 0xFFFFFFFF,
                 positionX = 0f,
@@ -242,51 +271,26 @@ class PixelCraftViewModel internal constructor(
         addTextLayer(dateString)
     }
 
-    fun addQuoteLayer(quote: Quote) {
-        addTextLayer(TextSizing.wrapQuote(quote))
-    }
-
     fun addShapeLayer(shapeType: ShapeType) {
         beginHistoryStep(continuous = false)
+        resetDragTracking()
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val labelIndex = _uiState.value.layers.count { it.type == LayerType.SHAPE } + 1
+        val isWordBalloon = shapeType.category == ShapeCategory.BALLOONS
         val newLayer = Layer(
             id = UUID.randomUUID().toString(),
-            name = "Shape $labelIndex",
+            name = "${shapeType.label} $labelIndex",
             type = LayerType.SHAPE,
             shapeType = shapeType,
-            width = 320f,
-            height = 320f,
-            shapeFillColor = 0xFF00B0FF,
+            width = shapeType.defaultWidth,
+            height = shapeType.defaultHeight,
+            shapeFillColor = if (isWordBalloon) 0xFFFFFFFF else 0xFF00B0FF,
+            shapeStrokeColor = if (isWordBalloon) 0xFF111111 else 0xFFFFFFFF,
+            shapeStrokeWidth = if (isWordBalloon) 5f else 0f,
+            strokePosition = StrokePosition.OUTSIDE,
             positionX = 0f,
             positionY = 0f,
             zIndex = nextZ
-        )
-        _uiState.update { state ->
-            state.copy(
-                layers = normalizeZIndices(state.layers + newLayer),
-                selectedLayerId = newLayer.id,
-                activeTab = BottomNavTab.OBJECTS,
-                activeSubTool = ActiveSubTool.NONE
-            )
-        }
-    }
-
-    fun addStickerLayer(stickerKey: String) {
-        beginHistoryStep(continuous = false)
-        val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
-        val labelIndex = _uiState.value.layers.count { it.type == LayerType.STICKER } + 1
-        val newLayer = TextSizing.withEstimatedBounds(
-            Layer(
-                id = UUID.randomUUID().toString(),
-                name = "Sticker $labelIndex",
-                type = LayerType.STICKER,
-                stickerKey = stickerKey,
-                fontSize = 64f,
-                positionX = 0f,
-                positionY = 0f,
-                zIndex = nextZ
-            )
         )
         _uiState.update { state ->
             state.copy(
@@ -303,6 +307,7 @@ class PixelCraftViewModel internal constructor(
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { image ->
                 beginHistoryStep(continuous = false)
+                resetDragTracking()
                 val config = _uiState.value.canvasConfig
                 val fit = ImageFit.fitWithin(image.width, image.height, config.width * 0.6f, config.height * 0.6f)
                 val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
@@ -355,48 +360,90 @@ class PixelCraftViewModel internal constructor(
 
         beginHistoryStep(continuous = true)
         val selectedId = currentLayer.id
-        val rawX = currentLayer.positionX + deltaX
-        val rawY = currentLayer.positionY + deltaY
+        val baseRaw = if (rawDragLayerId == selectedId && rawDragPosition != null) {
+            rawDragPosition!!
+        } else {
+            PointF(currentLayer.positionX, currentLayer.positionY)
+        }
+        val nextRaw = PointF(baseRaw.x + deltaX, baseRaw.y + deltaY)
+        rawDragLayerId = selectedId
+        rawDragPosition = nextRaw
 
-        val snapResult = SnappingEngine.calculateSnap(PointF(rawX, rawY))
-
-        _uiState.update { s ->
-            s.copy(
-                layers = s.layers.map {
-                    if (it.id == selectedId) {
-                        it.copy(
-                            positionX = snapResult.snappedPosition.x,
-                            positionY = snapResult.snappedPosition.y
-                        )
-                    } else it
-                },
-                showVerticalGuide = snapResult.showVerticalGuide,
-                showHorizontalGuide = snapResult.showHorizontalGuide
+        val stateSnapshot = _uiState.value
+        if (!stateSnapshot.isGridEnabled) {
+            // Freemove default: no magnetic anchor snapping when Grid is disabled
+            _uiState.update { s ->
+                s.copy(
+                    layers = s.layers.map {
+                        if (it.id == selectedId) {
+                            it.copy(
+                                positionX = nextRaw.x,
+                                positionY = nextRaw.y
+                            )
+                        } else it
+                    },
+                    activeVerticalGuideX = null,
+                    activeHorizontalGuideY = null
+                )
+            }
+        } else {
+            val snapResult = SnappingEngine.calculateSnap(
+                rawPosition = nextRaw,
+                canvasWidth = stateSnapshot.canvasConfig.width.toFloat(),
+                canvasHeight = stateSnapshot.canvasConfig.height.toFloat(),
+                gridColumns = stateSnapshot.gridColumns,
+                gridRows = stateSnapshot.gridRows
             )
+            _uiState.update { s ->
+                s.copy(
+                    layers = s.layers.map {
+                        if (it.id == selectedId) {
+                            it.copy(
+                                positionX = snapResult.snappedPosition.x,
+                                positionY = snapResult.snappedPosition.y
+                            )
+                        } else it
+                    },
+                    activeVerticalGuideX = snapResult.verticalGuideX,
+                    activeHorizontalGuideY = snapResult.horizontalGuideY
+                )
+            }
         }
     }
 
     fun clearSnappingGuides() {
         isContinuousEditing = false
+        resetDragTracking()
         _uiState.update {
-            it.copy(showVerticalGuide = false, showHorizontalGuide = false)
+            it.copy(activeVerticalGuideX = null, activeHorizontalGuideY = null)
         }
     }
 
     fun nudgeSelectedLayer(dx: Float, dy: Float) {
+        resetDragTracking()
         updateSelectedLayer(continuous = false) {
             it.copy(positionX = it.positionX + dx, positionY = it.positionY + dy)
         }
     }
 
     fun alignSelectedLayer(action: AlignmentAction) {
+        resetDragTracking()
         val state = _uiState.value
         val canvasW = state.canvasConfig.width.toFloat()
         val canvasH = state.canvasConfig.height.toFloat()
 
         updateSelectedLayer(continuous = false) { layer ->
-            val halfW = layer.width / 2f
-            val halfH = layer.height / 2f
+            val shapeOuterStroke = if (layer.type == LayerType.SHAPE && layer.shapeStrokeWidth > 0f) {
+                when (layer.strokePosition) {
+                    StrokePosition.OUTSIDE -> layer.shapeStrokeWidth
+                    StrokePosition.CENTER -> layer.shapeStrokeWidth / 2f
+                    StrokePosition.INSIDE -> 0f
+                }
+            } else {
+                0f
+            }
+            val halfW = (layer.width / 2f) + shapeOuterStroke
+            val halfH = (layer.height / 2f) + shapeOuterStroke
 
             when (action) {
                 AlignmentAction.CENTER_HORIZONTAL -> layer.copy(positionX = 0f)
@@ -414,6 +461,7 @@ class PixelCraftViewModel internal constructor(
         if (target.isLocked) return
 
         beginHistoryStep(continuous = false)
+        resetDragTracking()
         _uiState.update { state ->
             val remaining = normalizeZIndices(state.layers.filter { it.id != layerId })
             val nextSelected = if (state.selectedLayerId == layerId) {
@@ -423,7 +471,9 @@ class PixelCraftViewModel internal constructor(
             }
             state.copy(
                 layers = remaining,
-                selectedLayerId = nextSelected
+                selectedLayerId = nextSelected,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
             )
         }
     }
@@ -436,6 +486,7 @@ class PixelCraftViewModel internal constructor(
     fun duplicateSelectedLayer() {
         val layer = _uiState.value.selectedLayer ?: return
         beginHistoryStep(continuous = false)
+        resetDragTracking()
 
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val copy = layer.copy(
@@ -531,6 +582,7 @@ class PixelCraftViewModel internal constructor(
 
     fun toggleLayerLock(layerId: String) {
         isContinuousEditing = false
+        resetDragTracking()
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map {
@@ -627,6 +679,7 @@ class PixelCraftViewModel internal constructor(
 
     fun applyPreset(preset: StylePreset, recordHistory: Boolean = true) {
         isContinuousEditing = false
+        resetDragTracking()
         if (recordHistory) recordHistory()
         val normalizedLayers = normalizeZIndices(
             preset.initialLayers.map { TextSizing.withEstimatedBounds(it) }
@@ -639,7 +692,9 @@ class PixelCraftViewModel internal constructor(
                 selectedLayerId = topLayer?.id,
                 currentProjectId = null,
                 currentProjectName = preset.title,
-                activeSubTool = ActiveSubTool.NONE
+                activeSubTool = ActiveSubTool.NONE,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
             )
         }
     }
@@ -686,6 +741,7 @@ class PixelCraftViewModel internal constructor(
 
     fun loadProject(id: String) {
         isContinuousEditing = false
+        resetDragTracking()
         viewModelScope.launch {
             projectStorage.loadProject(id).onSuccess { project ->
                 recordHistory()
@@ -706,7 +762,9 @@ class PixelCraftViewModel internal constructor(
                         layers = normalized,
                         selectedLayerId = validSelectedId,
                         activeDialog = null,
-                        activeSubTool = ActiveSubTool.NONE
+                        activeSubTool = ActiveSubTool.NONE,
+                        activeVerticalGuideX = null,
+                        activeHorizontalGuideY = null
                     )
                 }
             }.onFailure { err ->

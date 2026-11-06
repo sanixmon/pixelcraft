@@ -7,6 +7,7 @@ import com.app.pixelcraft.data.model.CanvasFilters
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.ShapeType
+import com.app.pixelcraft.data.model.StrokePosition
 import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.model.TextAlignment
 import com.app.pixelcraft.domain.TextSizing
@@ -31,6 +32,7 @@ object DefaultPresets {
                         name = "New Text",
                         type = LayerType.TEXT,
                         text = "New Text",
+                        fontKey = "poppins",
                         fontSize = 48f,
                         textColor = 0xFFFFFFFF,
                         positionX = 0f,
@@ -60,6 +62,7 @@ object DefaultPresets {
                         name = "3D Title",
                         type = LayerType.TEXT,
                         text = "PIXELCRAFT 3D",
+                        fontKey = "archivo_black",
                         fontSize = 58f,
                         textColor = 0xFFFFD700,
                         isBold = true,
@@ -70,6 +73,7 @@ object DefaultPresets {
                         angle3D = 40f,
                         strokeColor = 0xFF8B6508,
                         strokeWidth = 3f,
+                        strokePosition = StrokePosition.OUTSIDE,
                         shadow3DEnabled = true,
                         shadow3DColor = 0xAA000000,
                         shadowEnabled = true,
@@ -97,7 +101,7 @@ object DefaultPresets {
                     name = "Neon Border",
                     type = LayerType.SHAPE,
                     shapeType = ShapeType.ROUNDED_RECTANGLE,
-                    width = 500f,
+                    width = 520f,
                     height = 240f,
                     zIndex = 0,
                     shapeFillColor = 0x00000000,
@@ -114,6 +118,7 @@ object DefaultPresets {
                         name = "Neon Text",
                         type = LayerType.TEXT,
                         text = "CYBER GLOW",
+                        fontKey = "russo_one",
                         fontSize = 46f,
                         textColor = 0xFF00F0FF,
                         isBold = true,
@@ -122,7 +127,8 @@ object DefaultPresets {
                         shadowColor = 0xFF00F0FF,
                         shadowRadius = 28f,
                         strokeColor = 0xFFFFFFFF,
-                        strokeWidth = 1f
+                        strokeWidth = 2f,
+                        strokePosition = StrokePosition.OUTSIDE
                     )
                 )
             )
@@ -161,14 +167,16 @@ object DefaultPresets {
                         name = "Thumbnail Title",
                         type = LayerType.TEXT,
                         text = "100% VIRAL!",
-                        fontSize = 52f,
+                        fontKey = "anton",
+                        fontSize = 56f,
                         textColor = 0xFFFFEB3B,
                         isBold = true,
                         positionX = 0f,
                         positionY = -60f,
                         zIndex = 1,
                         strokeColor = 0xFF000000,
-                        strokeWidth = 4f,
+                        strokeWidth = 5f,
+                        strokePosition = StrokePosition.OUTSIDE,
                         shadowEnabled = true,
                         shadowRadius = 12f
                     )
@@ -179,14 +187,16 @@ object DefaultPresets {
                         name = "Subtitle",
                         type = LayerType.TEXT,
                         text = "WATCH BEFORE IT'S DELETED",
-                        fontSize = 32f,
+                        fontKey = "bebas_neue",
+                        fontSize = 40f,
                         textColor = 0xFFFFFFFF,
                         isBold = true,
                         positionX = 0f,
                         positionY = 50f,
                         zIndex = 2,
                         strokeColor = 0xFF000000,
-                        strokeWidth = 3f
+                        strokeWidth = 4f,
+                        strokePosition = StrokePosition.OUTSIDE
                     )
                 )
             )
@@ -203,17 +213,17 @@ object DefaultPresets {
                 backgroundColor = 0xFFC0392B
             ),
             initialLayers = listOf(
-                TextSizing.withEstimatedBounds(
-                    Layer(
-                        id = "layer_crown",
-                        name = "Crown",
-                        type = LayerType.STICKER,
-                        stickerKey = "emoji_crown",
-                        positionX = 0f,
-                        positionY = -140f,
-                        fontSize = 72f,
-                        zIndex = 0
-                    )
+                Layer(
+                    id = "layer_crown",
+                    name = "Crown",
+                    type = LayerType.SHAPE,
+                    shapeType = ShapeType.CROWN,
+                    width = 160f,
+                    height = 115f,
+                    shapeFillColor = 0xFFFFFFFF,
+                    positionX = 0f,
+                    positionY = -150f,
+                    zIndex = 0
                 ),
                 TextSizing.withEstimatedBounds(
                     Layer(
@@ -221,10 +231,11 @@ object DefaultPresets {
                         name = "Poster Text",
                         type = LayerType.TEXT,
                         text = "KEEP CALM\nAND\nCRAFT ON",
-                        fontSize = 44f,
+                        fontKey = "bebas_neue",
+                        fontSize = 58f,
                         textColor = 0xFFFFFFFF,
                         isBold = true,
-                        lineHeightMultiplier = 1.3f,
+                        lineHeightMultiplier = 1.25f,
                         positionX = 0f,
                         positionY = 60f,
                         zIndex = 1
@@ -251,6 +262,7 @@ object DefaultPresets {
                         name = "Reflection Text",
                         type = LayerType.TEXT,
                         text = "REFLECT",
+                        fontKey = "russo_one",
                         fontSize = 62f,
                         textColor = 0xFFE0E0E0,
                         isBold = true,

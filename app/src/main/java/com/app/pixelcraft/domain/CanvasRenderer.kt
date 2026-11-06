@@ -3,6 +3,7 @@ package com.app.pixelcraft.domain
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -14,9 +15,11 @@ import com.app.pixelcraft.data.model.BackgroundType
 import com.app.pixelcraft.data.model.CanvasConfig
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
-import com.app.pixelcraft.data.model.ShapeType
+import com.app.pixelcraft.data.model.StrokeCapStyle
+import com.app.pixelcraft.data.model.StrokeJoinStyle
+import com.app.pixelcraft.data.model.StrokePattern
+import com.app.pixelcraft.data.model.StrokePosition
 import com.app.pixelcraft.data.model.TextAlignment
-import com.app.pixelcraft.data.presets.StickerLibrary
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -27,6 +30,16 @@ import kotlin.math.sin
  * (`0..config.width` x `0..config.height`) so preview and export match pixel-for-pixel.
  */
 object CanvasRenderer {
+
+    private fun defaultTypefaceResolver(fontKey: String, isBold: Boolean, isItalic: Boolean): Typeface {
+        val style = when {
+            isBold && isItalic -> Typeface.BOLD_ITALIC
+            isBold -> Typeface.BOLD
+            isItalic -> Typeface.ITALIC
+            else -> Typeface.NORMAL
+        }
+        return Typeface.create(Typeface.DEFAULT, style)
+    }
 
     fun renderBackground(
         canvas: Canvas,
@@ -94,7 +107,8 @@ object CanvasRenderer {
         canvas: Canvas,
         config: CanvasConfig,
         layers: List<Layer>,
-        bitmapLookup: (String) -> Bitmap?
+        bitmapLookup: (String) -> Bitmap?,
+        typefaceResolver: (String, Boolean, Boolean) -> Typeface = ::defaultTypefaceResolver
     ) {
         val canvasCenterX = config.width / 2f
         val canvasCenterY = config.height / 2f
@@ -108,9 +122,8 @@ object CanvasRenderer {
             canvas.rotate(layer.rotation)
 
             when (layer.type) {
-                LayerType.TEXT -> renderTextLayer(canvas, layer)
+                LayerType.TEXT -> renderTextLayer(canvas, layer, typefaceResolver)
                 LayerType.SHAPE -> renderShapeLayer(canvas, layer)
-                LayerType.STICKER -> renderStickerLayer(canvas, layer)
                 LayerType.IMAGE -> layer.imageLocalPath
                     ?.let(bitmapLookup)
                     ?.let { ImageRenderer.drawImageLayer(canvas, it, layer) }
@@ -151,36 +164,39 @@ object CanvasRenderer {
         }
     }
 
-    private fun renderTextLayer(canvas: Canvas, layer: Layer) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private fun renderTextLayer(
+        canvas: Canvas,
+        layer: Layer,
+        typefaceResolver: (String, Boolean, Boolean) -> Typeface
+    ) {
+        val resolvedTypeface = typefaceResolver(layer.fontKey, layer.isBold, layer.isItalic)
+        val metricsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             textSize = layer.fontSize
-            color = ColorMath.scaleAlpha(layer.textColor, layer.opacity)
-            textAlign = when (layer.textAlign) {
-                TextAlignment.LEFT -> Paint.Align.LEFT
-                TextAlignment.CENTER -> Paint.Align.CENTER
-                TextAlignment.RIGHT -> Paint.Align.RIGHT
-            }
-            isUnderlineText = layer.isUnderline
-            typeface = when {
-                layer.isBold && layer.isItalic -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
-                layer.isBold -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                layer.isItalic -> Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
-                else -> Typeface.DEFAULT
-            }
+            textAlign = Paint.Align.LEFT
+            typeface = resolvedTypeface
+            isFakeBoldText = layer.isBold && !resolvedTypeface.isBold
+            textSkewX = if (layer.isItalic && !resolvedTypeface.isItalic) -0.20f else 0f
         }
 
         val lines = layer.text.split("\n")
-        val fontMetrics = paint.fontMetrics
+        val fontMetrics = metricsPaint.fontMetrics
         val lineHeight = (fontMetrics.descent - fontMetrics.ascent) * layer.lineHeightMultiplier
         val totalTextHeight = lines.size * lineHeight
-        val maxLineWidth = lines.maxOfOrNull { paint.measureText(it) } ?: 0f
-
-        val textX = when (layer.textAlign) {
-            TextAlignment.LEFT -> -maxLineWidth / 2f
-            TextAlignment.CENTER -> 0f
-            TextAlignment.RIGHT -> maxLineWidth / 2f
-        }
+        val lineWidths = lines.map { metricsPaint.measureText(it) }
+        val maxLineWidth = lineWidths.maxOrNull() ?: 0f
         val startY = -totalTextHeight / 2f + lineHeight / 2f - (fontMetrics.ascent + fontMetrics.descent) / 2f
+
+        val textPath = buildTextContourPath(
+            lines = lines,
+            lineWidths = lineWidths,
+            maxLineWidth = maxLineWidth,
+            startY = startY,
+            lineHeight = lineHeight,
+            align = layer.textAlign,
+            isUnderline = layer.isUnderline,
+            fontSize = layer.fontSize,
+            paint = metricsPaint
+        )
 
         // Optional Text Background pill sized to actual measured text width
         if (layer.textBackgroundColor != null) {
@@ -189,8 +205,14 @@ object CanvasRenderer {
                 val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = bgArgb
                 }
-                val halfW = (maxLineWidth / 2f) + layer.textBackgroundPadding
-                val halfH = (totalTextHeight / 2f) + layer.textBackgroundPadding
+                val outerStroke = when {
+                    layer.strokeWidth <= 0f -> 0f
+                    layer.strokePosition == StrokePosition.OUTSIDE -> layer.strokeWidth
+                    layer.strokePosition == StrokePosition.CENTER -> layer.strokeWidth / 2f
+                    else -> 0f
+                }
+                val halfW = (maxLineWidth / 2f) + outerStroke + layer.textBackgroundPadding
+                val halfH = (totalTextHeight / 2f) + outerStroke + layer.textBackgroundPadding
                 val bgRect = RectF(-halfW, -halfH, halfW, halfH)
                 canvas.drawRoundRect(bgRect, layer.textBackgroundRadius, layer.textBackgroundRadius, bgPaint)
             }
@@ -201,11 +223,11 @@ object CanvasRenderer {
             canvas.save()
             canvas.scale(1f, -1f)
             canvas.translate(0f, -(totalTextHeight + layer.reflectionDistance * 4f))
-            val reflectPaint = Paint(paint).apply {
+            val reflectPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
                 color = ColorMath.scaleAlpha(layer.textColor, layer.opacity * layer.reflectionOpacity)
-                clearShadowLayer()
             }
-            drawTextLines(canvas, lines, reflectPaint, textX, startY, lineHeight)
+            canvas.drawPath(textPath, reflectPaint)
             canvas.restore()
         }
 
@@ -222,9 +244,24 @@ object CanvasRenderer {
 
         // 3D Extrusion
         if (layer.is3D) {
-            val extrudePaint = Paint(paint).apply {
-                color = ColorMath.darkenArgb(layer.textColor, layer.darken3D, layer.opacity)
-                clearShadowLayer()
+            val outerExpand = when {
+                layer.strokeWidth <= 0f -> 0f
+                layer.strokePosition == StrokePosition.OUTSIDE -> layer.strokeWidth * 2f
+                layer.strokePosition == StrokePosition.CENTER -> layer.strokeWidth
+                else -> 0f
+            }
+            val extrudeBaseColor = if (layer.strokeWidth > 0f && layer.strokePosition != StrokePosition.INSIDE) {
+                layer.strokeColor
+            } else {
+                layer.textColor
+            }
+            val extrudePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = if (outerExpand > 0f) Paint.Style.FILL_AND_STROKE else Paint.Style.FILL
+                strokeWidth = outerExpand
+                strokeJoin = resolveJoin(layer.strokeJoin)
+                strokeCap = resolveCap(layer.strokeCap)
+                strokeMiter = layer.strokeMiterLimit.coerceIn(1f, 20f)
+                color = ColorMath.darkenArgb(extrudeBaseColor, layer.darken3D, layer.opacity)
             }
             val steps = layer.depth3D.toInt().coerceIn(1, 35)
             val angleRad = (layer.angle3D * PI / 180f).toFloat()
@@ -233,197 +270,294 @@ object CanvasRenderer {
             for (i in steps downTo 1) {
                 canvas.save()
                 canvas.translate(i * stepDx, i * stepDy)
-                drawTextLines(canvas, lines, extrudePaint, textX, startY, lineHeight)
+                canvas.drawPath(textPath, extrudePaint)
                 canvas.restore()
             }
         }
 
-        // Drop Shadow
-        if (layer.shadowEnabled) {
-            paint.setShadowLayer(
-                layer.shadowRadius.coerceAtLeast(0.5f),
-                layer.shadowDx,
-                layer.shadowDy,
-                ColorMath.scaleAlpha(layer.shadowColor, layer.opacity)
-            )
+        val fillArgb = ColorMath.scaleAlpha(layer.textColor, layer.opacity)
+        val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = fillArgb
         }
 
-        // Main Text Fill
-        drawTextLines(canvas, lines, paint, textX, startY, lineHeight)
-
-        // Stroke Outline
-        if (layer.strokeWidth > 0f) {
-            val strokePaint = Paint(paint).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = layer.strokeWidth
-                strokeJoin = Paint.Join.ROUND
-                strokeCap = Paint.Cap.ROUND
-                color = ColorMath.scaleAlpha(layer.strokeColor, layer.opacity)
-                clearShadowLayer()
-            }
-            drawTextLines(canvas, lines, strokePaint, textX, startY, lineHeight)
-        }
+        drawVectorPathWithIvyStroke(
+            canvas = canvas,
+            path = textPath,
+            fillPaint = fillPaint,
+            hasFill = (fillArgb ushr 24) > 0,
+            isFillFullyOpaque = (fillArgb ushr 24) == 255,
+            strokeWidthPx = layer.strokeWidth,
+            strokeArgb = ColorMath.scaleAlpha(layer.strokeColor, layer.opacity),
+            strokePosition = layer.strokePosition,
+            strokeJoin = layer.strokeJoin,
+            strokeCap = layer.strokeCap,
+            strokePattern = layer.strokePattern,
+            dashLength = layer.strokeDashLength,
+            dashGap = layer.strokeDashGap,
+            dashPhase = layer.strokePhase,
+            miterLimit = layer.strokeMiterLimit,
+            shadowEnabled = layer.shadowEnabled,
+            shadowArgb = if (layer.shadowEnabled) ColorMath.scaleAlpha(layer.shadowColor, layer.opacity) else 0,
+            shadowRadius = layer.shadowRadius,
+            shadowDx = layer.shadowDx,
+            shadowDy = layer.shadowDy
+        )
     }
 
-    private fun drawTextLines(
-        canvas: Canvas,
+    private fun buildTextContourPath(
         lines: List<String>,
-        paint: Paint,
-        x: Float,
+        lineWidths: List<Float>,
+        maxLineWidth: Float,
         startY: Float,
-        lineHeight: Float
-    ) {
+        lineHeight: Float,
+        align: TextAlignment,
+        isUnderline: Boolean,
+        fontSize: Float,
+        paint: Paint
+    ): Path {
+        val combined = Path()
+        val linePath = Path()
         for ((idx, line) in lines.withIndex()) {
-            canvas.drawText(line, x, startY + (idx * lineHeight), paint)
+            if (line.isEmpty()) continue
+            val lw = lineWidths[idx]
+            val lineLeftX = when (align) {
+                TextAlignment.LEFT -> -maxLineWidth / 2f
+                TextAlignment.CENTER -> -lw / 2f
+                TextAlignment.RIGHT -> maxLineWidth / 2f - lw
+            }
+            val baselineY = startY + (idx * lineHeight)
+            linePath.reset()
+            paint.getTextPath(line, 0, line.length, lineLeftX, baselineY, linePath)
+            combined.addPath(linePath)
+
+            if (isUnderline && lw > 0f) {
+                val underlineOffset = fontSize * 0.08f
+                val underlineThickness = (fontSize * 0.065f).coerceAtLeast(2f)
+                val underlinePath = Path().apply {
+                    addRect(
+                        RectF(
+                            lineLeftX,
+                            baselineY + underlineOffset,
+                            lineLeftX + lw,
+                            baselineY + underlineOffset + underlineThickness
+                        ),
+                        Path.Direction.CW
+                    )
+                }
+                combined.op(underlinePath, Path.Op.UNION)
+            }
         }
+        return combined
     }
 
     private fun renderShapeLayer(canvas: Canvas, layer: Layer) {
-        val shapePath = createShapePath(layer)
-        val fillArgb = ColorMath.scaleAlpha(layer.shapeFillColor, layer.opacity)
-        val hasFill = (fillArgb ushr 24) > 0
-        val shadowArgb = if (layer.shadowEnabled) ColorMath.scaleAlpha(layer.shadowColor, layer.opacity) else 0
+        val shapePath = ShapePathBuilder.buildPath(layer)
+        val halfW = (layer.width / 2f).coerceAtLeast(1f)
+        val halfH = (layer.height / 2f).coerceAtLeast(1f)
 
+        val startArgb = ColorMath.scaleAlpha(layer.shapeFillColor, layer.opacity)
+        val endArgb = ColorMath.scaleAlpha(layer.shapeGradientEndColor, layer.opacity)
+        val hasFill: Boolean
+        val isFillFullyOpaque: Boolean
+        val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+        }
+
+        if (layer.shapeGradientEnabled) {
+            hasFill = ((startArgb ushr 24) > 0) || ((endArgb ushr 24) > 0)
+            isFillFullyOpaque = ((startArgb ushr 24) == 255) && ((endArgb ushr 24) == 255)
+            val angleRad = (layer.shapeGradientAngle * PI / 180f).toFloat()
+            val x1 = -cos(angleRad) * halfW
+            val y1 = -sin(angleRad) * halfH
+            val x2 = cos(angleRad) * halfW
+            val y2 = sin(angleRad) * halfH
+            fillPaint.shader = LinearGradient(x1, y1, x2, y2, startArgb, endArgb, Shader.TileMode.CLAMP)
+        } else {
+            hasFill = (startArgb ushr 24) > 0
+            isFillFullyOpaque = (startArgb ushr 24) == 255
+            fillPaint.color = startArgb
+        }
+
+        drawVectorPathWithIvyStroke(
+            canvas = canvas,
+            path = shapePath,
+            fillPaint = fillPaint,
+            hasFill = hasFill,
+            isFillFullyOpaque = isFillFullyOpaque,
+            strokeWidthPx = layer.shapeStrokeWidth,
+            strokeArgb = ColorMath.scaleAlpha(layer.shapeStrokeColor, layer.opacity),
+            strokePosition = layer.strokePosition,
+            strokeJoin = layer.strokeJoin,
+            strokeCap = layer.strokeCap,
+            strokePattern = layer.strokePattern,
+            dashLength = layer.strokeDashLength,
+            dashGap = layer.strokeDashGap,
+            dashPhase = layer.strokePhase,
+            miterLimit = layer.strokeMiterLimit,
+            shadowEnabled = layer.shadowEnabled,
+            shadowArgb = if (layer.shadowEnabled) ColorMath.scaleAlpha(layer.shadowColor, layer.opacity) else 0,
+            shadowRadius = layer.shadowRadius,
+            shadowDx = layer.shadowDx,
+            shadowDy = layer.shadowDy
+        )
+    }
+
+    /**
+     * Unified Ivy Draw-style vector path renderer supporting:
+     * - Position: `OUTSIDE` (`clipOutPath` + 2x width), `CENTER` (1x width), `INSIDE` (`clipPath` + 2x width)
+     * - Dash Patterns: `SOLID`, `DASHED`, `DOTTED`, `DASH_DOT` with customizable length, gap, and phase
+     * - Line Join (`ROUND`, `MITER` + miter limit, `BEVEL`) & Line Cap (`ROUND`, `BUTT`, `SQUARE`)
+     * - Clean Drop Shadow integration across opaque, semi-transparent, and hollow (`None`) fills
+     */
+    private fun drawVectorPathWithIvyStroke(
+        canvas: Canvas,
+        path: Path,
+        fillPaint: Paint,
+        hasFill: Boolean,
+        isFillFullyOpaque: Boolean,
+        strokeWidthPx: Float,
+        strokeArgb: Int,
+        strokePosition: StrokePosition,
+        strokeJoin: StrokeJoinStyle,
+        strokeCap: StrokeCapStyle,
+        strokePattern: StrokePattern,
+        dashLength: Float,
+        dashGap: Float,
+        dashPhase: Float,
+        miterLimit: Float,
+        shadowEnabled: Boolean,
+        shadowArgb: Int,
+        shadowRadius: Float,
+        shadowDx: Float,
+        shadowDy: Float
+    ) {
+        val hasStroke = strokeWidthPx > 0f && (strokeArgb ushr 24) > 0
+        val hasShadow = shadowEnabled && (shadowArgb ushr 24) > 0
+        val blur = shadowRadius.coerceAtLeast(0.5f)
+        val isStrokeOpaque = (strokeArgb ushr 24) == 255
+
+        // Unified outer silhouette shadow when both fill and outer/center solid stroke are opaque
+        val useSilhouetteShadowCaster = hasShadow &&
+            hasFill &&
+            isFillFullyOpaque &&
+            hasStroke &&
+            isStrokeOpaque &&
+            strokePattern == StrokePattern.SOLID &&
+            strokePosition != StrokePosition.INSIDE
+
+        if (useSilhouetteShadowCaster) {
+            val expandWidth = if (strokePosition == StrokePosition.OUTSIDE) strokeWidthPx * 2f else strokeWidthPx
+            val shadowCaster = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL_AND_STROKE
+                strokeWidth = expandWidth
+                this.strokeJoin = resolveJoin(strokeJoin)
+                this.strokeCap = resolveCap(strokeCap)
+                strokeMiter = miterLimit.coerceIn(1f, 20f)
+                color = strokeArgb
+                setShadowLayer(blur, shadowDx, shadowDy, shadowArgb)
+            }
+            canvas.drawPath(path, shadowCaster)
+        }
+
+        // 1. Fill Pass
         if (hasFill) {
-            val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.FILL
-                color = fillArgb
-                if (layer.shadowEnabled) {
-                    setShadowLayer(layer.shadowRadius.coerceAtLeast(0.5f), layer.shadowDx, layer.shadowDy, shadowArgb)
-                }
+            if (hasShadow && !useSilhouetteShadowCaster) {
+                fillPaint.setShadowLayer(blur, shadowDx, shadowDy, shadowArgb)
             }
-            canvas.drawPath(shapePath, fillPaint)
+            canvas.drawPath(path, fillPaint)
         }
 
-        if (layer.shapeStrokeWidth > 0f) {
-            val strokeArgb = ColorMath.scaleAlpha(layer.shapeStrokeColor, layer.opacity)
-            if ((strokeArgb ushr 24) > 0) {
-                val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    style = Paint.Style.STROKE
-                    strokeWidth = layer.shapeStrokeWidth
-                    strokeJoin = Paint.Join.ROUND
-                    strokeCap = Paint.Cap.ROUND
-                    color = strokeArgb
-                    // Apply shadow directly to stroke when fill is transparent (e.g., Neon Glow border)
-                    if (layer.shadowEnabled && !hasFill) {
-                        setShadowLayer(layer.shadowRadius.coerceAtLeast(0.5f), layer.shadowDx, layer.shadowDy, shadowArgb)
-                    }
-                }
-                canvas.drawPath(shapePath, strokePaint)
+        // 2. Ivy Draw Vector Stroke Pass
+        if (hasStroke) {
+            val paintStrokeWidth = when (strokePosition) {
+                StrokePosition.OUTSIDE, StrokePosition.INSIDE -> strokeWidthPx * 2f
+                StrokePosition.CENTER -> strokeWidthPx
             }
-        }
-    }
-
-    private fun renderStickerLayer(canvas: Canvas, layer: Layer) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = layer.fontSize.coerceAtLeast(36f)
-            textAlign = Paint.Align.CENTER
-            color = ColorMath.scaleAlpha(0xFFFFFFFF, layer.opacity)
-            if (layer.shadowEnabled) {
-                setShadowLayer(
-                    layer.shadowRadius.coerceAtLeast(0.5f),
-                    layer.shadowDx,
-                    layer.shadowDy,
-                    ColorMath.scaleAlpha(layer.shadowColor, layer.opacity)
+            val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = paintStrokeWidth
+                this.strokeJoin = resolveJoin(strokeJoin)
+                this.strokeCap = resolveCap(strokeCap)
+                strokeMiter = miterLimit.coerceIn(1f, 20f)
+                color = strokeArgb
+                pathEffect = resolveDashEffect(
+                    pattern = strokePattern,
+                    visualStrokeWidth = strokeWidthPx,
+                    cap = strokeCap,
+                    dashLength = dashLength,
+                    dashGap = dashGap,
+                    dashPhase = dashPhase
                 )
-            }
-        }
-        val fm = paint.fontMetrics
-        val baselineY = -(fm.ascent + fm.descent) / 2f
-        val stickerIcon = StickerLibrary.stickers.find { it.id == layer.stickerKey }?.emojiOrIcon ?: "⭐"
-        canvas.drawText(stickerIcon, 0f, baselineY, paint)
-    }
-
-    private fun createShapePath(layer: Layer): Path {
-        val halfW = layer.width / 2f
-        val halfH = layer.height / 2f
-        val rect = RectF(-halfW, -halfH, halfW, halfH)
-
-        return when (layer.shapeType) {
-            ShapeType.RECTANGLE -> Path().apply {
-                addRect(rect, Path.Direction.CW)
-            }
-            ShapeType.ROUNDED_RECTANGLE -> Path().apply {
-                addRoundRect(rect, layer.shapeCornerRadius, layer.shapeCornerRadius, Path.Direction.CW)
-            }
-            ShapeType.CIRCLE -> Path().apply {
-                addOval(rect, Path.Direction.CW)
-            }
-            ShapeType.TRIANGLE -> Path().apply {
-                moveTo(0f, -halfH)
-                lineTo(halfW, halfH)
-                lineTo(-halfW, halfH)
-                close()
-            }
-            ShapeType.STAR -> createStarPath(halfW, halfH, 5)
-            ShapeType.HEART -> createHeartPath(halfW, halfH)
-            ShapeType.HEXAGON -> createPolygonPath(halfW, halfH, 6)
-            ShapeType.SPEECH_BUBBLE -> {
-                val maxTailH = (layer.height * 0.35f).coerceAtLeast(6f)
-                val tailH = (layer.height * 0.16f).coerceIn(6f, maxTailH).coerceAtMost(36f)
-                val bubbleRect = RectF(-halfW, -halfH, halfW, halfH - tailH)
-                val body = Path().apply {
-                    addRoundRect(bubbleRect, layer.shapeCornerRadius, layer.shapeCornerRadius, Path.Direction.CW)
+                if (hasShadow && !hasFill) {
+                    setShadowLayer(blur, shadowDx, shadowDy, shadowArgb)
                 }
-                val tail = Path().apply {
-                    moveTo(-halfW * 0.25f, halfH - tailH - 2f)
-                    lineTo(-halfW * 0.45f, halfH)
-                    lineTo(halfW * 0.05f, halfH - tailH - 2f)
-                    close()
+            }
+
+            when (strokePosition) {
+                StrokePosition.OUTSIDE -> {
+                    canvas.save()
+                    canvas.clipOutPath(path)
+                    canvas.drawPath(path, strokePaint)
+                    canvas.restore()
                 }
-                body.op(tail, Path.Op.UNION)
-                body
-            }
-            ShapeType.ARROW -> Path().apply {
-                moveTo(-halfW, -halfH * 0.4f)
-                lineTo(0f, -halfH * 0.4f)
-                lineTo(0f, -halfH)
-                lineTo(halfW, 0f)
-                lineTo(0f, halfH)
-                lineTo(0f, halfH * 0.4f)
-                lineTo(-halfW, halfH * 0.4f)
-                close()
+                StrokePosition.INSIDE -> {
+                    canvas.save()
+                    canvas.clipPath(path)
+                    canvas.drawPath(path, strokePaint)
+                    canvas.restore()
+                }
+                StrokePosition.CENTER -> {
+                    canvas.drawPath(path, strokePaint)
+                }
             }
         }
     }
 
-    private fun createStarPath(halfW: Float, halfH: Float, points: Int): Path {
-        val path = Path()
-        val outerRadius = halfW.coerceAtMost(halfH)
-        val innerRadius = outerRadius * 0.45f
-        val step = PI / points
-
-        for (i in 0 until 2 * points) {
-            val r = if (i % 2 == 0) outerRadius else innerRadius
-            val angle = i * step - (PI / 2.0)
-            val x = (r * cos(angle)).toFloat()
-            val y = (r * sin(angle)).toFloat()
-            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        path.close()
-        return path
+    private fun resolveJoin(join: StrokeJoinStyle): Paint.Join = when (join) {
+        StrokeJoinStyle.ROUND -> Paint.Join.ROUND
+        StrokeJoinStyle.MITER -> Paint.Join.MITER
+        StrokeJoinStyle.BEVEL -> Paint.Join.BEVEL
     }
 
-    private fun createHeartPath(halfW: Float, halfH: Float): Path {
-        return Path().apply {
-            moveTo(0f, halfH * 0.7f)
-            cubicTo(-halfW * 1.2f, -halfH * 0.2f, -halfW * 0.8f, -halfH, 0f, -halfH * 0.35f)
-            cubicTo(halfW * 0.8f, -halfH, halfW * 1.2f, -halfH * 0.2f, 0f, halfH * 0.7f)
-            close()
-        }
+    private fun resolveCap(cap: StrokeCapStyle): Paint.Cap = when (cap) {
+        StrokeCapStyle.ROUND -> Paint.Cap.ROUND
+        StrokeCapStyle.BUTT -> Paint.Cap.BUTT
+        StrokeCapStyle.SQUARE -> Paint.Cap.SQUARE
     }
 
-    private fun createPolygonPath(halfW: Float, halfH: Float, sides: Int): Path {
-        val path = Path()
-        val radius = halfW.coerceAtMost(halfH)
-        val step = (2.0 * PI / sides)
-        for (i in 0 until sides) {
-            val angle = i * step - (PI / 2.0)
-            val x = (radius * cos(angle)).toFloat()
-            val y = (radius * sin(angle)).toFloat()
-            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    private fun resolveDashEffect(
+        pattern: StrokePattern,
+        visualStrokeWidth: Float,
+        cap: StrokeCapStyle,
+        dashLength: Float,
+        dashGap: Float,
+        dashPhase: Float
+    ): DashPathEffect? {
+        val cleanDash = dashLength.coerceAtLeast(2f)
+        val cleanGap = dashGap.coerceAtLeast(2f)
+        val dotSpan = if (cap == StrokeCapStyle.ROUND) 1f else visualStrokeWidth.coerceAtLeast(2f)
+        val roundCapPad = if (cap != StrokeCapStyle.BUTT) visualStrokeWidth else 0f
+
+        return when (pattern) {
+            StrokePattern.SOLID -> null
+            StrokePattern.DASHED -> DashPathEffect(
+                floatArrayOf(cleanDash, (cleanGap + roundCapPad * 0.5f).coerceAtLeast(2f)),
+                dashPhase
+            )
+            StrokePattern.DOTTED -> DashPathEffect(
+                floatArrayOf(dotSpan, (cleanGap + roundCapPad).coerceAtLeast(4f)),
+                dashPhase
+            )
+            StrokePattern.DASH_DOT -> DashPathEffect(
+                floatArrayOf(
+                    cleanDash,
+                    (cleanGap + roundCapPad * 0.6f).coerceAtLeast(3f),
+                    dotSpan,
+                    (cleanGap + roundCapPad * 0.6f).coerceAtLeast(3f)
+                ),
+                dashPhase
+            )
         }
-        path.close()
-        return path
     }
 }

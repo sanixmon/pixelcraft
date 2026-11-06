@@ -32,9 +32,13 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PointF
+import com.app.pixelcraft.data.model.StrokePosition
+import com.app.pixelcraft.data.presets.FontCatalog
 import com.app.pixelcraft.domain.CanvasRenderer
 import com.app.pixelcraft.domain.ImageStore
 import com.app.pixelcraft.domain.TransformHelper
@@ -50,6 +54,7 @@ fun PixelCraftCanvas(
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val density = LocalDensity.current
     val canvasConfig = state.canvasConfig
     val safeWidth = canvasConfig.width.coerceAtLeast(1)
@@ -176,7 +181,10 @@ fun PixelCraftCanvas(
                         canvas = native,
                         config = canvasConfig,
                         layers = state.layers,
-                        bitmapLookup = { bitmaps[it] }
+                        bitmapLookup = { bitmaps[it] },
+                        typefaceResolver = { fontKey, isBold, isItalic ->
+                            FontCatalog.resolveTypeface(context, fontKey, isBold, isItalic)
+                        }
                     )
                     CanvasRenderer.renderFilters(
                         canvas = native,
@@ -191,14 +199,23 @@ fun PixelCraftCanvas(
                             virtualCenter.y + active.positionY
                         )
                         val outlineColor = if (active.isLocked) Color(0xFFFFB300) else Color(0xFF00E5FF)
+                        val shapeOuterPad = if (active.type == LayerType.SHAPE && active.shapeStrokeWidth > 0f) {
+                            when (active.strokePosition) {
+                                StrokePosition.OUTSIDE -> active.shapeStrokeWidth
+                                StrokePosition.CENTER -> active.shapeStrokeWidth / 2f
+                                StrokePosition.INSIDE -> 0f
+                            }
+                        } else {
+                            0f
+                        }
                         translate(left = activeCenter.x, top = activeCenter.y) {
                             rotate(degrees = active.rotation, pivot = Offset.Zero) {
-                                val halfW = active.width / 2f
-                                val halfH = active.height / 2f
+                                val halfW = (active.width / 2f) + shapeOuterPad
+                                val halfH = (active.height / 2f) + shapeOuterPad
                                 drawRect(
                                     color = outlineColor,
                                     topLeft = Offset(-halfW, -halfH),
-                                    size = Size(active.width, active.height),
+                                    size = Size(halfW * 2f, halfH * 2f),
                                     style = Stroke(
                                         width = 2.5f / canvasScale,
                                         pathEffect = PathEffect.dashPathEffect(
@@ -210,22 +227,26 @@ fun PixelCraftCanvas(
                         }
                     }
 
-                    // 3. Magnetic Snapping Guides (editor-only)
-                    if (state.showVerticalGuide) {
-                        drawLine(
-                            color = Color(0xFFFFEB3B),
-                            start = Offset(virtualCenter.x, 0f),
-                            end = Offset(virtualCenter.x, safeHeight.toFloat()),
-                            strokeWidth = 2.5f / canvasScale
-                        )
-                    }
-                    if (state.showHorizontalGuide) {
-                        drawLine(
-                            color = Color(0xFFFFEB3B),
-                            start = Offset(0f, virtualCenter.y),
-                            end = Offset(safeWidth.toFloat(), virtualCenter.y),
-                            strokeWidth = 2.5f / canvasScale
-                        )
+                    // 3. Magnetic Anchor Guides (active ONLY when Grid is enabled)
+                    if (state.isGridEnabled) {
+                        state.activeVerticalGuideX?.let { gx ->
+                            val canvasX = virtualCenter.x + gx
+                            drawLine(
+                                color = Color(0xFFFFEB3B),
+                                start = Offset(canvasX, 0f),
+                                end = Offset(canvasX, safeHeight.toFloat()),
+                                strokeWidth = 2.5f / canvasScale
+                            )
+                        }
+                        state.activeHorizontalGuideY?.let { gy ->
+                            val canvasY = virtualCenter.y + gy
+                            drawLine(
+                                color = Color(0xFFFFEB3B),
+                                start = Offset(0f, canvasY),
+                                end = Offset(safeWidth.toFloat(), canvasY),
+                                strokeWidth = 2.5f / canvasScale
+                            )
+                        }
                     }
                 }
 

@@ -1,112 +1,42 @@
 # PixelCraft (Jetpack Compose & Material 3)
 
-**PixelCraft** is an open-source Android editor for putting styled text, shapes and stickers on pictures, built from scratch with **Android Jetpack Compose**, **Material 3**, and declarative state-driven rendering.
+**PixelCraft** is an open-source Android typography, vector shape, and photo editor built with **Android Jetpack Compose**, **Material 3**, and declarative state-driven rendering.
 
 ---
 
 ## ✨ Features
 
-### 1. 🔤 3D Typography & Styling
-- **3D Text Extrusion**: Configurable 3D extrusion depth, darkening ratio, and light angle.
-- **Mirror Reflection**: Realistic bottom floor reflection with adjustable distance and opacity.
-- **Floor & Drop Shadows**: 3D floor shadow and 2D blur shadow with X/Y offset controls.
-- **Stroke & Outline**: Crisp outline rendering with custom stroke widths.
-- **Typography Styles**: Bold, Italic, Underline, and multi-line alignment.
-- **Text Background**: Customizable background pill/box with inner padding and corner radius.
-- **Color Palette**: Quick solid color picker and opacity control.
+### 1. 🔤 Typography, 15 Bundled Open-Source Fonts & Ivy Draw Vector Strokes
+- **15 Bundled Commercial-Safe Fonts**: Packaged directly in `res/font/` under SIL OFL 1.1 & Apache 2.0 (*Poppins*, *Lato*, *Bebas Neue*, *Anton*, *Archivo Black*, *Russo One*, *Bangers*, *Luckiest Guy*, *Abril Fatface*, *PT Serif*, *Permanent Marker*, *Pacifico*, *Great Vibes*, *Press Start 2P*, and *Space Mono*, plus *System Sans* — see `assets/FONT_LICENSES.txt`).
+- **Ivy Draw Vector Path Strokes**: True glyph/contour `Path` strokes supporting **Position** (`Outside`, `Center`, `Inside` via `clipOutPath` / `clipPath`), **Dash Patterns** (`Solid`, `Dashed`, `Dotted`, `Dash-Dot` with `Dash`, `Gap`, and `Phase` controls), **Corner Joins** (`Round`, `Miter` + `Miter Limit`, `Bevel`), and **Line Caps** (`Round`, `Butt`, `Square`).
+- **3D Text Extrusion**: Configurable 3D extrusion depth, darkening ratio, floor shadow, and light angle.
+- **Mirror Reflection & Drop Shadows**: Studio floor mirror reflection and customizable blur drop shadows.
+- **Typography Styles & Pill Background**: Bold, Italic, Underline, multi-line alignment, line spacing, and rounded text background pills.
 
-### 2. 🖼️ Photos
-- **Photo Layers**: Add pictures from the system photo picker (no storage permission needed) and move, resize, rotate, or adjust opacity like any layer.
-- **Photo Backgrounds**: Use a picture as the canvas background, centre-cropped to fill any aspect ratio.
-- Picked photos are copied into app storage, so saved projects keep their pictures.
+### 2. 🔷 PicSay Pro Vector Shapes, Word Balloons & Pointers
+- **24 Pure Vector Shapes in 4 Categories**:
+  - **Basic**: Rectangle, Rounded Rect, Circle / Oval, Triangle, Diamond, Pentagon, Hexagon, Octagon
+  - **Word Balloons**: Oval Balloon, Speech Box, Thought Cloud, Comic Shout Burst
+  - **Arrows**: Block Arrow, Double Arrow, Chevron, Callout Pin
+  - **Badges & Symbols**: 5-Point Star, 12-Point Starburst, Heart, Shield, Ribbon Banner, Crown, Lightning, Cross
+- **Flip Horizontal / Vertical**: Instantly flip word balloon tails and arrow directions toward any subject.
+- **Solid, 2-Color Gradient & Hollow Fills**: Combine solid or linear gradient fills with Ivy Draw vector strokes and shape drop shadows.
 
-### 2b. 🔷 Shapes & Decorative Stickers
-- **Geometric Shapes**: Rectangle, Rounded Rectangle, Circle, 5-Point Star, Triangle, Heart, Hexagon, Speech Bubble, and Arrow.
-- **Stroke & Fill**: Adjustable outline stroke width, fill color, and transparency.
-- **Sticker Library**: Curated emoji stickers organized into Emojis, Badges & Stars, Decorative elements, and Sale labels.
+### 3. 🎨 Interactive Color Wheel & Hex Picker Everywhere
+- **2D HSV Color Wheel + Brightness & Alpha Sliders + Hex (`#RRGGBB` / `#AARRGGBB`)**: Accessible from every color palette in the editor (Text Color, Text Background, Vector Stroke, Drop Shadows, Shape Fill & Gradients, Canvas Background, and Vignette).
 
-### 3. 🎨 Interactive Canvas & Alignment Controls
-- **Tap & Drag Selection**: Cyan dashed selection outline with rotated bounding-box hit testing and drag-to-move.
-- **Magnetic Snapping**: Real-time guide lines snapping layer centers to canvas horizontal and vertical center axes.
-- **Grid Overlay**: Toggleable rule-of-thirds alignment grid.
-- **Nudge & Relative Position**: Directional arrow pad (with step slider) and one-tap alignments (Center H/V, Left, Right, Top, Bottom).
+### 4. 🖼️ Photos, Fixed Canvas & Grid-Activated Magnetic Anchors
+- **Fixed Canvas Viewport**: Static canvas slot + compact icon-only bottom navigation bar so opening or switching any tool/inspector never shifts or rescales the canvas.
+- **Freemove by Default, Anchors When Grid ON**: Smooth un-anchored freemove dragging by default; toggle **Grid** on to activate magnetic snapping and guide lines on canvas center axes and grid divisions.
+- **Photo Layers & Backgrounds**: Import photos via the Android Photo Picker into movable layers or center-cropped canvas backgrounds.
 
-### 4. 📐 Canvas Aspect Ratio & Backgrounds
-- **Aspect Ratio Presets**:
-  - `Square (1:1)` - 1080 x 1080 px
-  - `YouTube Thumbnail (16:9)` - 1280 x 720 px
-  - `YouTube Channel Banner` - 2560 x 1440 px
-  - `Story / Reels (9:16)` - 1080 x 1920 px
-  - `Facebook Cover` - 1200 x 628 px
-  - `Twitter Header` - 1500 x 500 px
-  - `Custom Dimensions`
-- **Background Modes**: Solid Color, Multi-stop Gradients, Photo Background, Transparent (checkered pattern for PNG cutout).
-- **Canvas Filters**: Vignette shading and TV scanlines / stripes.
-
-### 5. 📑 Multi-Layer Management Stack
-- **Floating Layers Drawer**: Reverse z-order stack display.
-- **Layer Actions**:
-  - Visibility toggle (eye icon)
-  - Lock / Freeze toggle (padlock icon to prevent accidental moves)
-  - Bring to Front / Send to Back
-  - Reorder layers up/down
-  - Duplicate & Delete layers
-
-### 6. 💾 High-Resolution Export & Project Persistence
-- **Save to Gallery**: Exports land in `Pictures/PixelCraft` (MediaStore), with a one-tap **Share** action.
-- **Export Formats**: PNG (preserves transparency) and JPEG.
-- **Resolution Scaling**:
-  - `Default` (1.0x)
-  - `Low` (0.5x)
-  - `Medium` (1.0x)
-  - `High` (1.5x)
-  - `Very High` (2.0x HD)
-  - `Ultra` (3.0x - 4K UHD!)
-- **Project Storage**: Save and load projects locally as JSON snapshots, plus 50-step undo/redo history.
-- **Quotes Library**: 1-tap quote inserts across Motivation, Success, Friendship, Love, Happiness, and Wisdom categories.
+### 5. 💾 High-Resolution Export & Project Persistence
+- **Save to Gallery & Share**: Exports to `Pictures/PixelCraft` (MediaStore) in **PNG** (preserving transparency) or **JPEG** up to **4K Ultra HD (`3.0x`)**.
+- **Project Storage & Undo/Redo**: Local JSON project snapshots (`kotlinx.serialization`) and 50-step undo/redo history.
 
 ---
 
-## 🏗️ Architecture & Technology Stack
-
-```
-pixelcraft/
-├── app/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/app/pixelcraft/
-│   │   │   │   ├── PixelCraftApp.kt
-│   │   │   │   ├── MainActivity.kt
-│   │   │   │   ├── data/
-│   │   │   │   │   ├── model/         # Layer, CanvasConfig, Preset, History, PointF
-│   │   │   │   │   └── presets/       # DefaultPresets, QuotesLibrary, StickerLibrary
-│   │   │   │   ├── domain/            # CanvasRenderer, TransformHelper, SnappingEngine, TextSizing, ImageExporter, ImageStore, GallerySaver, ProjectStorage
-│   │   │   │   ├── presentation/      # PixelCraftViewModel, PixelCraftUiState, PixelCraftScreen
-│   │   │   │   │   └── components/    # PixelCraftCanvas, TopBar, BottomNav, LayersSheet, ToolPanels, Dialogs
-│   │   │   │   └── ui/theme/          # Material 3 Theme, DarkColorScheme
-│   │   │   └── res/
-│   │   └── test/java/com/app/pixelcraft/ # Transform, Snapping, Serialization & Export Unit Tests
-│   └── build.gradle.kts
-├── .github/workflows/ci.yml           # Automated GitHub Actions CI workflow
-├── build.gradle.kts
-├── settings.gradle.kts
-└── gradle.properties
-```
-
-- **UI Framework**: Android Jetpack Compose with Material 3 (`androidx.compose.material3`).
-- **State Management**: Kotlin Coroutines Flow (`StateFlow` & `MutableStateFlow`) with Uni-directional Data Flow (UDF).
-- **Kotlin Serialization**: `kotlinx.serialization` for zero-reflection JSON project serialization.
-- **Compositing Engine**: Dual-mode rendering:
-  - Compose Declarative Canvas (`androidx.compose.foundation.Canvas`) for smooth 60fps interactive editing.
-  - Android Software Canvas (`android.graphics.Canvas` / `Bitmap`) for crisp, offline 4K high-resolution rendering and export.
-
----
-
-## 🚀 Building & Testing Locally
-
-### Prerequisites
-- JDK 17 or JDK 21
-- Android SDK (compileSdk 34+, platforms 34, 35, or 36)
+## 🚀 Building & Testing
 
 ### Run Unit Tests
 ```bash
@@ -117,23 +47,9 @@ pixelcraft/
 ```bash
 ./gradlew assembleDebug
 ```
-The output APK is generated at:
-```
-app/build/outputs/apk/debug/app-debug.apk
-```
-
----
-
-## 🔄 GitHub CI Workflow
-
-The repository includes automated CI in `.github/workflows/ci.yml`:
-1. Checks out repository code on `push` and `pull_request` to `main` / `master`.
-2. Sets up JDK 17 with Temurin and Gradle build cache.
-3. Executes `./gradlew testDebugUnitTest` and uploads test result artifacts.
-4. Compiles `./gradlew assembleDebug` and archives `app-debug.apk` as a downloadable artifact.
 
 ---
 
 ## 📄 License
 
-Licensed under the [Apache License, Version 2.0](LICENSE).
+Licensed under the [Apache License, Version 2.0](LICENSE). Bundled font licenses are documented in [`app/src/main/assets/FONT_LICENSES.txt`](app/src/main/assets/FONT_LICENSES.txt).

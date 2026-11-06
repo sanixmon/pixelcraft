@@ -1,0 +1,28 @@
+PixelCraft Bundled Open-Source Fonts & License Attribution
+==========================================================
+
+All fonts bundled inside PixelCraft (under app/src/main/res/font/) are free,
+open-source, and commercially redistributable under either the SIL Open Font
+License 1.1 (OFL-1.1) or the Apache License, Version 2.0, sourced from the
+official Google Fonts repository (https://github.com/google/fonts).
+
+1. SIL Open Font License 1.1 (https://openfontlicense.org)
+----------------------------------------------------------
+- Poppins (Regular, Bold) — Copyright 2020 The Poppins Project Authors (Indian Type Foundry)
+- Lato (Regular, Bold) — Copyright 2011-2015 Lukasz Dziedzic (tyPoland)
+- Bebas Neue (Regular) — Copyright 2019 The Bebas Neue Project Authors (Dharma Type / Ryoichi Tsunekawa)
+- Anton (Regular) — Copyright 2020 The Anton Project Authors (Vernon Adams)
+- Archivo Black (Regular) — Copyright 2017 The Archivo Black Project Authors (Omnibus-Type)
+- Russo One (Regular) — Copyright 2011 Jovanny Lemonad
+- Bangers (Regular) — Copyright 2010 The Bangers Project Authors (Vernon Adams)
+- Abril Fatface (Regular) — Copyright 2011 TypeTogether (Veronika Burian & Jose Scaglione)
+- PT Serif (Regular, Bold) — Copyright 2010 ParaType Ltd.
+- Pacifico (Regular) — Copyright 2018 The Pacifico Project Authors (Vernon Adams)
+- Great Vibes (Regular) — Copyright 2010 The Great Vibes Pro Project Authors (TypeSETit / Robert E. Leuschke)
+- Press Start 2P (Regular) — Copyright 2012 The Press Start 2P Project Authors (Cody "CodeMan38" Boisclair)
+- Space Mono (Regular, Bold) — Copyright 2016 The Space Mono Project Authors (Colophon Foundry)
+
+2. Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+----------------------------------------------------------------------------
+- Luckiest Guy (Regular) — Copyright 2010 Brian J. Bonislawsky DBA Astigmatic (AOETI)
+- Permanent Marker (Regular) — Copyright 2010 Font Diner, Inc.

@@ -1,11 +1,9 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,21 +14,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.BorderStyle
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.FormatShapes
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material3.Button
@@ -39,12 +37,18 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -53,12 +57,14 @@ import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.ActiveDialog
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
+import com.app.pixelcraft.data.model.ShapeCategory
 import com.app.pixelcraft.data.model.ShapeType
 import com.app.pixelcraft.presentation.ActiveSubTool
+import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 
 private val ObjectPalette = listOf(
-    0xFF00B0FF, 0xFFFF0055, 0xFFFFEB3B, 0xFF00E676,
-    0xFF651FFF, 0xFFFF9100, 0xFFFFFFFF, 0xFF000000
+    0xFFFFFFFF, 0xFF000000, 0xFF00B0FF, 0xFFFF0055,
+    0xFFFFEB3B, 0xFF00E676, 0xFF651FFF, 0xFFFF9100
 )
 
 @Composable
@@ -79,7 +85,6 @@ fun ObjectToolPanel(
     if (
         selectedLayer == null || (
             selectedLayer.type != LayerType.SHAPE &&
-                selectedLayer.type != LayerType.STICKER &&
                 selectedLayer.type != LayerType.IMAGE
             )
     ) {
@@ -90,7 +95,7 @@ fun ObjectToolPanel(
                 .background(Color(0xFF232730))
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
@@ -99,16 +104,7 @@ fun ObjectToolPanel(
             ) {
                 Icon(Icons.Default.FormatShapes, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Shapes", color = Color.Black, fontWeight = FontWeight.Bold)
-            }
-
-            Button(
-                onClick = { onOpenDialog(ActiveDialog.ADD_STICKER) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF651FFF))
-            ) {
-                Icon(Icons.Default.EmojiEmotions, contentDescription = null, tint = Color.White)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Stickers", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Shapes & Balloons", color = Color.Black, fontWeight = FontWeight.Bold)
             }
 
             Button(
@@ -147,6 +143,50 @@ fun ObjectToolPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            if (selectedLayer.type == LayerType.SHAPE) {
+                ObjectToolItem(
+                    icon = Icons.Default.Category,
+                    label = "Shape",
+                    isActive = activeSubTool == ActiveSubTool.SHAPE_TYPE,
+                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_TYPE) }
+                )
+                ObjectToolItem(
+                    icon = Icons.Default.FormatColorFill,
+                    label = "Fill",
+                    isActive = activeSubTool == ActiveSubTool.SHAPE_COLOR,
+                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_COLOR) }
+                )
+                ObjectToolItem(
+                    icon = Icons.Default.BorderStyle,
+                    label = "Stroke",
+                    isActive = activeSubTool == ActiveSubTool.SHAPE_STROKE,
+                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_STROKE) }
+                )
+                ObjectToolItem(
+                    icon = Icons.Default.Lightbulb,
+                    label = "Shadow",
+                    isActive = activeSubTool == ActiveSubTool.SHAPE_SHADOW,
+                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_SHADOW) }
+                )
+                ObjectToolItem(
+                    icon = Icons.Default.Flip,
+                    label = "Flip H",
+                    isActive = selectedLayer.flipHorizontal,
+                    onClick = {
+                        onUpdateLayer(false) { it.copy(flipHorizontal = !it.flipHorizontal) }
+                    }
+                )
+                ObjectToolItem(
+                    icon = Icons.Default.Flip,
+                    label = "Flip V",
+                    isActive = selectedLayer.flipVertical,
+                    iconRotation = 90f,
+                    onClick = {
+                        onUpdateLayer(false) { it.copy(flipVertical = !it.flipVertical) }
+                    }
+                )
+            }
+
             ObjectToolItem(
                 icon = Icons.Default.AspectRatio,
                 label = "Size",
@@ -165,28 +205,6 @@ fun ObjectToolPanel(
                 isActive = activeSubTool == ActiveSubTool.SHAPE_OPACITY,
                 onClick = { onSubToolSelected(ActiveSubTool.SHAPE_OPACITY) }
             )
-
-            if (selectedLayer.type == LayerType.SHAPE) {
-                ObjectToolItem(
-                    icon = Icons.Default.Category,
-                    label = "Type",
-                    isActive = activeSubTool == ActiveSubTool.SHAPE_TYPE,
-                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_TYPE) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.FormatColorFill,
-                    label = "Color",
-                    isActive = activeSubTool == ActiveSubTool.SHAPE_COLOR,
-                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_COLOR) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.ColorLens,
-                    label = "Stroke",
-                    isActive = activeSubTool == ActiveSubTool.SHAPE_STROKE,
-                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_STROKE) }
-                )
-            }
-
             ObjectToolItem(
                 icon = Icons.Default.Layers,
                 label = "To Front",
@@ -220,6 +238,7 @@ private fun ObjectToolItem(
     icon: ImageVector,
     label: String,
     isActive: Boolean,
+    iconRotation: Float = 0f,
     onClick: () -> Unit
 ) {
     val activeColor = Color(0xFF00E5FF)
@@ -236,7 +255,9 @@ private fun ObjectToolItem(
             imageVector = icon,
             contentDescription = label,
             tint = if (isActive) activeColor else Color.White,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier
+                .size(22.dp)
+                .rotate(iconRotation)
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
@@ -258,7 +279,7 @@ private fun ObjectSubToolInspector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 220.dp)
+            .heightIn(max = 225.dp)
             .background(Color(0xFF1B1D24))
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
@@ -305,22 +326,12 @@ private fun ObjectSubToolInspector(
                         if (layer.shapeType == ShapeType.ROUNDED_RECTANGLE || layer.shapeType == ShapeType.SPEECH_BUBBLE) {
                             Text("Corner Radius: ${layer.shapeCornerRadius.toInt()} px", color = Color.White, fontSize = 12.sp)
                             Slider(
-                                value = layer.shapeCornerRadius.coerceIn(0f, 120f),
+                                value = layer.shapeCornerRadius.coerceIn(0f, 140f),
                                 onValueChange = { r -> onUpdate(true) { it.copy(shapeCornerRadius = r) } },
                                 onValueChangeFinished = onFinishContinuousEdit,
-                                valueRange = 0f..120f
+                                valueRange = 0f..140f
                             )
                         }
-                    }
-
-                    LayerType.STICKER -> {
-                        Text("Sticker Size: ${layer.fontSize.toInt()}", color = Color.White, fontSize = 12.sp)
-                        Slider(
-                            value = layer.fontSize.coerceIn(36f, 220f),
-                            onValueChange = { s -> onUpdate(true) { it.copy(fontSize = s) } },
-                            onValueChangeFinished = onFinishContinuousEdit,
-                            valueRange = 36f..220f
-                        )
                     }
 
                     LayerType.IMAGE -> {
@@ -368,17 +379,33 @@ private fun ObjectSubToolInspector(
 
             ActiveSubTool.SHAPE_TYPE -> {
                 if (layer.type == LayerType.SHAPE) {
+                    var activeCat by remember(layer.shapeType) { mutableStateOf(layer.shapeType.category) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        for (cat in ShapeCategory.entries) {
+                            FilterChip(
+                                selected = activeCat == cat,
+                                onClick = { activeCat = cat },
+                                label = { Text(cat.label, fontSize = 11.sp) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        for (shape in ShapeType.entries) {
+                        for (shape in ShapeType.entries.filter { it.category == activeCat }) {
                             FilterChip(
                                 selected = layer.shapeType == shape,
                                 onClick = { onUpdate(false) { it.copy(shapeType = shape) } },
-                                label = { Text(shape.name.replace("_", " ")) }
+                                label = { Text(shape.label, fontSize = 11.sp) }
                             )
                         }
                     }
@@ -387,33 +414,74 @@ private fun ObjectSubToolInspector(
 
             ActiveSubTool.SHAPE_COLOR -> {
                 if (layer.type == LayerType.SHAPE) {
-                    Text("Fill Color", color = Color.White, fontSize = 12.sp)
+                    val isTransparent = !layer.shapeGradientEnabled && (layer.shapeFillColor ushr 24) == 0L
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
-                            selected = (layer.shapeFillColor ushr 24) == 0L,
-                            onClick = { onUpdate(false) { it.copy(shapeFillColor = 0x00000000) } },
-                            label = { Text("None") }
+                            selected = !layer.shapeGradientEnabled && !isTransparent,
+                            onClick = {
+                                onUpdate(false) {
+                                    val fallback = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
+                                    it.copy(shapeGradientEnabled = false, shapeFillColor = fallback)
+                                }
+                            },
+                            label = { Text("Solid", fontSize = 11.sp) }
                         )
-                        for (c in ObjectPalette) {
-                            val isSelected = layer.shapeFillColor == c
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(c))
-                                    .border(
-                                        width = if (isSelected) 2.5.dp else 1.dp,
-                                        color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF555555),
-                                        shape = CircleShape
-                                    )
-                                    .clickable { onUpdate(false) { it.copy(shapeFillColor = c) } }
+                        FilterChip(
+                            selected = layer.shapeGradientEnabled,
+                            onClick = {
+                                onUpdate(false) {
+                                    val start = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
+                                    it.copy(shapeGradientEnabled = true, shapeFillColor = start)
+                                }
+                            },
+                            label = { Text("Gradient", fontSize = 11.sp) }
+                        )
+                        FilterChip(
+                            selected = isTransparent,
+                            onClick = {
+                                onUpdate(false) {
+                                    it.copy(shapeGradientEnabled = false, shapeFillColor = 0x00000000L)
+                                }
+                            },
+                            label = { Text("None (Hollow)", fontSize = 11.sp) }
+                        )
+                    }
+
+                    if (!isTransparent) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (layer.shapeGradientEnabled) "Start Color" else "Fill Color",
+                            color = Color(0xFFCCCCCC),
+                            fontSize = 11.sp
+                        )
+                        ColorPaletteRow(
+                            colors = ObjectPalette,
+                            selectedColor = layer.shapeFillColor,
+                            onSelectColor = { c -> onUpdate(false) { it.copy(shapeFillColor = c) } },
+                            allowAlpha = true,
+                            pickerTitle = if (layer.shapeGradientEnabled) "Gradient Start Color" else "Shape Fill Color"
+                        )
+
+                        if (layer.shapeGradientEnabled) {
+                            Text("End Color", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+                            ColorPaletteRow(
+                                colors = ObjectPalette,
+                                selectedColor = layer.shapeGradientEndColor,
+                                onSelectColor = { c -> onUpdate(false) { it.copy(shapeGradientEndColor = c) } },
+                                allowAlpha = true,
+                                pickerTitle = "Gradient End Color"
+                            )
+                            Text("Gradient Angle: ${layer.shapeGradientAngle.toInt()}°", color = Color.White, fontSize = 11.sp)
+                            Slider(
+                                value = layer.shapeGradientAngle.coerceIn(0f, 360f),
+                                onValueChange = { ang -> onUpdate(true) { it.copy(shapeGradientAngle = ang) } },
+                                onValueChangeFinished = onFinishContinuousEdit,
+                                valueRange = 0f..360f
                             )
                         }
                     }
@@ -422,38 +490,84 @@ private fun ObjectSubToolInspector(
 
             ActiveSubTool.SHAPE_STROKE -> {
                 if (layer.type == LayerType.SHAPE) {
-                    Text("Stroke Width: ${layer.shapeStrokeWidth.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.shapeStrokeWidth.coerceIn(0f, 40f),
-                        onValueChange = { w -> onUpdate(true) { it.copy(shapeStrokeWidth = w) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0f..40f
+                    IvyStrokeInspector(
+                        strokeWidth = layer.shapeStrokeWidth,
+                        maxStrokeWidth = 48f,
+                        defaultEnableWidth = 5f,
+                        strokeColor = layer.shapeStrokeColor,
+                        strokePosition = layer.strokePosition,
+                        strokePattern = layer.strokePattern,
+                        dashLength = layer.strokeDashLength,
+                        dashGap = layer.strokeDashGap,
+                        dashPhase = layer.strokePhase,
+                        strokeJoin = layer.strokeJoin,
+                        miterLimit = layer.strokeMiterLimit,
+                        strokeCap = layer.strokeCap,
+                        palette = ObjectPalette,
+                        onToggleEnable = { _, width ->
+                            onUpdate(false) { it.copy(shapeStrokeWidth = width) }
+                        },
+                        onWidthChange = { w -> onUpdate(true) { it.copy(shapeStrokeWidth = w) } },
+                        onColorChange = { c -> onUpdate(false) { it.copy(shapeStrokeColor = c) } },
+                        onPositionChange = { pos -> onUpdate(false) { it.copy(strokePosition = pos) } },
+                        onPatternChange = { pat -> onUpdate(false) { it.copy(strokePattern = pat) } },
+                        onDashLengthChange = { d -> onUpdate(true) { it.copy(strokeDashLength = d) } },
+                        onDashGapChange = { g -> onUpdate(true) { it.copy(strokeDashGap = g) } },
+                        onDashPhaseChange = { p -> onUpdate(true) { it.copy(strokePhase = p) } },
+                        onJoinChange = { j -> onUpdate(false) { it.copy(strokeJoin = j) } },
+                        onMiterLimitChange = { m -> onUpdate(true) { it.copy(strokeMiterLimit = m) } },
+                        onCapChange = { c -> onUpdate(false) { it.copy(strokeCap = c) } },
+                        onFinishContinuousEdit = onFinishContinuousEdit
                     )
-                    if (layer.shapeStrokeWidth > 0f) {
-                        Text("Stroke Color", color = Color.White, fontSize = 12.sp)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            for (c in ObjectPalette) {
-                                val isSelected = layer.shapeStrokeColor == c
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(c))
-                                        .border(
-                                            width = if (isSelected) 2.5.dp else 1.dp,
-                                            color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF555555),
-                                            shape = CircleShape
-                                        )
-                                        .clickable { onUpdate(false) { it.copy(shapeStrokeColor = c) } }
-                                )
-                            }
-                        }
+                }
+            }
+
+            ActiveSubTool.SHAPE_SHADOW -> {
+                if (layer.type == LayerType.SHAPE) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Enable Shape Shadow", color = Color.White, fontSize = 12.sp)
+                        Switch(
+                            checked = layer.shadowEnabled,
+                            onCheckedChange = { en -> onUpdate(false) { it.copy(shadowEnabled = en) } }
+                        )
+                    }
+                    if (layer.shadowEnabled) {
+                        Text("Shadow Color", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+                        ColorPaletteRow(
+                            colors = listOf(
+                                0xAA000000, 0xFF000000, 0xCCFFFFFF, 0xFFFF007F,
+                                0xFF00E5FF, 0xFFFFEB3B, 0xFF651FFF
+                            ),
+                            selectedColor = layer.shadowColor,
+                            onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
+                            allowAlpha = true,
+                            pickerTitle = "Shape Shadow Color"
+                        )
+                        Text("Blur Radius: ${layer.shadowRadius.toInt()} px", color = Color.White, fontSize = 11.sp)
+                        Slider(
+                            value = layer.shadowRadius.coerceIn(1f, 40f),
+                            onValueChange = { r -> onUpdate(true) { it.copy(shadowRadius = r) } },
+                            onValueChangeFinished = onFinishContinuousEdit,
+                            valueRange = 1f..40f
+                        )
+                        Text("Offset X: ${layer.shadowDx.toInt()} px", color = Color.White, fontSize = 11.sp)
+                        Slider(
+                            value = layer.shadowDx.coerceIn(-30f, 30f),
+                            onValueChange = { dx -> onUpdate(true) { it.copy(shadowDx = dx) } },
+                            onValueChangeFinished = onFinishContinuousEdit,
+                            valueRange = -30f..30f
+                        )
+                        Text("Offset Y: ${layer.shadowDy.toInt()} px", color = Color.White, fontSize = 11.sp)
+                        Slider(
+                            value = layer.shadowDy.coerceIn(-30f, 30f),
+                            onValueChange = { dy -> onUpdate(true) { it.copy(shadowDy = dy) } },
+                            onValueChangeFinished = onFinishContinuousEdit,
+                            valueRange = -30f..30f
+                        )
                     }
                 }
             }
