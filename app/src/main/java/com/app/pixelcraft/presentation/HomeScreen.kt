@@ -64,7 +64,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -680,10 +679,14 @@ private fun ProjectThumbnailCard(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    val thumbImage by produceState<ImageBitmap?>(initialValue = null, summary.thumbnailFileName, summary.timestamp) {
+    var thumbImage by remember(summary.thumbnailFileName, summary.timestamp) {
+        mutableStateOf<ImageBitmap?>(null)
+    }
+
+    LaunchedEffect(summary.thumbnailFileName, summary.timestamp) {
         val fileName = summary.thumbnailFileName
-        value = if (fileName != null) {
-            withContext(Dispatchers.IO) {
+        if (fileName != null) {
+            val bmp = withContext(Dispatchers.IO) {
                 val file = File(thumbnailsDir, fileName)
                 if (file.exists()) {
                     BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
@@ -691,8 +694,9 @@ private fun ProjectThumbnailCard(
                     null
                 }
             }
+            thumbImage = bmp
         } else {
-            null
+            thumbImage = null
         }
     }
 
