@@ -701,6 +701,10 @@ class PixelCraftViewModel internal constructor(
 
     // --- Projects Save / Load ---
 
+    private suspend fun reloadSavedProjects(): List<ProjectData> {
+        return projectStorage.listProjects().getOrElse { _uiState.value.savedProjects }
+    }
+
     fun refreshSavedProjects() {
         viewModelScope.launch {
             projectStorage.listProjects().onSuccess { projects ->
@@ -722,15 +726,16 @@ class PixelCraftViewModel internal constructor(
         )
         viewModelScope.launch {
             projectStorage.saveProject(project).onSuccess {
+                val projects = reloadSavedProjects()
                 _uiState.update {
                     it.copy(
                         currentProjectId = id,
                         currentProjectName = cleanName,
+                        savedProjects = projects,
                         activeDialog = null,
                         userMessage = "Saved project \"$cleanName\""
                     )
                 }
-                refreshSavedProjects()
             }.onFailure { err ->
                 _uiState.update {
                     it.copy(userMessage = "Couldn't save project: ${err.message}")
@@ -778,10 +783,13 @@ class PixelCraftViewModel internal constructor(
     fun deleteProject(id: String) {
         viewModelScope.launch {
             projectStorage.deleteProject(id).onSuccess {
+                val projects = reloadSavedProjects()
                 _uiState.update { state ->
-                    if (state.currentProjectId == id) state.copy(currentProjectId = null) else state
+                    state.copy(
+                        currentProjectId = if (state.currentProjectId == id) null else state.currentProjectId,
+                        savedProjects = projects
+                    )
                 }
-                refreshSavedProjects()
             }.onFailure { err ->
                 _uiState.update {
                     it.copy(userMessage = "Couldn't delete project: ${err.message}")

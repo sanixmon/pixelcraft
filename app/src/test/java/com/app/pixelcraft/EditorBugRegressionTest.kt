@@ -13,11 +13,13 @@ import com.app.pixelcraft.domain.ProjectStorage
 import com.app.pixelcraft.domain.TextSizing
 import com.app.pixelcraft.presentation.AlignmentAction
 import com.app.pixelcraft.presentation.PixelCraftViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -36,21 +38,31 @@ class EditorBugRegressionTest {
     @get:Rule
     val tempFolder = TemporaryFolder()
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private lateinit var viewModelStore: ViewModelStore
+    private var vmCounter = 0
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        viewModelStore = ViewModelStore()
+        vmCounter = 0
     }
 
     @After
     fun tearDown() {
+        viewModelStore.clear()
         Dispatchers.resetMain()
     }
 
     private fun createViewModel(): PixelCraftViewModel {
         val dir = tempFolder.newFolder()
-        return PixelCraftViewModel(Application(), ProjectStorage { dir })
+        val factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return PixelCraftViewModel(Application(), ProjectStorage { dir }) as T
+            }
+        }
+        return ViewModelProvider(viewModelStore, factory)["vm_${vmCounter++}", PixelCraftViewModel::class.java]
     }
 
     private fun awaitCondition(timeoutMs: Long = 3000L, predicate: () -> Boolean) {
@@ -256,7 +268,7 @@ class EditorBugRegressionTest {
     }
 
     @Test
-    fun projectSaveIsolationAcrossPresetsRenameAndDelete() = runTest {
+    fun projectSaveIsolationAcrossPresetsRenameAndDelete() {
         val vm = createViewModel()
 
         vm.saveProject("Poster One")
@@ -274,6 +286,7 @@ class EditorBugRegressionTest {
         }
         val posterTwoId = vm.uiState.value.currentProjectId!!
 
+        vm.clearUserMessage()
         vm.addTextLayer("Updated")
         vm.saveProject("Poster Two")
         awaitCondition { vm.uiState.value.userMessage == "Saved project \"Poster Two\"" }
