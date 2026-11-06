@@ -4,5 +4,4 @@
     <include domain="file" path="images" />
     <include domain="file" path="fonts" />
     <include domain="file" path="datastore" />
-    <exclude domain="file" path="draft.json" />
 </full-backup-content>

@@ -681,14 +681,18 @@ private fun ProjectThumbnailCard(
     var menuExpanded by remember { mutableStateOf(false) }
 
     val thumbImage by produceState<ImageBitmap?>(initialValue = null, summary.thumbnailFileName, summary.timestamp) {
-        val fileName = summary.thumbnailFileName ?: return@produceState
-        value = withContext(Dispatchers.IO) {
-            val file = File(thumbnailsDir, fileName)
-            if (file.exists()) {
-                BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
-            } else {
-                null
+        val fileName = summary.thumbnailFileName
+        value = if (fileName != null) {
+            withContext(Dispatchers.IO) {
+                val file = File(thumbnailsDir, fileName)
+                if (file.exists()) {
+                    BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
+                } else {
+                    null
+                }
             }
+        } else {
+            null
         }
     }
 

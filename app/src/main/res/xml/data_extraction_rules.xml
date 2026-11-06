@@ -5,13 +5,11 @@
         <include domain="file" path="images" />
         <include domain="file" path="fonts" />
         <include domain="file" path="datastore" />
-        <exclude domain="file" path="draft.json" />
     </cloud-backup>
     <device-transfer>
         <include domain="file" path="pixelcraft_projects" />
         <include domain="file" path="images" />
         <include domain="file" path="fonts" />
         <include domain="file" path="datastore" />
-        <exclude domain="file" path="draft.json" />
     </device-transfer>
 </data-extraction-rules>
