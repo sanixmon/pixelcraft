@@ -7,9 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.app.pixelcraft.data.model.ActiveDialog
 import com.app.pixelcraft.data.model.AspectRatioPreset
 import com.app.pixelcraft.data.model.BackgroundType
-import com.app.pixelcraft.data.model.CanvasConfig
+import com.app.pixelcraft.data.model.BottomNavTab
 import com.app.pixelcraft.data.model.CanvasFilters
-import com.app.pixelcraft.data.model.DrawPath
 import com.app.pixelcraft.data.model.EditorSnapshot
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
@@ -18,17 +17,15 @@ import com.app.pixelcraft.data.model.ProjectData
 import com.app.pixelcraft.data.model.Quote
 import com.app.pixelcraft.data.model.ShapeType
 import com.app.pixelcraft.data.model.StylePreset
-import com.app.pixelcraft.data.model.TextAlignment
 import com.app.pixelcraft.data.presets.DefaultPresets
-import com.app.pixelcraft.domain.ExportFormat
 import com.app.pixelcraft.domain.ExportOptions
-import com.app.pixelcraft.domain.ExportQuality
 import com.app.pixelcraft.domain.GallerySaver
 import com.app.pixelcraft.domain.ImageExporter
 import com.app.pixelcraft.domain.ImageFit
 import com.app.pixelcraft.domain.ImageStore
 import com.app.pixelcraft.domain.ProjectStorage
 import com.app.pixelcraft.domain.SnappingEngine
+import com.app.pixelcraft.domain.TextSizing
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,9 +36,18 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
-class PixelCraftViewModel(application: Application) : AndroidViewModel(application) {
+class PixelCraftViewModel internal constructor(
+    application: Application,
+    private val projectStorage: ProjectStorage
+) : AndroidViewModel(application) {
 
-    private val projectStorage = ProjectStorage(application)
+    constructor(application: Application) : this(application, ProjectStorage(application))
+
+    companion object {
+        const val MIN_CANVAS_DIMENSION = 64
+        const val MAX_CANVAS_DIMENSION = 4096
+    }
+
     private val imageExporter = ImageExporter()
     private val imageStore = ImageStore(application)
     private val gallerySaver = GallerySaver(application)
@@ -51,12 +57,18 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
 
     private val undoStack = mutableListOf<EditorSnapshot>()
     private val redoStack = mutableListOf<EditorSnapshot>()
+    private var isContinuousEditing = false
 
     init {
-        // Apply default preset on launch
         val defaultPreset = DefaultPresets.presets.first()
         applyPreset(defaultPreset, recordHistory = false)
         refreshSavedProjects()
+    }
+
+    private fun normalizeZIndices(layers: List<Layer>): List<Layer> {
+        return layers.sortedBy { it.zIndex }.mapIndexed { index, layer ->
+            layer.copy(zIndex = index)
+        }
     }
 
     private fun takeSnapshot(): EditorSnapshot {
@@ -77,6 +89,22 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         updateHistoryFlags()
     }
 
+    private fun beginHistoryStep(continuous: Boolean) {
+        if (continuous) {
+            if (!isContinuousEditing) {
+                isContinuousEditing = true
+                recordHistory()
+            }
+        } else {
+            isContinuousEditing = false
+            recordHistory()
+        }
+    }
+
+    fun finishContinuousEdit() {
+        isContinuousEditing = false
+    }
+
     private fun updateHistoryFlags() {
         _uiState.update {
             it.copy(
@@ -87,6 +115,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun undo() {
+        isContinuousEditing = false
         if (undoStack.isEmpty()) return
         val currentState = takeSnapshot()
         redoStack.add(currentState)
@@ -103,6 +132,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun redo() {
+        isContinuousEditing = false
         if (redoStack.isEmpty()) return
         val currentState = takeSnapshot()
         undoStack.add(currentState)
@@ -120,15 +150,18 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
 
     // --- Tab and Dialog Management ---
 
-    fun setActiveTab(tab: com.app.pixelcraft.data.model.BottomNavTab) {
+    fun setActiveTab(tab: BottomNavTab) {
+        isContinuousEditing = false
         _uiState.update { it.copy(activeTab = tab, activeSubTool = ActiveSubTool.NONE) }
     }
 
     fun setActiveSubTool(subTool: ActiveSubTool) {
+        isContinuousEditing = false
         _uiState.update { it.copy(activeSubTool = subTool) }
     }
 
     fun openDialog(dialog: ActiveDialog) {
+        isContinuousEditing = false
         _uiState.update { it.copy(activeDialog = dialog) }
     }
 
@@ -144,68 +177,61 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         _uiState.update { it.copy(isLayersDrawerOpen = open) }
     }
 
-    // --- Grid & Zoom ---
+    // --- Grid ---
 
     fun toggleGrid() {
         _uiState.update { it.copy(isGridEnabled = !it.isGridEnabled) }
     }
 
-    fun toggleSnapToGrid() {
-        _uiState.update { it.copy(isSnapToGrid = !it.isSnapToGrid) }
-    }
-
-    fun toggleZoomMode() {
-        _uiState.update { it.copy(isZoomMode = !it.isZoomMode) }
-    }
-
-    fun resetZoom() {
-        _uiState.update { it.copy(zoomScale = 1.0f, panOffset = PointF(0f, 0f)) }
-    }
-
-    fun updateZoomAndPan(scaleMultiplier: Float, panDelta: PointF) {
-        _uiState.update { current ->
-            val newScale = (current.zoomScale * scaleMultiplier).coerceIn(0.5f, 5.0f)
-            val newPanX = current.panOffset.x + panDelta.x
-            val newPanY = current.panOffset.y + panDelta.y
-            current.copy(zoomScale = newScale, panOffset = PointF(newPanX, newPanY))
-        }
-    }
-
     // --- Layer Selection & Navigation ---
 
     fun selectLayer(layerId: String?) {
+        isContinuousEditing = false
         _uiState.update { state ->
             val layer = state.layers.find { it.id == layerId }
             val newTab = when (layer?.type) {
-                LayerType.TEXT -> com.app.pixelcraft.data.model.BottomNavTab.TEXT
-                LayerType.SHAPE, LayerType.STICKER, LayerType.DRAWING, LayerType.IMAGE -> com.app.pixelcraft.data.model.BottomNavTab.OBJECTS
+                LayerType.TEXT -> BottomNavTab.TEXT
+                LayerType.SHAPE, LayerType.STICKER, LayerType.IMAGE -> BottomNavTab.OBJECTS
                 null -> state.activeTab
             }
-            state.copy(selectedLayerId = layerId, activeTab = newTab)
+            val nextSubTool = if (newTab != state.activeTab || layer?.type != state.selectedLayer?.type) {
+                ActiveSubTool.NONE
+            } else {
+                state.activeSubTool
+            }
+            state.copy(
+                selectedLayerId = layerId,
+                activeTab = newTab,
+                activeSubTool = nextSubTool
+            )
         }
     }
 
     // --- Layer Operations ---
 
     fun addTextLayer(initialText: String = "New Text") {
-        recordHistory()
-        val newZIndex = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0) + 1
-        val newLayer = Layer(
-            id = UUID.randomUUID().toString(),
-            name = "Text $newZIndex",
-            type = LayerType.TEXT,
-            text = initialText,
-            fontSize = 44f,
-            textColor = 0xFFFFFFFF,
-            positionX = 0f,
-            positionY = 0f,
-            zIndex = newZIndex
+        beginHistoryStep(continuous = false)
+        val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
+        val labelIndex = _uiState.value.layers.count { it.type == LayerType.TEXT } + 1
+        val newLayer = TextSizing.withEstimatedBounds(
+            Layer(
+                id = UUID.randomUUID().toString(),
+                name = "Text $labelIndex",
+                type = LayerType.TEXT,
+                text = initialText,
+                fontSize = 44f,
+                textColor = 0xFFFFFFFF,
+                positionX = 0f,
+                positionY = 0f,
+                zIndex = nextZ
+            )
         )
         _uiState.update { state ->
             state.copy(
-                layers = state.layers + newLayer,
+                layers = normalizeZIndices(state.layers + newLayer),
                 selectedLayerId = newLayer.id,
-                activeTab = com.app.pixelcraft.data.model.BottomNavTab.TEXT
+                activeTab = BottomNavTab.TEXT,
+                activeSubTool = ActiveSubTool.NONE
             )
         }
     }
@@ -217,16 +243,16 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun addQuoteLayer(quote: Quote) {
-        val text = "\"${quote.text}\"\n- ${quote.author.ifBlank { "Unknown" }}"
-        addTextLayer(text)
+        addTextLayer(TextSizing.wrapQuote(quote))
     }
 
     fun addShapeLayer(shapeType: ShapeType) {
-        recordHistory()
-        val newZIndex = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0) + 1
+        beginHistoryStep(continuous = false)
+        val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
+        val labelIndex = _uiState.value.layers.count { it.type == LayerType.SHAPE } + 1
         val newLayer = Layer(
             id = UUID.randomUUID().toString(),
-            name = "Shape $newZIndex",
+            name = "Shape $labelIndex",
             type = LayerType.SHAPE,
             shapeType = shapeType,
             width = 320f,
@@ -234,37 +260,40 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
             shapeFillColor = 0xFF00B0FF,
             positionX = 0f,
             positionY = 0f,
-            zIndex = newZIndex
+            zIndex = nextZ
         )
         _uiState.update { state ->
             state.copy(
-                layers = state.layers + newLayer,
+                layers = normalizeZIndices(state.layers + newLayer),
                 selectedLayerId = newLayer.id,
-                activeTab = com.app.pixelcraft.data.model.BottomNavTab.OBJECTS
+                activeTab = BottomNavTab.OBJECTS,
+                activeSubTool = ActiveSubTool.NONE
             )
         }
     }
 
     fun addStickerLayer(stickerKey: String) {
-        recordHistory()
-        val newZIndex = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0) + 1
-        val newLayer = Layer(
-            id = UUID.randomUUID().toString(),
-            name = "Sticker $newZIndex",
-            type = LayerType.STICKER,
-            stickerKey = stickerKey,
-            fontSize = 64f,
-            width = 160f,
-            height = 160f,
-            positionX = 0f,
-            positionY = 0f,
-            zIndex = newZIndex
+        beginHistoryStep(continuous = false)
+        val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
+        val labelIndex = _uiState.value.layers.count { it.type == LayerType.STICKER } + 1
+        val newLayer = TextSizing.withEstimatedBounds(
+            Layer(
+                id = UUID.randomUUID().toString(),
+                name = "Sticker $labelIndex",
+                type = LayerType.STICKER,
+                stickerKey = stickerKey,
+                fontSize = 64f,
+                positionX = 0f,
+                positionY = 0f,
+                zIndex = nextZ
+            )
         )
         _uiState.update { state ->
             state.copy(
-                layers = state.layers + newLayer,
+                layers = normalizeZIndices(state.layers + newLayer),
                 selectedLayerId = newLayer.id,
-                activeTab = com.app.pixelcraft.data.model.BottomNavTab.OBJECTS
+                activeTab = BottomNavTab.OBJECTS,
+                activeSubTool = ActiveSubTool.NONE
             )
         }
     }
@@ -273,24 +302,26 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     fun addImageLayer(uri: Uri) {
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { image ->
-                recordHistory()
+                beginHistoryStep(continuous = false)
                 val config = _uiState.value.canvasConfig
                 val fit = ImageFit.fitWithin(image.width, image.height, config.width * 0.6f, config.height * 0.6f)
-                val newZIndex = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0) + 1
+                val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
+                val labelIndex = _uiState.value.layers.count { it.type == LayerType.IMAGE } + 1
                 val newLayer = Layer(
                     id = UUID.randomUUID().toString(),
-                    name = "Photo $newZIndex",
+                    name = "Photo $labelIndex",
                     type = LayerType.IMAGE,
                     imageLocalPath = image.path,
                     width = fit.width,
                     height = fit.height,
-                    zIndex = newZIndex
+                    zIndex = nextZ
                 )
                 _uiState.update { state ->
                     state.copy(
-                        layers = state.layers + newLayer,
+                        layers = normalizeZIndices(state.layers + newLayer),
                         selectedLayerId = newLayer.id,
-                        activeTab = com.app.pixelcraft.data.model.BottomNavTab.OBJECTS
+                        activeTab = BottomNavTab.OBJECTS,
+                        activeSubTool = ActiveSubTool.NONE
                     )
                 }
             }.onFailure { err ->
@@ -299,36 +330,35 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun updateSelectedLayer(transform: (Layer) -> Layer) {
-        val selectedId = _uiState.value.selectedLayerId ?: return
-        recordHistory()
+    fun updateSelectedLayer(continuous: Boolean = false, transform: (Layer) -> Layer) {
+        val currentLayer = _uiState.value.selectedLayer ?: return
+        if (currentLayer.isLocked) return
+
+        beginHistoryStep(continuous = continuous)
+        val selectedId = currentLayer.id
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map { layer ->
-                    if (layer.id == selectedId) transform(layer) else layer
+                    if (layer.id == selectedId) {
+                        TextSizing.withEstimatedBounds(transform(layer))
+                    } else {
+                        layer
+                    }
                 }
             )
         }
     }
 
     fun updateLayerPositionWithSnapping(deltaX: Float, deltaY: Float) {
-        val selectedId = _uiState.value.selectedLayerId ?: return
-        val currentLayer = _uiState.value.layers.find { it.id == selectedId } ?: return
+        val currentLayer = _uiState.value.selectedLayer ?: return
         if (currentLayer.isLocked) return
 
-        val state = _uiState.value
+        beginHistoryStep(continuous = true)
+        val selectedId = currentLayer.id
         val rawX = currentLayer.positionX + deltaX
         val rawY = currentLayer.positionY + deltaY
 
-        val canvasCenter = PointF(state.canvasConfig.width / 2f, state.canvasConfig.height / 2f)
-        val gridSize = state.canvasConfig.width / (state.gridColumns + 1f)
-
-        val snapResult = SnappingEngine.calculateSnap(
-            rawPosition = PointF(rawX, rawY),
-            canvasCenter = canvasCenter,
-            gridSize = gridSize,
-            isSnapToGrid = state.isSnapToGrid
-        )
+        val snapResult = SnappingEngine.calculateSnap(PointF(rawX, rawY))
 
         _uiState.update { s ->
             s.copy(
@@ -341,21 +371,20 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
                     } else it
                 },
                 showVerticalGuide = snapResult.showVerticalGuide,
-                verticalGuideX = snapResult.guideX,
-                showHorizontalGuide = snapResult.showHorizontalGuide,
-                horizontalGuideY = snapResult.guideY
+                showHorizontalGuide = snapResult.showHorizontalGuide
             )
         }
     }
 
     fun clearSnappingGuides() {
+        isContinuousEditing = false
         _uiState.update {
             it.copy(showVerticalGuide = false, showHorizontalGuide = false)
         }
     }
 
     fun nudgeSelectedLayer(dx: Float, dy: Float) {
-        updateSelectedLayer {
+        updateSelectedLayer(continuous = false) {
             it.copy(positionX = it.positionX + dx, positionY = it.positionY + dy)
         }
     }
@@ -365,9 +394,9 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         val canvasW = state.canvasConfig.width.toFloat()
         val canvasH = state.canvasConfig.height.toFloat()
 
-        updateSelectedLayer { layer ->
-            val halfW = (layer.width * layer.scaleX) / 2f
-            val halfH = (layer.height * layer.scaleY) / 2f
+        updateSelectedLayer(continuous = false) { layer ->
+            val halfW = layer.width / 2f
+            val halfH = layer.height / 2f
 
             when (action) {
                 AlignmentAction.CENTER_HORIZONTAL -> layer.copy(positionX = 0f)
@@ -380,68 +409,117 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun deleteSelectedLayer() {
-        val selectedId = _uiState.value.selectedLayerId ?: return
-        recordHistory()
+    fun deleteLayer(layerId: String) {
+        val target = _uiState.value.layers.find { it.id == layerId } ?: return
+        if (target.isLocked) return
+
+        beginHistoryStep(continuous = false)
         _uiState.update { state ->
-            val remaining = state.layers.filter { it.id != selectedId }
+            val remaining = normalizeZIndices(state.layers.filter { it.id != layerId })
+            val nextSelected = if (state.selectedLayerId == layerId) {
+                remaining.maxByOrNull { it.zIndex }?.id
+            } else {
+                state.selectedLayerId
+            }
             state.copy(
                 layers = remaining,
-                selectedLayerId = remaining.lastOrNull()?.id
+                selectedLayerId = nextSelected
             )
         }
     }
 
-    fun duplicateSelectedLayer() {
+    fun deleteSelectedLayer() {
         val selectedId = _uiState.value.selectedLayerId ?: return
-        val layer = _uiState.value.layers.find { it.id == selectedId } ?: return
-        recordHistory()
+        deleteLayer(selectedId)
+    }
 
-        val newZIndex = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0) + 1
+    fun duplicateSelectedLayer() {
+        val layer = _uiState.value.selectedLayer ?: return
+        beginHistoryStep(continuous = false)
+
+        val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val copy = layer.copy(
             id = UUID.randomUUID().toString(),
             name = "${layer.name} Copy",
+            isLocked = false,
             positionX = layer.positionX + 25f,
             positionY = layer.positionY + 25f,
-            zIndex = newZIndex
+            zIndex = nextZ
         )
 
         _uiState.update { state ->
             state.copy(
-                layers = state.layers + copy,
+                layers = normalizeZIndices(state.layers + copy),
                 selectedLayerId = copy.id
             )
         }
     }
 
     fun bringLayerToFront() {
-        val selectedId = _uiState.value.selectedLayerId ?: return
-        recordHistory()
+        val current = _uiState.value.selectedLayer ?: return
+        if (current.isLocked) return
+        val maxZ = _uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0
+        if (current.zIndex == maxZ && _uiState.value.layers.count { it.zIndex == maxZ } == 1) return
+
+        beginHistoryStep(continuous = false)
+        val selectedId = current.id
         _uiState.update { state ->
-            val maxZ = state.layers.maxOfOrNull { it.zIndex } ?: 0
-            state.copy(
-                layers = state.layers.map {
-                    if (it.id == selectedId) it.copy(zIndex = maxZ + 1) else it
-                }
-            )
+            val updated = state.layers.map {
+                if (it.id == selectedId) it.copy(zIndex = maxZ + 1) else it
+            }
+            state.copy(layers = normalizeZIndices(updated))
         }
     }
 
     fun sendLayerToBack() {
-        val selectedId = _uiState.value.selectedLayerId ?: return
-        recordHistory()
+        val current = _uiState.value.selectedLayer ?: return
+        if (current.isLocked) return
+        val minZ = _uiState.value.layers.minOfOrNull { it.zIndex } ?: 0
+        if (current.zIndex == minZ && _uiState.value.layers.count { it.zIndex == minZ } == 1) return
+
+        beginHistoryStep(continuous = false)
+        val selectedId = current.id
         _uiState.update { state ->
-            val minZ = state.layers.minOfOrNull { it.zIndex } ?: 0
-            state.copy(
-                layers = state.layers.map {
-                    if (it.id == selectedId) it.copy(zIndex = minZ - 1) else it
-                }
-            )
+            val updated = state.layers.map {
+                if (it.id == selectedId) it.copy(zIndex = minZ - 1) else it
+            }
+            state.copy(layers = normalizeZIndices(updated))
         }
     }
 
+    /** Moves [layerId] one step forward (higher `zIndex`) in visual order. */
+    fun moveLayerUp(layerId: String) {
+        val sortedAsc = normalizeZIndices(_uiState.value.layers).toMutableList()
+        val idx = sortedAsc.indexOfFirst { it.id == layerId }
+        if (idx < 0 || idx >= sortedAsc.lastIndex) return
+
+        beginHistoryStep(continuous = false)
+        val tmp = sortedAsc[idx]
+        sortedAsc[idx] = sortedAsc[idx + 1]
+        sortedAsc[idx + 1] = tmp
+
+        val reindexed = sortedAsc.mapIndexed { i, layer -> layer.copy(zIndex = i) }
+        _uiState.update { it.copy(layers = reindexed) }
+    }
+
+    /** Moves [layerId] one step backward (lower `zIndex`) in visual order. */
+    fun moveLayerDown(layerId: String) {
+        val sortedAsc = normalizeZIndices(_uiState.value.layers).toMutableList()
+        val idx = sortedAsc.indexOfFirst { it.id == layerId }
+        if (idx <= 0) return
+
+        beginHistoryStep(continuous = false)
+        val tmp = sortedAsc[idx]
+        sortedAsc[idx] = sortedAsc[idx - 1]
+        sortedAsc[idx - 1] = tmp
+
+        val reindexed = sortedAsc.mapIndexed { i, layer -> layer.copy(zIndex = i) }
+        _uiState.update { it.copy(layers = reindexed) }
+    }
+
     fun toggleLayerVisibility(layerId: String) {
-        recordHistory()
+        if (_uiState.value.layers.none { it.id == layerId }) return
+        beginHistoryStep(continuous = false)
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map {
@@ -452,6 +530,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun toggleLayerLock(layerId: String) {
+        isContinuousEditing = false
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map {
@@ -461,29 +540,12 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun reorderLayers(fromIndex: Int, toIndex: Int) {
-        recordHistory()
-        _uiState.update { state ->
-            val list = state.layers.toMutableList()
-            if (fromIndex in list.indices && toIndex in list.indices) {
-                val item = list.removeAt(fromIndex)
-                list.add(toIndex, item)
-                val updatedWithZ = list.mapIndexed { index, layer ->
-                    layer.copy(zIndex = index)
-                }
-                state.copy(layers = updatedWithZ)
-            } else {
-                state
-            }
-        }
-    }
-
     // --- Canvas & Background Settings ---
 
     fun setAspectRatioPreset(preset: AspectRatioPreset, customW: Int? = null, customH: Int? = null) {
-        recordHistory()
-        val w = customW ?: preset.defaultWidth
-        val h = customH ?: preset.defaultHeight
+        beginHistoryStep(continuous = false)
+        val w = (customW ?: preset.defaultWidth).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
+        val h = (customH ?: preset.defaultHeight).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -496,7 +558,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun setBackgroundColor(color: Long) {
-        recordHistory()
+        beginHistoryStep(continuous = false)
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -508,7 +570,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun setBackgroundGradient(colors: List<Long>, angle: Float = 45f) {
-        recordHistory()
+        beginHistoryStep(continuous = false)
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -524,7 +586,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     fun setBackgroundImage(uri: Uri) {
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { image ->
-                recordHistory()
+                beginHistoryStep(continuous = false)
                 _uiState.update { state ->
                     state.copy(
                         canvasConfig = state.canvasConfig.copy(
@@ -540,7 +602,7 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun setBackgroundTransparent() {
-        recordHistory()
+        beginHistoryStep(continuous = false)
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -550,8 +612,8 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun updateCanvasFilters(transform: (CanvasFilters) -> CanvasFilters) {
-        recordHistory()
+    fun updateCanvasFilters(continuous: Boolean = false, transform: (CanvasFilters) -> CanvasFilters) {
+        beginHistoryStep(continuous = continuous)
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -564,13 +626,20 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     // --- Presets ---
 
     fun applyPreset(preset: StylePreset, recordHistory: Boolean = true) {
+        isContinuousEditing = false
         if (recordHistory) recordHistory()
+        val normalizedLayers = normalizeZIndices(
+            preset.initialLayers.map { TextSizing.withEstimatedBounds(it) }
+        )
+        val topLayer = normalizedLayers.maxByOrNull { it.zIndex }
         _uiState.update { state ->
             state.copy(
                 canvasConfig = preset.canvasConfig,
-                layers = preset.initialLayers,
-                selectedLayerId = preset.initialLayers.firstOrNull()?.id,
-                currentProjectName = preset.title
+                layers = normalizedLayers,
+                selectedLayerId = topLayer?.id,
+                currentProjectId = null,
+                currentProjectName = preset.title,
+                activeSubTool = ActiveSubTool.NONE
             )
         }
     }
@@ -587,10 +656,12 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
 
     fun saveProject(name: String) {
         val state = _uiState.value
-        val id = state.currentProjectId ?: UUID.randomUUID().toString()
+        val cleanName = name.trim().ifBlank { "Untitled Project" }
+        val reuseExistingId = state.currentProjectId != null && cleanName == state.currentProjectName
+        val id = if (reuseExistingId) state.currentProjectId!! else UUID.randomUUID().toString()
         val project = ProjectData(
             id = id,
-            name = name,
+            name = cleanName,
             timestamp = System.currentTimeMillis(),
             snapshot = takeSnapshot()
         )
@@ -599,28 +670,48 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
                 _uiState.update {
                     it.copy(
                         currentProjectId = id,
-                        currentProjectName = name,
-                        activeDialog = null
+                        currentProjectName = cleanName,
+                        activeDialog = null,
+                        userMessage = "Saved project \"$cleanName\""
                     )
                 }
                 refreshSavedProjects()
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(userMessage = "Couldn't save project: ${err.message}")
+                }
             }
         }
     }
 
     fun loadProject(id: String) {
-        recordHistory()
+        isContinuousEditing = false
         viewModelScope.launch {
             projectStorage.loadProject(id).onSuccess { project ->
+                recordHistory()
+                val normalized = normalizeZIndices(
+                    project.snapshot.layers.map { TextSizing.withEstimatedBounds(it) }
+                )
+                val validSelectedId = project.snapshot.selectedLayerId
+                    ?.takeIf { sel -> normalized.any { it.id == sel } }
+                    ?: normalized.maxByOrNull { it.zIndex }?.id
                 _uiState.update {
                     it.copy(
                         currentProjectId = project.id,
                         currentProjectName = project.name,
-                        canvasConfig = project.snapshot.canvasConfig,
-                        layers = project.snapshot.layers,
-                        selectedLayerId = project.snapshot.selectedLayerId,
-                        activeDialog = null
+                        canvasConfig = project.snapshot.canvasConfig.copy(
+                            width = project.snapshot.canvasConfig.width.coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION),
+                            height = project.snapshot.canvasConfig.height.coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
+                        ),
+                        layers = normalized,
+                        selectedLayerId = validSelectedId,
+                        activeDialog = null,
+                        activeSubTool = ActiveSubTool.NONE
                     )
+                }
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(userMessage = "Couldn't open project: ${err.message}")
                 }
             }
         }
@@ -629,7 +720,14 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
     fun deleteProject(id: String) {
         viewModelScope.launch {
             projectStorage.deleteProject(id).onSuccess {
+                _uiState.update { state ->
+                    if (state.currentProjectId == id) state.copy(currentProjectId = null) else state
+                }
                 refreshSavedProjects()
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(userMessage = "Couldn't delete project: ${err.message}")
+                }
             }
         }
     }
@@ -651,9 +749,16 @@ class PixelCraftViewModel(application: Application) : AndroidViewModel(applicati
                     layers = state.layers,
                     options = state.exportOptions
                 )
-                val baseName = state.currentProjectName.replace("[^A-Za-z0-9_-]+".toRegex(), "_") +
-                    "_" + System.currentTimeMillis()
-                gallerySaver.save(bitmap, state.exportOptions, baseName).getOrThrow()
+                try {
+                    val sanitized = state.currentProjectName
+                        .replace("[^A-Za-z0-9_-]+".toRegex(), "_")
+                        .trim('_')
+                        .ifBlank { "PixelCraft" }
+                    val baseName = "${sanitized}_${System.currentTimeMillis()}"
+                    gallerySaver.save(bitmap, state.exportOptions, baseName).getOrThrow()
+                } finally {
+                    bitmap.recycle()
+                }
             }.onSuccess { uri ->
                 _uiState.update {
                     it.copy(

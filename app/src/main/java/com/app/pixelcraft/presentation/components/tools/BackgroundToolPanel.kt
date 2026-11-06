@@ -6,6 +6,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,9 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.ColorLens
-import androidx.compose.material.icons.filled.Crop
-import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Texture
 import androidx.compose.material3.Button
@@ -31,16 +29,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.ActiveDialog
-import com.app.pixelcraft.data.model.CanvasConfig
 
 @Composable
 fun BackgroundToolPanel(
-    canvasConfig: CanvasConfig,
     onSetColor: (Long) -> Unit,
     onSetGradient: (List<Long>, Float) -> Unit,
     onSetTransparent: () -> Unit,
@@ -67,43 +64,53 @@ fun BackgroundToolPanel(
             .background(Color(0xFF232730))
             .padding(10.dp)
     ) {
+        Text(
+            text = "Canvas Background",
+            color = Color(0xFF00E5FF),
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Canvas Background", color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Button(
+                onClick = onPickImage,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(Icons.Default.Image, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Photo", fontSize = 11.sp, color = Color.Black)
+            }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onPickImage,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Icon(Icons.Default.Image, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Photo", fontSize = 11.sp, color = Color.Black)
-                }
+            Button(
+                onClick = { onOpenDialog(ActiveDialog.IMAGE_SIZE) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Image Size", fontSize = 11.sp)
+            }
 
-                Button(
-                    onClick = { onOpenDialog(ActiveDialog.IMAGE_SIZE) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Image Size", fontSize = 11.sp)
-                }
-
-                Button(
-                    onClick = onSetTransparent,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Icon(Icons.Default.Texture, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Transparent", fontSize = 11.sp)
-                }
+            Button(
+                onClick = onSetTransparent,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(Icons.Default.Texture, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Transparent", fontSize = 11.sp)
             }
         }
 
@@ -143,11 +150,7 @@ fun BackgroundToolPanel(
                     modifier = Modifier
                         .size(34.dp)
                         .clip(CircleShape)
-                        .background(
-                            androidx.compose.ui.graphics.Brush.linearGradient(
-                                grad.map { Color(it) }
-                            )
-                        )
+                        .background(Brush.linearGradient(grad.map { Color(it) }))
                         .clickable { onSetGradient(grad, 45f) }
                 )
             }

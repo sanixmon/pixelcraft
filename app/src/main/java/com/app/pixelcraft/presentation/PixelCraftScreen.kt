@@ -7,9 +7,6 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,9 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.app.pixelcraft.data.model.ActiveDialog
 import com.app.pixelcraft.data.model.BottomNavTab
+import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.presentation.components.PixelCraftBottomNavigation
 import com.app.pixelcraft.presentation.components.PixelCraftCanvas
 import com.app.pixelcraft.presentation.components.PixelCraftLayersSheet
@@ -80,10 +80,9 @@ fun PixelCraftScreen(
     }
 
     LaunchedEffect(state.userMessage) {
-        val msg = state.userMessage
-        if (msg != null) {
-            val exportedUri = state.lastExportedUri
-            viewModel.clearUserMessage()
+        val msg = state.userMessage ?: return@LaunchedEffect
+        val exportedUri = state.lastExportedUri
+        try {
             val result = snackbarHostState.showSnackbar(
                 message = msg,
                 actionLabel = if (exportedUri != null) "Share" else null,
@@ -97,6 +96,8 @@ fun PixelCraftScreen(
                 }
                 context.startActivity(Intent.createChooser(send, "Share image"))
             }
+        } finally {
+            viewModel.clearUserMessage()
         }
     }
 
@@ -110,17 +111,16 @@ fun PixelCraftScreen(
                 onAddDate = { viewModel.addCurrentDateLayer() },
                 onAddSticker = { viewModel.openDialog(ActiveDialog.ADD_STICKER) },
                 onAddShape = { viewModel.openDialog(ActiveDialog.ADD_SHAPE) },
+                onAddImage = { pickLayerImage.launch(imagesOnly) },
                 onOpenDialog = { viewModel.openDialog(it) },
                 onUndo = { viewModel.undo() },
                 onRedo = { viewModel.redo() },
-                onToggleZoom = { viewModel.toggleZoomMode() },
                 onToggleGrid = { viewModel.toggleGrid() },
                 onToggleLayers = { viewModel.toggleLayersDrawer() }
             )
         },
         bottomBar = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Active Tool Panel above the bottom navigation
                 when (state.activeTab) {
                     BottomNavTab.PRESETS -> {
                         PresetsToolPanel(
@@ -137,7 +137,10 @@ fun PixelCraftScreen(
                             selectedLayer = state.selectedLayer,
                             activeSubTool = state.activeSubTool,
                             onSubToolSelected = { viewModel.setActiveSubTool(it) },
-                            onUpdateLayer = { viewModel.updateSelectedLayer(it) },
+                            onUpdateLayer = { continuous, transform ->
+                                viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
+                            },
+                            onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
                             onDeleteLayer = { viewModel.deleteSelectedLayer() },
                             onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
                             onBringToFront = { viewModel.bringLayerToFront() },
@@ -154,9 +157,14 @@ fun PixelCraftScreen(
                             selectedLayer = state.selectedLayer,
                             activeSubTool = state.activeSubTool,
                             onSubToolSelected = { viewModel.setActiveSubTool(it) },
-                            onUpdateLayer = { viewModel.updateSelectedLayer(it) },
+                            onUpdateLayer = { continuous, transform ->
+                                viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
+                            },
+                            onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
                             onDeleteLayer = { viewModel.deleteSelectedLayer() },
                             onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
+                            onBringToFront = { viewModel.bringLayerToFront() },
+                            onSendToBack = { viewModel.sendLayerToBack() },
                             onOpenDialog = { viewModel.openDialog(it) },
                             onAddImage = { pickLayerImage.launch(imagesOnly) }
                         )
@@ -164,7 +172,6 @@ fun PixelCraftScreen(
 
                     BottomNavTab.BACKGROUND -> {
                         BackgroundToolPanel(
-                            canvasConfig = state.canvasConfig,
                             onSetColor = { viewModel.setBackgroundColor(it) },
                             onSetGradient = { colors, angle -> viewModel.setBackgroundGradient(colors, angle) },
                             onSetTransparent = { viewModel.setBackgroundTransparent() },
@@ -176,12 +183,14 @@ fun PixelCraftScreen(
                     BottomNavTab.FILTERS -> {
                         FilterToolPanel(
                             filters = state.canvasConfig.filters,
-                            onUpdateFilters = { viewModel.updateCanvasFilters(it) }
+                            onUpdateFilters = { continuous, transform ->
+                                viewModel.updateCanvasFilters(continuous = continuous, transform = transform)
+                            },
+                            onFinishContinuousEdit = { viewModel.finishContinuousEdit() }
                         )
                     }
                 }
 
-                // 5 Iconic Bottom Tabs
                 PixelCraftBottomNavigation(
                     activeTab = state.activeTab,
                     onTabSelected = { viewModel.setActiveTab(it) }
@@ -195,31 +204,13 @@ fun PixelCraftScreen(
                 .padding(innerPadding)
                 .background(Color(0xFF14161D))
         ) {
-            // Main Interactive Canvas
             PixelCraftCanvas(
                 state = state,
                 onSelectLayer = { viewModel.selectLayer(it) },
                 onDragDelta = { dx, dy -> viewModel.updateLayerPositionWithSnapping(dx, dy) },
-                onDragEnd = { viewModel.clearSnappingGuides() },
-                onResizeLayer = { dx, dy ->
-                    viewModel.updateSelectedLayer {
-                        it.copy(
-                            width = (it.width + dx).coerceAtLeast(60f),
-                            height = (it.height + dy).coerceAtLeast(40f)
-                        )
-                    }
-                },
-                onRotateLayer = { dRot ->
-                    viewModel.updateSelectedLayer {
-                        it.copy(rotation = (it.rotation + dRot).coerceIn(-180f, 180f))
-                    }
-                },
-                onDeleteLayer = { viewModel.deleteSelectedLayer() },
-                onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
-                onZoomAndPan = { zoom, pan -> viewModel.updateZoomAndPan(zoom, pan) }
+                onDragEnd = { viewModel.clearSnappingGuides() }
             )
 
-            // Floating Layers Sheet on Right Side
             if (state.isLayersDrawerOpen) {
                 PixelCraftLayersSheet(
                     layers = state.layers,
@@ -227,10 +218,9 @@ fun PixelCraftScreen(
                     onSelectLayer = { viewModel.selectLayer(it) },
                     onToggleLock = { viewModel.toggleLayerLock(it) },
                     onToggleVisibility = { viewModel.toggleLayerVisibility(it) },
-                    onMoveUp = { idx -> viewModel.reorderLayers(idx, idx - 1) },
-                    onMoveDown = { idx -> viewModel.reorderLayers(idx, idx + 1) },
-                    onDuplicate = { viewModel.duplicateSelectedLayer() },
-                    onDelete = { viewModel.deleteSelectedLayer() },
+                    onMoveUp = { id -> viewModel.moveLayerUp(id) },
+                    onMoveDown = { id -> viewModel.moveLayerDown(id) },
+                    onDelete = { viewModel.deleteLayer(it) },
                     onClose = { viewModel.setLayersDrawerOpen(false) },
                     modifier = Modifier.align(Alignment.TopEnd)
                 )
@@ -238,17 +228,21 @@ fun PixelCraftScreen(
         }
     }
 
-    // Dialogs
     when (state.activeDialog) {
         ActiveDialog.TEXT_EDIT -> {
-            PixelCraftTextEditDialog(
-                initialText = state.selectedLayer?.text ?: "New Text",
-                onConfirm = { newText ->
-                    viewModel.updateSelectedLayer { it.copy(text = newText) }
-                    viewModel.closeDialog()
-                },
-                onDismiss = { viewModel.closeDialog() }
-            )
+            val selected = state.selectedLayer
+            if (selected != null && selected.type == LayerType.TEXT) {
+                PixelCraftTextEditDialog(
+                    initialText = selected.text,
+                    onConfirm = { newText ->
+                        viewModel.updateSelectedLayer { it.copy(text = newText) }
+                        viewModel.closeDialog()
+                    },
+                    onDismiss = { viewModel.closeDialog() }
+                )
+            } else {
+                viewModel.closeDialog()
+            }
         }
 
         ActiveDialog.QUOTES -> {
@@ -277,6 +271,7 @@ fun PixelCraftScreen(
         ActiveDialog.EXPORT -> {
             PixelCraftExportDialog(
                 canvasConfig = state.canvasConfig,
+                initialOptions = state.exportOptions,
                 isExporting = state.isExporting,
                 onExport = { opts ->
                     viewModel.setExportOptions(opts)
@@ -312,11 +307,6 @@ fun PixelCraftScreen(
                 onSave = { name -> viewModel.saveProject(name) },
                 onDismiss = { viewModel.closeDialog() }
             )
-        }
-
-        ActiveDialog.OPEN_PROJECT -> {
-            // Already handled via PresetsToolPanel or open project dialog
-            viewModel.closeDialog()
         }
 
         ActiveDialog.HELP -> {

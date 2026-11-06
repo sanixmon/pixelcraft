@@ -38,19 +38,24 @@ import com.app.pixelcraft.data.model.CanvasConfig
 import com.app.pixelcraft.domain.ExportFormat
 import com.app.pixelcraft.domain.ExportOptions
 import com.app.pixelcraft.domain.ExportQuality
+import com.app.pixelcraft.domain.ImageExporter
 
 @Composable
 fun PixelCraftExportDialog(
     canvasConfig: CanvasConfig,
+    initialOptions: ExportOptions,
     isExporting: Boolean,
     onExport: (ExportOptions) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var format by remember { mutableStateOf(ExportFormat.PNG) }
-    var quality by remember { mutableStateOf(ExportQuality.MEDIUM) }
+    var format by remember(initialOptions.format) { mutableStateOf(initialOptions.format) }
+    var quality by remember(initialOptions.qualityPreset) { mutableStateOf(initialOptions.qualityPreset) }
 
-    val targetWidth = (canvasConfig.width * quality.multiplier).toInt()
-    val targetHeight = (canvasConfig.height * quality.multiplier).toInt()
+    val (targetWidth, targetHeight) = ImageExporter.computeTargetDimensions(
+        canvasConfig.width,
+        canvasConfig.height,
+        quality.multiplier
+    )
 
     AlertDialog(
         onDismissRequest = { if (!isExporting) onDismiss() },
@@ -65,7 +70,6 @@ fun PixelCraftExportDialog(
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Format Selector (PNG vs JPEG)
                 Text("Image Format:", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
@@ -86,14 +90,16 @@ fun PixelCraftExportDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Dimensions Preset
                 Text("Dimensions Quality:", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     for (q in ExportQuality.entries) {
                         val isSelected = quality == q
-                        val w = (canvasConfig.width * q.multiplier).toInt()
-                        val h = (canvasConfig.height * q.multiplier).toInt()
+                        val (w, h) = ImageExporter.computeTargetDimensions(
+                            canvasConfig.width,
+                            canvasConfig.height,
+                            q.multiplier
+                        )
 
                         Row(
                             modifier = Modifier
@@ -126,7 +132,7 @@ fun PixelCraftExportDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Resolution: ${targetWidth} x ${targetHeight} px",
+                    text = "Resolution: $targetWidth x $targetHeight px",
                     color = Color(0xFF00E5FF),
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
@@ -137,7 +143,7 @@ fun PixelCraftExportDialog(
             Button(
                 onClick = {
                     onExport(
-                        ExportOptions(
+                        initialOptions.copy(
                             format = format,
                             qualityPreset = quality
                         )

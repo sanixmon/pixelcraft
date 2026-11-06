@@ -12,6 +12,7 @@ object ImageRenderer {
 
     /** Fills a [w] x [h] area with the bitmap, centre-cropped to keep its proportions. */
     fun drawCover(canvas: Canvas, bitmap: Bitmap, w: Float, h: Float) {
+        if (bitmap.width <= 0 || bitmap.height <= 0 || w <= 0f || h <= 0f) return
         val crop = ImageFit.coverCrop(bitmap.width, bitmap.height, w, h)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
         canvas.drawBitmap(
@@ -29,7 +30,12 @@ object ImageRenderer {
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG).apply {
             alpha = (layer.opacity * 255).toInt().coerceIn(0, 255)
             if (layer.shadowEnabled) {
-                setShadowLayer(layer.shadowRadius, layer.shadowDx, layer.shadowDy, layer.shadowColor.toInt())
+                setShadowLayer(
+                    layer.shadowRadius.coerceAtLeast(0.5f),
+                    layer.shadowDx,
+                    layer.shadowDy,
+                    ColorMath.scaleAlpha(layer.shadowColor, layer.opacity)
+                )
             }
         }
         canvas.drawBitmap(bitmap, null, RectF(-halfW, -halfH, halfW, halfH), paint)

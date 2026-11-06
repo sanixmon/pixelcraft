@@ -32,9 +32,7 @@ enum class ActiveDialog {
     EXPORT,
     QUOTES,
     SAVE_PROJECT,
-    OPEN_PROJECT,
     ADD_SHAPE,
     ADD_STICKER,
-    COLOR_PICKER,
     HELP
 }

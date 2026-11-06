@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -25,13 +26,14 @@ import com.app.pixelcraft.data.model.CanvasFilters
 @Composable
 fun FilterToolPanel(
     filters: CanvasFilters,
-    onUpdateFilters: ((CanvasFilters) -> CanvasFilters) -> Unit,
+    onUpdateFilters: (Boolean, (CanvasFilters) -> CanvasFilters) -> Unit,
+    onFinishContinuousEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(220.dp)
+            .heightIn(max = 220.dp)
             .background(Color(0xFF232730))
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
@@ -49,14 +51,15 @@ fun FilterToolPanel(
             Text("Vignette", color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.vignetteEnabled,
-                onCheckedChange = { en -> onUpdateFilters { it.copy(vignetteEnabled = en) } }
+                onCheckedChange = { en -> onUpdateFilters(false) { it.copy(vignetteEnabled = en) } }
             )
         }
         if (filters.vignetteEnabled) {
             Text("Intensity: ${(filters.vignetteIntensity * 100).toInt()}%", color = Color(0xFFBBBBBB), fontSize = 11.sp)
             Slider(
-                value = filters.vignetteIntensity,
-                onValueChange = { i -> onUpdateFilters { it.copy(vignetteIntensity = i) } },
+                value = filters.vignetteIntensity.coerceIn(0.1f, 0.9f),
+                onValueChange = { i -> onUpdateFilters(true) { it.copy(vignetteIntensity = i) } },
+                onValueChangeFinished = onFinishContinuousEdit,
                 valueRange = 0.1f..0.9f
             )
         }
@@ -70,32 +73,17 @@ fun FilterToolPanel(
             Text("TV Scanlines", color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.stripesEnabled,
-                onCheckedChange = { en -> onUpdateFilters { it.copy(stripesEnabled = en) } }
+                onCheckedChange = { en -> onUpdateFilters(false) { it.copy(stripesEnabled = en) } }
             )
         }
         if (filters.stripesEnabled) {
             Text("Spacing: ${filters.stripesSpacing.toInt()} px", color = Color(0xFFBBBBBB), fontSize = 11.sp)
             Slider(
-                value = filters.stripesSpacing,
-                onValueChange = { s -> onUpdateFilters { it.copy(stripesSpacing = s) } },
+                value = filters.stripesSpacing.coerceIn(4f..30f),
+                onValueChange = { s -> onUpdateFilters(true) { it.copy(stripesSpacing = s) } },
+                onValueChangeFinished = onFinishContinuousEdit,
                 valueRange = 4f..30f
             )
         }
-
-        // Brightness
-        Text("Brightness: ${(filters.brightness * 100).toInt()}", color = Color.White, fontSize = 12.sp)
-        Slider(
-            value = filters.brightness,
-            onValueChange = { b -> onUpdateFilters { it.copy(brightness = b) } },
-            valueRange = -0.5f..0.5f
-        )
-
-        // Contrast
-        Text("Contrast: ${(filters.contrast * 100).toInt()}%", color = Color.White, fontSize = 12.sp)
-        Slider(
-            value = filters.contrast,
-            onValueChange = { c -> onUpdateFilters { it.copy(contrast = c) } },
-            valueRange = 0.5f..2.0f
-        )
     }
 }

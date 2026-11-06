@@ -28,7 +28,7 @@ fun PixelCraftSaveProjectDialog(
     onSave: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var name by remember { mutableStateOf(initialName) }
+    var name by remember(initialName) { mutableStateOf(initialName) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -77,7 +77,7 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "About PixelCraft Clone",
+                text = "About PixelCraft",
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp
@@ -86,7 +86,7 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "PixelCraft - Text on pictures clone built from scratch with Jetpack Compose & Material 3.",
+                    text = "PixelCraft - Photo & text editor built with Jetpack Compose & Material 3.",
                     color = Color.White,
                     fontSize = 13.sp
                 )
@@ -96,10 +96,10 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
                             "• 3D text with depth extrusion, darken factor, and angle\n" +
                             "• Mirror reflections & floor shadows\n" +
                             "• Stroke, multi-line typography, and drop shadows\n" +
-                            "• Geometric shapes, stickers, and badges\n" +
+                            "• Photo layers & backgrounds, geometric shapes, and stickers\n" +
                             "• Canvas aspect ratio presets (YouTube Thumbnail, Story, etc.)\n" +
-                            "• Full multi-layer stack with re-ordering, locking & visibility\n" +
-                            "• Grid alignment with magnetic snapping\n" +
+                            "• Multi-layer stack with re-ordering, locking & visibility\n" +
+                            "• Grid overlay and center-axis magnetic snapping\n" +
                             "• High-resolution PNG & JPEG export up to 4K Ultra HD\n" +
                             "• Project saving and undo/redo history",
                     color = Color(0xFFCCCCCC),

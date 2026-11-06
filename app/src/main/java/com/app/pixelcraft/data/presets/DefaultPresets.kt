@@ -9,7 +9,7 @@ import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.ShapeType
 import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.model.TextAlignment
-import java.util.UUID
+import com.app.pixelcraft.domain.TextSizing
 
 object DefaultPresets {
     val presets = listOf(
@@ -25,16 +25,19 @@ object DefaultPresets {
                 backgroundColor = 0xFF2A2E39
             ),
             initialLayers = listOf(
-                Layer(
-                    id = "layer_default_text",
-                    name = "New Text",
-                    type = LayerType.TEXT,
-                    text = "New Text",
-                    fontSize = 48f,
-                    textColor = 0xFFFFFFFF,
-                    positionX = 0f,
-                    positionY = 0f,
-                    textAlign = TextAlignment.CENTER
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_default_text",
+                        name = "New Text",
+                        type = LayerType.TEXT,
+                        text = "New Text",
+                        fontSize = 48f,
+                        textColor = 0xFFFFFFFF,
+                        positionX = 0f,
+                        positionY = 0f,
+                        zIndex = 0,
+                        textAlign = TextAlignment.CENTER
+                    )
                 )
             )
         ),
@@ -51,25 +54,28 @@ object DefaultPresets {
                 gradientAngle = 45f
             ),
             initialLayers = listOf(
-                Layer(
-                    id = "layer_3d_text",
-                    name = "3D Title",
-                    type = LayerType.TEXT,
-                    text = "PIXELCRAFT 3D",
-                    fontSize = 58f,
-                    textColor = 0xFFFFD700,
-                    isBold = true,
-                    is3D = true,
-                    depth3D = 24f,
-                    darken3D = 0.5f,
-                    angle3D = 40f,
-                    strokeColor = 0xFF8B6508,
-                    strokeWidth = 3f,
-                    shadow3DEnabled = true,
-                    shadow3DColor = 0xAA000000,
-                    shadowEnabled = true,
-                    shadowColor = 0x88000000,
-                    shadowRadius = 15f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_3d_text",
+                        name = "3D Title",
+                        type = LayerType.TEXT,
+                        text = "PIXELCRAFT 3D",
+                        fontSize = 58f,
+                        textColor = 0xFFFFD700,
+                        isBold = true,
+                        zIndex = 0,
+                        is3D = true,
+                        depth3D = 24f,
+                        darken3D = 0.5f,
+                        angle3D = 40f,
+                        strokeColor = 0xFF8B6508,
+                        strokeWidth = 3f,
+                        shadow3DEnabled = true,
+                        shadow3DColor = 0xAA000000,
+                        shadowEnabled = true,
+                        shadowColor = 0x88000000,
+                        shadowRadius = 15f
+                    )
                 )
             )
         ),
@@ -93,6 +99,7 @@ object DefaultPresets {
                     shapeType = ShapeType.ROUNDED_RECTANGLE,
                     width = 500f,
                     height = 240f,
+                    zIndex = 0,
                     shapeFillColor = 0x00000000,
                     shapeStrokeColor = 0xFFFF007F,
                     shapeStrokeWidth = 6f,
@@ -101,19 +108,22 @@ object DefaultPresets {
                     shadowColor = 0xFFFF007F,
                     shadowRadius = 24f
                 ),
-                Layer(
-                    id = "layer_neon_text",
-                    name = "Neon Text",
-                    type = LayerType.TEXT,
-                    text = "CYBER GLOW",
-                    fontSize = 46f,
-                    textColor = 0xFF00F0FF,
-                    isBold = true,
-                    shadowEnabled = true,
-                    shadowColor = 0xFF00F0FF,
-                    shadowRadius = 28f,
-                    strokeColor = 0xFFFFFFFF,
-                    strokeWidth = 1f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_neon_text",
+                        name = "Neon Text",
+                        type = LayerType.TEXT,
+                        text = "CYBER GLOW",
+                        fontSize = 46f,
+                        textColor = 0xFF00F0FF,
+                        isBold = true,
+                        zIndex = 1,
+                        shadowEnabled = true,
+                        shadowColor = 0xFF00F0FF,
+                        shadowRadius = 28f,
+                        strokeColor = 0xFFFFFFFF,
+                        strokeWidth = 1f
+                    )
                 )
             )
         ),
@@ -139,38 +149,45 @@ object DefaultPresets {
                     height = 110f,
                     positionX = 0f,
                     positionY = -60f,
+                    zIndex = 0,
                     shapeFillColor = 0xFF000000,
                     shapeStrokeColor = 0xFFFFD700,
                     shapeStrokeWidth = 4f,
                     shapeCornerRadius = 16f
                 ),
-                Layer(
-                    id = "layer_yt_title",
-                    name = "Thumbnail Title",
-                    type = LayerType.TEXT,
-                    text = "100% VIRAL!",
-                    fontSize = 52f,
-                    textColor = 0xFFFFEB3B,
-                    isBold = true,
-                    positionX = 0f,
-                    positionY = -60f,
-                    strokeColor = 0xFF000000,
-                    strokeWidth = 4f,
-                    shadowEnabled = true,
-                    shadowRadius = 12f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_yt_title",
+                        name = "Thumbnail Title",
+                        type = LayerType.TEXT,
+                        text = "100% VIRAL!",
+                        fontSize = 52f,
+                        textColor = 0xFFFFEB3B,
+                        isBold = true,
+                        positionX = 0f,
+                        positionY = -60f,
+                        zIndex = 1,
+                        strokeColor = 0xFF000000,
+                        strokeWidth = 4f,
+                        shadowEnabled = true,
+                        shadowRadius = 12f
+                    )
                 ),
-                Layer(
-                    id = "layer_yt_sub",
-                    name = "Subtitle",
-                    type = LayerType.TEXT,
-                    text = "WATCH BEFORE IT'S DELETED",
-                    fontSize = 32f,
-                    textColor = 0xFFFFFFFF,
-                    isBold = true,
-                    positionX = 0f,
-                    positionY = 50f,
-                    strokeColor = 0xFF000000,
-                    strokeWidth = 3f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_yt_sub",
+                        name = "Subtitle",
+                        type = LayerType.TEXT,
+                        text = "WATCH BEFORE IT'S DELETED",
+                        fontSize = 32f,
+                        textColor = 0xFFFFFFFF,
+                        isBold = true,
+                        positionX = 0f,
+                        positionY = 50f,
+                        zIndex = 2,
+                        strokeColor = 0xFF000000,
+                        strokeWidth = 3f
+                    )
                 )
             )
         ),
@@ -186,27 +203,32 @@ object DefaultPresets {
                 backgroundColor = 0xFFC0392B
             ),
             initialLayers = listOf(
-                Layer(
-                    id = "layer_crown",
-                    name = "Crown",
-                    type = LayerType.STICKER,
-                    stickerKey = "emoji_crown",
-                    positionX = 0f,
-                    positionY = -140f,
-                    fontSize = 72f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_crown",
+                        name = "Crown",
+                        type = LayerType.STICKER,
+                        stickerKey = "emoji_crown",
+                        positionX = 0f,
+                        positionY = -140f,
+                        fontSize = 72f,
+                        zIndex = 0
+                    )
                 ),
-                Layer(
-                    id = "layer_calm_text",
-                    name = "Poster Text",
-                    type = LayerType.TEXT,
-                    text = "KEEP CALM\nAND\nCRAFT ON",
-                    fontSize = 44f,
-                    textColor = 0xFFFFFFFF,
-                    isBold = true,
-                    letterSpacing = 4f,
-                    lineHeightMultiplier = 1.3f,
-                    positionX = 0f,
-                    positionY = 60f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_calm_text",
+                        name = "Poster Text",
+                        type = LayerType.TEXT,
+                        text = "KEEP CALM\nAND\nCRAFT ON",
+                        fontSize = 44f,
+                        textColor = 0xFFFFFFFF,
+                        isBold = true,
+                        lineHeightMultiplier = 1.3f,
+                        positionX = 0f,
+                        positionY = 60f,
+                        zIndex = 1
+                    )
                 )
             )
         ),
@@ -223,23 +245,25 @@ object DefaultPresets {
                 gradientAngle = 90f
             ),
             initialLayers = listOf(
-                Layer(
-                    id = "layer_reflect_text",
-                    name = "Reflection Text",
-                    type = LayerType.TEXT,
-                    text = "REFLECT",
-                    fontSize = 62f,
-                    textColor = 0xFFE0E0E0,
-                    isBold = true,
-                    letterSpacing = 6f,
-                    positionX = 0f,
-                    positionY = -40f,
-                    reflectionEnabled = true,
-                    reflectionDistance = 8f,
-                    reflectionOpacity = 0.4f,
-                    shadowEnabled = true,
-                    shadowColor = 0x99000000,
-                    shadowRadius = 14f
+                TextSizing.withEstimatedBounds(
+                    Layer(
+                        id = "layer_reflect_text",
+                        name = "Reflection Text",
+                        type = LayerType.TEXT,
+                        text = "REFLECT",
+                        fontSize = 62f,
+                        textColor = 0xFFE0E0E0,
+                        isBold = true,
+                        positionX = 0f,
+                        positionY = -40f,
+                        zIndex = 0,
+                        reflectionEnabled = true,
+                        reflectionDistance = 8f,
+                        reflectionOpacity = 0.4f,
+                        shadowEnabled = true,
+                        shadowColor = 0x99000000,
+                        shadowRadius = 14f
+                    )
                 )
             )
         )

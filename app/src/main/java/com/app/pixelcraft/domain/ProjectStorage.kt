@@ -8,14 +8,16 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class ProjectStorage(private val context: Context) {
+class ProjectStorage(private val projectsDirProvider: () -> File) {
+    constructor(context: Context) : this({ File(context.filesDir, "pixelcraft_projects") })
+
     private val json = Json {
         ignoreUnknownKeys = true
         prettyPrint = true
     }
 
     private val projectsDir: File
-        get() = File(context.filesDir, "pixelcraft_projects").apply {
+        get() = projectsDirProvider().apply {
             if (!exists()) mkdirs()
         }
 

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.AspectRatioPreset
+import com.app.pixelcraft.presentation.PixelCraftViewModel
 
 @Composable
 fun PixelCraftImageSizeDialog(
@@ -43,9 +43,16 @@ fun PixelCraftImageSizeDialog(
     onApply: (AspectRatioPreset, Int, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedPreset by remember { mutableStateOf(currentPreset) }
-    var widthText by remember { mutableStateOf(currentWidth.toString()) }
-    var heightText by remember { mutableStateOf(currentHeight.toString()) }
+    var selectedPreset by remember(currentPreset) { mutableStateOf(currentPreset) }
+    var widthText by remember(currentWidth) { mutableStateOf(currentWidth.toString()) }
+    var heightText by remember(currentHeight) { mutableStateOf(currentHeight.toString()) }
+
+    val minDim = PixelCraftViewModel.MIN_CANVAS_DIMENSION
+    val maxDim = PixelCraftViewModel.MAX_CANVAS_DIMENSION
+    val parsedW = widthText.trim().toIntOrNull()
+    val parsedH = heightText.trim().toIntOrNull()
+    val isValid = parsedW != null && parsedH != null &&
+        parsedW in minDim..maxDim && parsedH in minDim..maxDim
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -76,8 +83,10 @@ fun PixelCraftImageSizeDialog(
                             .background(if (isSelected) Color(0xFF2C3240) else Color.Transparent)
                             .clickable {
                                 selectedPreset = preset
-                                widthText = preset.defaultWidth.toString()
-                                heightText = preset.defaultHeight.toString()
+                                if (preset != AspectRatioPreset.CUSTOM) {
+                                    widthText = preset.defaultWidth.toString()
+                                    heightText = preset.defaultHeight.toString()
+                                }
                             }
                             .padding(vertical = 6.dp, horizontal = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -97,7 +106,12 @@ fun PixelCraftImageSizeDialog(
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
-                Text("Dimensions (px):", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "Dimensions ($minDim–$maxDim px):",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
@@ -106,17 +120,44 @@ fun PixelCraftImageSizeDialog(
                 ) {
                     OutlinedTextField(
                         value = widthText,
-                        onValueChange = { widthText = it },
+                        onValueChange = { next ->
+                            widthText = next.filter { it.isDigit() }.take(4)
+                            if (selectedPreset != AspectRatioPreset.CUSTOM &&
+                                widthText.toIntOrNull() != selectedPreset.defaultWidth
+                            ) {
+                                selectedPreset = AspectRatioPreset.CUSTOM
+                            }
+                        },
                         label = { Text("Width") },
+                        isError = parsedW == null || parsedW !in minDim..maxDim,
+                        singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = heightText,
-                        onValueChange = { heightText = it },
+                        onValueChange = { next ->
+                            heightText = next.filter { it.isDigit() }.take(4)
+                            if (selectedPreset != AspectRatioPreset.CUSTOM &&
+                                heightText.toIntOrNull() != selectedPreset.defaultHeight
+                            ) {
+                                selectedPreset = AspectRatioPreset.CUSTOM
+                            }
+                        },
                         label = { Text("Height") },
+                        isError = parsedH == null || parsedH !in minDim..maxDim,
+                        singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
+                    )
+                }
+
+                if (!isValid) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Enter width and height between $minDim and $maxDim px.",
+                        color = Color(0xFFFF5252),
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -124,10 +165,11 @@ fun PixelCraftImageSizeDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val w = widthText.toIntOrNull() ?: currentWidth
-                    val h = heightText.toIntOrNull() ?: currentHeight
+                    val w = (parsedW ?: currentWidth).coerceIn(minDim, maxDim)
+                    val h = (parsedH ?: currentHeight).coerceIn(minDim, maxDim)
                     onApply(selectedPreset, w, h)
                 },
+                enabled = isValid,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 shape = RoundedCornerShape(6.dp)
             ) {

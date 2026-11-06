@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.data.model.LayerType
 
 @Composable
 fun PixelCraftLayersSheet(
@@ -50,15 +50,14 @@ fun PixelCraftLayersSheet(
     onSelectLayer: (String) -> Unit,
     onToggleLock: (String) -> Unit,
     onToggleVisibility: (String) -> Unit,
-    onMoveUp: (Int) -> Unit,
-    onMoveDown: (Int) -> Unit,
-    onDuplicate: (String) -> Unit,
+    onMoveUp: (String) -> Unit,
+    onMoveDown: (String) -> Unit,
     onDelete: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Show top zIndex at top
-    val sortedLayers = layers.sortedByDescending { it.zIndex }
+    // Reverse ascending zIndex so top-to-bottom matches render order even if ties exist
+    val sortedLayers = layers.sortedBy { it.zIndex }.asReversed()
 
     Card(
         modifier = modifier
@@ -70,7 +69,6 @@ fun PixelCraftLayersSheet(
         elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -103,8 +101,10 @@ fun PixelCraftLayersSheet(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    itemsIndexed(sortedLayers) { index, layer ->
+                    itemsIndexed(sortedLayers, key = { _, layer -> layer.id }) { index, layer ->
                         val isSelected = layer.id == selectedLayerId
+                        val canMoveUp = index > 0 && !layer.isLocked
+                        val canMoveDown = index < sortedLayers.lastIndex && !layer.isLocked
 
                         Row(
                             modifier = Modifier
@@ -120,10 +120,13 @@ fun PixelCraftLayersSheet(
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Layer preview title
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (layer.type == com.app.pixelcraft.data.model.LayerType.TEXT) layer.text.take(15) else layer.name,
+                                    text = if (layer.type == LayerType.TEXT) {
+                                        layer.text.replace("\n", " ").take(18)
+                                    } else {
+                                        layer.name
+                                    },
                                     color = Color.White,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     fontSize = 12.sp,
@@ -137,7 +140,6 @@ fun PixelCraftLayersSheet(
                                 )
                             }
 
-                            // Actions: Visibility, Lock, Up, Down, Delete
                             IconButton(
                                 onClick = { onToggleVisibility(layer.id) },
                                 modifier = Modifier.size(24.dp)
@@ -163,39 +165,40 @@ fun PixelCraftLayersSheet(
                             }
 
                             IconButton(
-                                onClick = { if (index > 0) onMoveUp(index) },
-                                enabled = index > 0,
+                                onClick = { onMoveUp(layer.id) },
+                                enabled = canMoveUp,
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowUpward,
                                     contentDescription = "Move Up",
-                                    tint = if (index > 0) Color.White else Color(0xFF444444),
+                                    tint = if (canMoveUp) Color.White else Color(0xFF444444),
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
 
                             IconButton(
-                                onClick = { if (index < sortedLayers.lastIndex) onMoveDown(index) },
-                                enabled = index < sortedLayers.lastIndex,
+                                onClick = { onMoveDown(layer.id) },
+                                enabled = canMoveDown,
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowDownward,
                                     contentDescription = "Move Down",
-                                    tint = if (index < sortedLayers.lastIndex) Color.White else Color(0xFF444444),
+                                    tint = if (canMoveDown) Color.White else Color(0xFF444444),
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
 
                             IconButton(
                                 onClick = { onDelete(layer.id) },
+                                enabled = !layer.isLocked,
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Delete",
-                                    tint = Color(0xFFFF5252),
+                                    tint = if (!layer.isLocked) Color(0xFFFF5252) else Color(0xFF553333),
                                     modifier = Modifier.size(16.dp)
                                 )
                             }

@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.util.LruCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -33,7 +32,7 @@ class ImageStore(private val context: Context) {
                 val format = if (bitmap.hasAlpha()) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
                 check(bitmap.compress(format, 92, out)) { "Could not store the picture" }
             }
-            cache.put(file.absolutePath, bitmap)
+            putCached(file.absolutePath, bitmap)
             ImportedImage(file.absolutePath, bitmap.width, bitmap.height)
         }
     }
@@ -61,18 +60,31 @@ class ImageStore(private val context: Context) {
 
     companion object {
         private const val MAX_DIMENSION = 2048
+        private val maxCacheBytes = (Runtime.getRuntime().maxMemory() / 8).coerceAtLeast(4 * 1024 * 1024)
+        private var currentCacheBytes = 0L
+        private val cache = LinkedHashMap<String, Bitmap>(16, 0.75f, true)
 
-        private val cache = object : LruCache<String, Bitmap>(
-            (Runtime.getRuntime().maxMemory() / 8).toInt()
-        ) {
-            override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
+        @Synchronized
+        private fun getCached(path: String): Bitmap? = cache[path]
+
+        @Synchronized
+        private fun putCached(path: String, bitmap: Bitmap) {
+            cache.remove(path)?.let { currentCacheBytes -= it.byteCount }
+            cache[path] = bitmap
+            currentCacheBytes += bitmap.byteCount
+            val iter = cache.entries.iterator()
+            while (currentCacheBytes > maxCacheBytes && iter.hasNext()) {
+                val eldest = iter.next()
+                currentCacheBytes -= eldest.value.byteCount
+                iter.remove()
+            }
         }
 
         /** Decodes (or returns cached) bitmap for a stored picture. Blocking: call off the main thread. */
         fun loadBitmap(path: String): Bitmap? {
-            cache.get(path)?.let { return it }
+            getCached(path)?.let { return it }
             val bitmap = BitmapFactory.decodeFile(path) ?: return null
-            cache.put(path, bitmap)
+            putCached(path, bitmap)
             return bitmap
         }
     }

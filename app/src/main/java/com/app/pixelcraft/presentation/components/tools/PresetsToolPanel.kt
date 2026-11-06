@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,12 +29,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.ActiveDialog
+import com.app.pixelcraft.data.model.BackgroundType
+import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.ProjectData
 import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.presets.DefaultPresets
@@ -79,6 +83,22 @@ fun PresetsToolPanel(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             for (preset in DefaultPresets.presets) {
+                val cfg = preset.canvasConfig
+                val thumbModifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .let { base ->
+                        if (cfg.backgroundType == BackgroundType.GRADIENT && cfg.gradientColors.size >= 2) {
+                            base.background(Brush.linearGradient(cfg.gradientColors.map { Color(it) }))
+                        } else {
+                            base.background(Color(cfg.backgroundColor))
+                        }
+                    }
+                val textLayer = preset.initialLayers.firstOrNull { it.type == LayerType.TEXT }
+                val previewLabel = textLayer?.text?.lineSequence()?.firstOrNull()?.take(5)
+                    ?: preset.title.take(4)
+                val previewColor = textLayer?.let { Color(it.textColor) } ?: Color.White
+
                 Column(
                     modifier = Modifier
                         .width(110.dp)
@@ -90,17 +110,15 @@ fun PresetsToolPanel(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color(preset.canvasConfig.backgroundColor)),
+                        modifier = thumbModifier,
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = preset.initialLayers.firstOrNull()?.text?.take(4) ?: "3D",
-                            color = Color.White,
+                            text = previewLabel,
+                            color = previewColor,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            fontSize = 12.sp,
+                            maxLines = 1
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -138,7 +156,14 @@ fun PresetsToolPanel(
                     ) {
                         Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(p.name, color = Color.White, fontSize = 11.sp)
+                        Text(
+                            text = p.name,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 140.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         IconButton(
                             onClick = { onDeleteProject(p.id) },

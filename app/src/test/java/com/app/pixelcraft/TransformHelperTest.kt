@@ -3,9 +3,9 @@ package com.app.pixelcraft
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PointF
-import com.app.pixelcraft.domain.HandleType
 import com.app.pixelcraft.domain.TransformHelper
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs
@@ -56,7 +56,7 @@ class TransformHelperTest {
     }
 
     @Test
-    fun testHitTestHandle_BodyAndHandles() {
+    fun testHitTestBody() {
         val layer = Layer(
             id = "layer1",
             name = "Test Layer",
@@ -70,16 +70,8 @@ class TransformHelperTest {
         val center = PointF(500f, 500f)
         val bounds = TransformHelper.computeLayerBounds(layer, center)
 
-        // Center should hit body
-        val hitBody = TransformHelper.hitTestHandle(PointF(500f, 500f), bounds)
-        assertEquals(HandleType.BODY, hitBody)
-
-        // Rotation handle
-        val hitRot = TransformHelper.hitTestHandle(bounds.rotationHandle, bounds)
-        assertEquals(HandleType.ROTATION, hitRot)
-
-        // Outside should hit NONE
-        val hitOutside = TransformHelper.hitTestHandle(PointF(100f, 100f), bounds)
-        assertEquals(HandleType.NONE, hitOutside)
+        assertTrue(TransformHelper.hitTestBody(PointF(500f, 500f), bounds))
+        assertFalse(TransformHelper.hitTestBody(PointF(500f, 405f), bounds))
+        assertFalse(TransformHelper.hitTestBody(PointF(100f, 100f), bounds))
     }
 }
