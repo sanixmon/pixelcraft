@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">PixelCraft</string>
+    <string name="app_subtitle">Text on Photo Studio</string>
+    <string name="home_new_canvas">New Canvas</string>
+    <string name="home_from_photo">From Photo</string>
+    <string name="home_templates">Templates</string>
+    <string name="home_my_projects">My Projects</string>
+    <string name="home_continue_draft">Continue Unsaved Draft</string>
+    <string name="home_import_project">Import .pixelcraft</string>
+    <string name="home_search_projects">Search saved projects…</string>
+    <string name="home_no_projects">No saved projects yet. Start a new canvas or pick a template above.</string>
+    <string name="action_save">Save</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_share">Share</string>
+    <string name="action_export">Export</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_reset">Reset</string>
+    <string name="unsaved_changes_title">Save changes?</string>
+    <string name="unsaved_changes_body">Your design has unsaved changes. Save as a project before leaving?</string>
+    <string name="autosaved_indicator">Autosaved</string>
+    <string name="nav_templates">Templates</string>
+    <string name="nav_text">Text</string>
+    <string name="nav_objects">Objects</string>
+    <string name="nav_canvas">Canvas</string>
+    <string name="nav_effects">Effects</string>
+    <string name="onboarding_tip">Tip: Tap to select, pinch with 2 fingers to resize &amp; rotate, double-tap text to edit.</string>
+</resources>

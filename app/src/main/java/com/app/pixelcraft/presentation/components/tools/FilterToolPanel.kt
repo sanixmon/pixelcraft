@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +30,7 @@ private val VignettePalette = listOf(
 @Composable
 fun FilterToolPanel(
     filters: CanvasFilters,
+    recentColors: List<Long> = emptyList(),
     onUpdateFilters: (Boolean, (CanvasFilters) -> CanvasFilters) -> Unit,
     onFinishContinuousEdit: () -> Unit,
     modifier: Modifier = Modifier
@@ -38,64 +38,102 @@ fun FilterToolPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 225.dp)
-            .background(Color(0xFF232730))
+            .heightIn(max = 235.dp)
+            .background(Color(0xFF1B1F2B))
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
     ) {
-        Text("Post-Processing & Magic Filters", color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text(
+            text = "Canvas Post-Processing Effects",
+            color = Color(0xFF00E5FF),
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Vignette
+        // 1. Vignette
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Vignette", color = Color.White, fontSize = 12.sp)
+            Text("Vignette Frame", color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.vignetteEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(vignetteEnabled = en) } }
             )
         }
         if (filters.vignetteEnabled) {
-            Text("Vignette Color", color = Color(0xFFBBBBBB), fontSize = 11.sp)
             ColorPaletteRow(
                 colors = VignettePalette,
+                recentColors = recentColors,
                 selectedColor = filters.vignetteColor,
                 onSelectColor = { c -> onUpdateFilters(false) { it.copy(vignetteColor = c) } },
                 allowAlpha = true,
                 pickerTitle = "Vignette Color"
             )
-            Text("Intensity: ${(filters.vignetteIntensity * 100).toInt()}%", color = Color(0xFFBBBBBB), fontSize = 11.sp)
-            Slider(
-                value = filters.vignetteIntensity.coerceIn(0.1f, 0.9f),
-                onValueChange = { i -> onUpdateFilters(true) { it.copy(vignetteIntensity = i) } },
-                onValueChangeFinished = onFinishContinuousEdit,
-                valueRange = 0.1f..0.9f
+            PrecisionSlider(
+                label = "Vignette Intensity",
+                value = filters.vignetteIntensity,
+                valueRange = 0.1f..0.9f,
+                defaultValue = 0.5f,
+                fineStep = 0.05f,
+                unitSuffix = "%",
+                valueFormatter = { "${(it * 100).toInt()}" },
+                onValueChange = { i, cont -> onUpdateFilters(cont) { it.copy(vignetteIntensity = i) } },
+                onValueChangeFinished = onFinishContinuousEdit
             )
         }
 
-        // Stripes / Scanlines
+        // 2. Film Grain (§ 7 Phase 4)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("TV Scanlines", color = Color.White, fontSize = 12.sp)
+            Text("Film Grain Texture", color = Color.White, fontSize = 12.sp)
+            Switch(
+                checked = filters.grainEnabled,
+                onCheckedChange = { en -> onUpdateFilters(false) { it.copy(grainEnabled = en) } }
+            )
+        }
+        if (filters.grainEnabled) {
+            PrecisionSlider(
+                label = "Grain Amount",
+                value = filters.grainIntensity,
+                valueRange = 0.03f..0.60f,
+                defaultValue = 0.15f,
+                fineStep = 0.02f,
+                unitSuffix = "%",
+                valueFormatter = { "${(it * 100).toInt()}" },
+                onValueChange = { g, cont -> onUpdateFilters(cont) { it.copy(grainIntensity = g) } },
+                onValueChangeFinished = onFinishContinuousEdit
+            )
+        }
+
+        // 3. Retro Scanlines
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Retro Scanlines", color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.stripesEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(stripesEnabled = en) } }
             )
         }
         if (filters.stripesEnabled) {
-            Text("Spacing: ${filters.stripesSpacing.toInt()} px", color = Color(0xFFBBBBBB), fontSize = 11.sp)
-            Slider(
-                value = filters.stripesSpacing.coerceIn(4f..30f),
-                onValueChange = { s -> onUpdateFilters(true) { it.copy(stripesSpacing = s) } },
-                onValueChangeFinished = onFinishContinuousEdit,
-                valueRange = 4f..30f
+            PrecisionSlider(
+                label = "Line Spacing",
+                value = filters.stripesSpacing,
+                valueRange = 4f..30f,
+                defaultValue = 12f,
+                fineStep = 1f,
+                unitSuffix = "px",
+                onValueChange = { s, cont -> onUpdateFilters(cont) { it.copy(stripesSpacing = s) } },
+                onValueChangeFinished = onFinishContinuousEdit
             )
         }
     }

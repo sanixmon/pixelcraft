@@ -1,5 +1,7 @@
 package com.app.pixelcraft
 
+import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PointF
 import com.app.pixelcraft.domain.SnappingEngine
 import org.junit.Assert.assertEquals
@@ -25,7 +27,6 @@ class SnappingEngineTest {
 
     @Test
     fun testGridDivisionSnapping() {
-        // 1080x1080 with 3x3 internal grid lines -> step = 270 -> lines at -270, 0, +270
         val result = SnappingEngine.calculateSnap(
             rawPosition = PointF(-262f, 276f),
             canvasWidth = 1080f,
@@ -61,5 +62,45 @@ class SnappingEngineTest {
         assertEquals(250f, result.snappedPosition.y, 0.001f)
         assertFalse(result.showVerticalGuide)
         assertFalse(result.showHorizontalGuide)
+    }
+
+    @Test
+    fun testCanvasEdgeSnappingAndInterLayerSmartGuides() {
+        // Bug 2.10 & 2.11: A 200x100 layer whose left edge is at -532 (8px from left canvas edge -540)
+        // has center at -432 -> snaps its left edge cleanly to -540 (center = -440)!
+        val edgeSnap = SnappingEngine.calculateSnap(
+            rawPosition = PointF(-432f, 120f),
+            canvasWidth = 1080f,
+            canvasHeight = 1080f,
+            thresholdPx = 12f,
+            layerWidth = 200f,
+            layerHeight = 100f
+        )
+        assertEquals(-440f, edgeSnap.snappedPosition.x, 0.01f)
+        assertEquals(-540f, edgeSnap.verticalGuideX!!, 0.01f)
+
+        // Smart Guides against another visible layer at x = 210, width = 160 (left = 130, right = 290)
+        val referenceLayer = Layer(
+            id = "ref",
+            name = "Reference",
+            type = LayerType.SHAPE,
+            positionX = 210f,
+            positionY = -180f,
+            width = 160f,
+            height = 80f
+        )
+        val smartSnap = SnappingEngine.calculateSnap(
+            rawPosition = PointF(204f, -175f),
+            canvasWidth = 1080f,
+            canvasHeight = 1080f,
+            thresholdPx = 10f,
+            layerWidth = 160f,
+            layerHeight = 80f,
+            otherLayers = listOf(referenceLayer)
+        )
+        assertEquals(210f, smartSnap.snappedPosition.x, 0.01f)
+        assertEquals(-180f, smartSnap.snappedPosition.y, 0.01f)
+        assertEquals(210f, smartSnap.verticalGuideX!!, 0.01f)
+        assertEquals(-180f, smartSnap.horizontalGuideY!!, 0.01f)
     }
 }

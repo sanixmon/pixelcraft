@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Colorize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -68,7 +69,10 @@ private val RainbowSweepColors = listOf(
 )
 
 /**
- * Reusable horizontal color palette row with a leading Rainbow HSV/Hex Custom Color Picker button.
+ * Reusable horizontal color palette row with:
+ * - Optional Canvas Eyedropper launcher (`onPickFromCanvas`)
+ * - Leading Rainbow HSV/Hex Custom Color Picker swatch
+ * - Deduplicated Recent Colors + preset swatches
  */
 @Composable
 fun ColorPaletteRow(
@@ -76,14 +80,29 @@ fun ColorPaletteRow(
     selectedColor: Long,
     onSelectColor: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    recentColors: List<Long> = emptyList(),
+    onPickFromCanvas: (() -> Unit)? = null,
     allowAlpha: Boolean = true,
     pickerTitle: String = "Custom Color",
     leadingContent: (@Composable () -> Unit)? = null
 ) {
     var showCustomDialog by remember { mutableStateOf(false) }
     val normalizedSelected = selectedColor and 0xFFFFFFFFL
+    val mergedSwatches = remember(recentColors, colors) {
+        val seen = HashSet<Long>()
+        buildList {
+            for (c in recentColors) {
+                val n = c and 0xFFFFFFFFL
+                if (seen.add(n)) add(n)
+            }
+            for (c in colors) {
+                val n = c and 0xFFFFFFFFL
+                if (seen.add(n)) add(n)
+            }
+        }
+    }
     val isCustomSelected = (normalizedSelected ushr 24) > 0L &&
-        colors.none { (it and 0xFFFFFFFFL) == normalizedSelected }
+        mergedSwatches.none { it == normalizedSelected }
 
     Row(
         modifier = modifier
@@ -95,10 +114,29 @@ fun ColorPaletteRow(
     ) {
         leadingContent?.invoke()
 
+        if (onPickFromCanvas != null) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF282D3A))
+                    .border(1.5.dp, Color(0xFF00E5FF), CircleShape)
+                    .clickable { onPickFromCanvas() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Colorize,
+                    contentDescription = "Pick Color from Canvas",
+                    tint = Color(0xFF00E5FF),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
         // Custom HSV Color Wheel + Hex Picker launcher swatch
         Box(
             modifier = Modifier
-                .size(34.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(Brush.sweepGradient(RainbowSweepColors))
                 .border(
@@ -129,12 +167,11 @@ fun ColorPaletteRow(
             }
         }
 
-        for (colorValue in colors) {
-            val normalizedSwatch = colorValue and 0xFFFFFFFFL
+        for (normalizedSwatch in mergedSwatches) {
             val isSelected = normalizedSelected == normalizedSwatch
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(Color(normalizedSwatch))
                     .border(
@@ -219,7 +256,6 @@ fun PixelCraftColorPickerDialog(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 2D HSV Color Wheel
                 HsvColorWheel(
                     hue = hue,
                     saturation = saturation,
@@ -233,7 +269,6 @@ fun PixelCraftColorPickerDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Brightness (V) Slider
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -250,7 +285,6 @@ fun PixelCraftColorPickerDialog(
                     valueRange = 0f..1f
                 )
 
-                // Optional Alpha Slider
                 if (allowAlpha) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -271,7 +305,6 @@ fun PixelCraftColorPickerDialog(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Live Preview Swatch + Hex Input
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -382,13 +415,11 @@ private fun HsvColorWheel(
             val radius = size.minDimension / 2f
             val centerOffset = Offset(size.width / 2f, size.height / 2f)
 
-            // 1. Hue sweep
             drawCircle(
                 brush = Brush.sweepGradient(RainbowSweepColors, center = centerOffset),
                 radius = radius,
                 center = centerOffset
             )
-            // 2. Saturation radial fade (white at center -> transparent at rim)
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(Color.White, Color.Transparent),
@@ -398,7 +429,6 @@ private fun HsvColorWheel(
                 radius = radius,
                 center = centerOffset
             )
-            // 3. Brightness darkening overlay
             val darkenAlpha = (1f - value.coerceIn(0f, 1f))
             if (darkenAlpha > 0f) {
                 drawCircle(
@@ -407,7 +437,6 @@ private fun HsvColorWheel(
                     center = centerOffset
                 )
             }
-            // Outer border
             drawCircle(
                 color = Color.White.copy(alpha = 0.35f),
                 radius = radius,
@@ -415,7 +444,6 @@ private fun HsvColorWheel(
                 style = Stroke(width = 2f)
             )
 
-            // Selected thumb indicator
             val rad = (hue * PI / 180.0)
             val thumbDist = saturation.coerceIn(0f, 1f) * radius
             val thumbCenter = Offset(

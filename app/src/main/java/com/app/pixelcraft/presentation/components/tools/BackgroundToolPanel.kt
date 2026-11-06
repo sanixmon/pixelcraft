@@ -27,8 +27,8 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Texture
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,30 +46,28 @@ import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.ActiveDialog
 import com.app.pixelcraft.data.model.BackgroundType
 import com.app.pixelcraft.data.model.CanvasConfig
+import com.app.pixelcraft.data.model.GradientType
+import com.app.pixelcraft.data.presets.DefaultPresets
 import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftColorPickerDialog
 
 @Composable
 fun BackgroundToolPanel(
     canvasConfig: CanvasConfig,
+    recentColors: List<Long> = emptyList(),
     onSetColor: (Long) -> Unit,
-    onSetGradient: (List<Long>, Float) -> Unit,
+    onSetGradient: (List<Long>, Float, GradientType, Boolean) -> Unit,
+    onUpdatePhotoEffects: (Float, Float, Boolean) -> Unit,
+    onFinishContinuousEdit: () -> Unit,
     onSetTransparent: () -> Unit,
     onPickImage: () -> Unit,
+    onPickEyedropper: () -> Unit = {},
     onOpenDialog: (ActiveDialog) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val solidColors = listOf(
-        0xFF2A2E39L, 0xFF121212L, 0xFF000000L, 0xFFFFFFFFL,
+        0xFF2A2E39L, 0xFF121212L, 0xFF000000L, 0xFFFFFFFFL, 0xFFF5F0E6L,
         0xFF1E3A8AL, 0xFF065F46L, 0xFF7C2D12L, 0xFF831843L, 0xFF4C1D95L
-    )
-
-    val gradients = listOf(
-        listOf(0xFF0F2027L, 0xFF203A43L, 0xFF2C5364L),
-        listOf(0xFFFF416CL, 0xFFFF4B2BL),
-        listOf(0xFF141E30L, 0xFF243B55L),
-        listOf(0xFF8A2387L, 0xFFE94057L, 0xFFF27121L),
-        listOf(0xFF11998EL, 0xFF38EF7DL)
     )
 
     var editingGradientStopIndex by remember { mutableStateOf<Int?>(null) }
@@ -77,13 +75,13 @@ fun BackgroundToolPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 230.dp)
-            .background(Color(0xFF232730))
+            .heightIn(max = 240.dp)
+            .background(Color(0xFF1B1F2B))
             .verticalScroll(rememberScrollState())
             .padding(10.dp)
     ) {
         Text(
-            text = "Canvas Background",
+            text = "Canvas & Background (${canvasConfig.width}×${canvasConfig.height})",
             color = Color(0xFF00E5FF),
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
@@ -101,42 +99,73 @@ fun BackgroundToolPanel(
             Button(
                 onClick = onPickImage,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(6.dp),
+                shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Icon(Icons.Default.Image, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Photo", fontSize = 11.sp, color = Color.Black)
+                Text("Photo", fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
             }
 
             Button(
                 onClick = { onOpenDialog(ActiveDialog.IMAGE_SIZE) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
-                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2B3242)),
+                shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Image Size", fontSize = 11.sp)
+                Text("Canvas Size", fontSize = 12.sp)
             }
 
             Button(
                 onClick = onSetTransparent,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
-                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2B3242)),
+                shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Icon(Icons.Default.Texture, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Transparent", fontSize = 11.sp)
+                Text("Transparent", fontSize = 12.sp)
             }
+        }
+
+        if (canvasConfig.backgroundType == BackgroundType.CUSTOM_IMAGE) {
+            Spacer(modifier = Modifier.height(8.dp))
+            PrecisionSlider(
+                label = "Photo Blur",
+                value = canvasConfig.backgroundBlur,
+                valueRange = 0f..25f,
+                defaultValue = 0f,
+                fineStep = 1f,
+                unitSuffix = "px",
+                onValueChange = { blur, cont ->
+                    onUpdatePhotoEffects(blur, canvasConfig.backgroundDim, cont)
+                },
+                onValueChangeFinished = onFinishContinuousEdit
+            )
+            PrecisionSlider(
+                label = "Photo Dim Overlay",
+                value = canvasConfig.backgroundDim,
+                valueRange = 0f..0.85f,
+                defaultValue = 0f,
+                fineStep = 0.05f,
+                unitSuffix = "%",
+                valueFormatter = { "${(it * 100).toInt()}" },
+                onValueChange = { dim, cont ->
+                    onUpdatePhotoEffects(canvasConfig.backgroundBlur, dim, cont)
+                },
+                onValueChangeFinished = onFinishContinuousEdit
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("Solid Color (Palette / Wheel / Hex)", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+        Text("Solid Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
         ColorPaletteRow(
             colors = solidColors,
+            recentColors = recentColors,
+            onPickFromCanvas = onPickEyedropper,
             selectedColor = if (canvasConfig.backgroundType == BackgroundType.SOLID_COLOR) {
                 canvasConfig.backgroundColor
             } else {
@@ -149,7 +178,7 @@ fun BackgroundToolPanel(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text("Gradients (Presets & Custom 2-Stop)", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+        Text("Curated Gradients (${DefaultPresets.curatedGradients.size})", color = Color(0xFFCCCCCC), fontSize = 12.sp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -158,7 +187,6 @@ fun BackgroundToolPanel(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Custom 2-stop gradient stop pickers
             val activeStops = if (canvasConfig.gradientColors.size >= 2) {
                 canvasConfig.gradientColors
             } else {
@@ -166,7 +194,7 @@ fun BackgroundToolPanel(
             }
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(Color(activeStops.first() and 0xFFFFFFFFL))
                     .border(1.5.dp, Color(0xFF00E5FF), CircleShape)
@@ -177,7 +205,7 @@ fun BackgroundToolPanel(
             }
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(Color(activeStops.last() and 0xFFFFFFFFL))
                     .border(1.5.dp, Color(0xFF00E5FF), CircleShape)
@@ -187,35 +215,58 @@ fun BackgroundToolPanel(
                 Icon(Icons.Default.Add, contentDescription = "Gradient End", tint = Color.White, modifier = Modifier.size(14.dp))
             }
 
-            for (grad in gradients) {
+            for (grad in DefaultPresets.curatedGradients) {
                 val isSelected = canvasConfig.backgroundType == BackgroundType.GRADIENT &&
-                    canvasConfig.gradientColors == grad
+                    canvasConfig.gradientColors == grad.colors &&
+                    canvasConfig.gradientType == grad.type
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(grad.map { Color(it and 0xFFFFFFFFL) }))
+                        .background(Brush.linearGradient(grad.colors.map { Color(it and 0xFFFFFFFFL) }))
                         .border(
                             width = if (isSelected) 2.5.dp else 1.dp,
                             color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF555555),
                             shape = CircleShape
                         )
-                        .clickable { onSetGradient(grad, canvasConfig.gradientAngle) }
+                        .clickable {
+                            onSetGradient(grad.colors, grad.angle, grad.type, false)
+                        }
                 )
             }
         }
 
         if (canvasConfig.backgroundType == BackgroundType.GRADIENT) {
-            Text(
-                text = "Gradient Angle: ${canvasConfig.gradientAngle.toInt()}°",
-                color = Color(0xFFCCCCCC),
-                fontSize = 11.sp
-            )
-            Slider(
-                value = canvasConfig.gradientAngle.coerceIn(0f, 360f),
-                onValueChange = { ang -> onSetGradient(canvasConfig.gradientColors, ang) },
-                valueRange = 0f..360f
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                for (gt in GradientType.entries) {
+                    FilterChip(
+                        selected = canvasConfig.gradientType == gt,
+                        onClick = {
+                            onSetGradient(canvasConfig.gradientColors, canvasConfig.gradientAngle, gt, false)
+                        },
+                        label = { Text(gt.label, fontSize = 12.sp) }
+                    )
+                }
+            }
+            if (canvasConfig.gradientType != GradientType.RADIAL) {
+                PrecisionSlider(
+                    label = "Gradient Angle",
+                    value = canvasConfig.gradientAngle,
+                    valueRange = 0f..360f,
+                    defaultValue = 45f,
+                    fineStep = 5f,
+                    unitSuffix = "°",
+                    onValueChange = { ang, cont ->
+                        onSetGradient(canvasConfig.gradientColors, ang, canvasConfig.gradientType, cont)
+                    },
+                    onValueChangeFinished = onFinishContinuousEdit
+                )
+            }
         }
     }
 
@@ -238,7 +289,7 @@ fun BackgroundToolPanel(
                     listOf(currentStops.first(), picked)
                 }
                 editingGradientStopIndex = null
-                onSetGradient(newStops, canvasConfig.gradientAngle)
+                onSetGradient(newStops, canvasConfig.gradientAngle, canvasConfig.gradientType, false)
             },
             onDismiss = { editingGradientStopIndex = null }
         )

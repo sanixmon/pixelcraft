@@ -1,5 +1,6 @@
 package com.app.pixelcraft.data.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -7,6 +8,46 @@ enum class LayerType {
     TEXT,
     SHAPE,
     IMAGE
+}
+
+@Serializable
+enum class LayerBlendMode(val label: String) {
+    NORMAL("Normal"),
+    MULTIPLY("Multiply"),
+    SCREEN("Screen"),
+    OVERLAY("Overlay"),
+    DARKEN("Darken"),
+    LIGHTEN("Lighten"),
+    PLUS("Add / Glow")
+}
+
+@Serializable
+enum class PhotoFilterPreset(val label: String) {
+    NONE("Original"),
+    BW("B&W"),
+    VINTAGE("Vintage"),
+    COOL("Cool"),
+    WARM("Warm"),
+    VIVID("Vivid"),
+    NOIR("Noir"),
+    FADE("Matte Fade")
+}
+
+@Immutable
+@Serializable
+data class ImageAdjustments(
+    val brightness: Float = 0f,     // -0.5f .. 0.5f
+    val contrast: Float = 1f,       // 0.5f .. 1.8f
+    val saturation: Float = 1f,     // 0f .. 2.0f
+    val warmth: Float = 0f,         // -0.4f .. 0.4f
+    val filterPreset: PhotoFilterPreset = PhotoFilterPreset.NONE
+) {
+    val isDefault: Boolean
+        get() = brightness == 0f &&
+            contrast == 1f &&
+            saturation == 1f &&
+            warmth == 0f &&
+            filterPreset == PhotoFilterPreset.NONE
 }
 
 @Serializable
@@ -34,7 +75,7 @@ enum class ShapeType(
     HEXAGON("Hexagon", ShapeCategory.BASIC, 300f, 300f),
     OCTAGON("Octagon", ShapeCategory.BASIC, 300f, 300f),
 
-    // PicSay Pro Word Balloons
+    // Word Balloons
     SPEECH_ROUND("Oval Balloon", ShapeCategory.BALLOONS, 380f, 280f),
     SPEECH_BUBBLE("Speech Box", ShapeCategory.BALLOONS, 380f, 280f),
     THOUGHT_CLOUD("Thought Cloud", ShapeCategory.BALLOONS, 400f, 300f),
@@ -93,12 +134,14 @@ enum class StrokePattern(val label: String) {
     DASH_DOT("Dash-Dot")
 }
 
+@Immutable
 @Serializable
 data class PointF(
     val x: Float,
     val y: Float
 )
 
+@Immutable
 @Serializable
 data class Layer(
     val id: String,
@@ -106,6 +149,8 @@ data class Layer(
     val type: LayerType,
     val isVisible: Boolean = true,
     val isLocked: Boolean = false,
+    val groupId: String? = null,
+    val blendMode: LayerBlendMode = LayerBlendMode.NORMAL,
 
     // Transform
     val positionX: Float = 0f,
@@ -125,18 +170,24 @@ data class Layer(
     val fontKey: String = "default",
     val fontSize: Float = 42f,
     val textColor: Long = 0xFFFFFFFF,
+    val textGradientEnabled: Boolean = false,
+    val textGradientEndColor: Long = 0xFF00E5FF,
+    val textGradientAngle: Float = 0f,
+    val textGradientRadial: Boolean = false,
     val isBold: Boolean = false,
     val isItalic: Boolean = false,
     val isUnderline: Boolean = false,
     val textAlign: TextAlignment = TextAlignment.CENTER,
     val lineHeightMultiplier: Float = 1.15f,
+    val letterSpacing: Float = 0f,
+    val curveAngle: Float = 0f,
 
     // Text Background
     val textBackgroundColor: Long? = null,
     val textBackgroundPadding: Float = 16f,
     val textBackgroundRadius: Float = 8f,
 
-    // Ivy Draw Vector Stroke / Outline (shared parameters across Text & Shape)
+    // Vector Stroke / Outline (shared parameters across Text & Shape)
     val strokeColor: Long = 0xFF000000,
     val strokeWidth: Float = 0f,
     val strokePosition: StrokePosition = StrokePosition.OUTSIDE,
@@ -148,6 +199,11 @@ data class Layer(
     val strokePhase: Float = 0f,
     val strokeMiterLimit: Float = 4f,
 
+    // Outer Glow
+    val glowEnabled: Boolean = false,
+    val glowColor: Long = 0xFF00E5FF,
+    val glowRadius: Float = 18f,
+
     // Drop Shadow
     val shadowEnabled: Boolean = false,
     val shadowColor: Long = 0xAA000000,
@@ -155,13 +211,13 @@ data class Layer(
     val shadowDx: Float = 4f,
     val shadowDy: Float = 6f,
 
-    // 3D Text
+    // 3D Extrusion
     val is3D: Boolean = false,
     val depth3D: Float = 16f,
     val darken3D: Float = 0.4f,
     val angle3D: Float = 30f,
 
-    // 3D Shadow (floor shadow)
+    // 3D Floor Shadow
     val shadow3DEnabled: Boolean = false,
     val shadow3DColor: Long = 0x66000000,
     val shadow3DScale: Float = 1.0f,
@@ -172,7 +228,7 @@ data class Layer(
     val reflectionDistance: Float = 4f,
     val reflectionOpacity: Float = 0.35f,
 
-    // PicSay Pro Shape Attributes
+    // Shape Attributes
     val shapeType: ShapeType = ShapeType.ROUNDED_RECTANGLE,
     val shapeFillColor: Long = 0xFF00B0FF,
     val shapeGradientEnabled: Boolean = false,
@@ -183,5 +239,83 @@ data class Layer(
     val shapeCornerRadius: Float = 24f,
 
     // Image Attributes
-    val imageLocalPath: String? = null
+    val imageLocalPath: String? = null,
+    val cropLeft: Float = 0f,
+    val cropTop: Float = 0f,
+    val cropRight: Float = 1f,
+    val cropBottom: Float = 1f,
+    val imageAdjustments: ImageAdjustments = ImageAdjustments(),
+    val imageMaskShape: ShapeType? = null,
+    val imageCornerRadius: Float = 0f,
+    val imageBorderWidth: Float = 0f,
+    val imageBorderColor: Long = 0xFFFFFFFF
+) {
+    /** Copies visual styling (colors, fonts, stroke, shadow, glow, 3D, blend) from [source] onto this layer. */
+    fun copyVisualStyleFrom(source: Layer): Layer {
+        return copy(
+            opacity = source.opacity,
+            blendMode = source.blendMode,
+            fontKey = source.fontKey,
+            fontSize = if (type == LayerType.TEXT && source.type == LayerType.TEXT) source.fontSize else fontSize,
+            textColor = source.textColor,
+            textGradientEnabled = source.textGradientEnabled,
+            textGradientEndColor = source.textGradientEndColor,
+            textGradientAngle = source.textGradientAngle,
+            textGradientRadial = source.textGradientRadial,
+            isBold = source.isBold,
+            isItalic = source.isItalic,
+            isUnderline = source.isUnderline,
+            textAlign = source.textAlign,
+            lineHeightMultiplier = source.lineHeightMultiplier,
+            letterSpacing = source.letterSpacing,
+            curveAngle = source.curveAngle,
+            textBackgroundColor = source.textBackgroundColor,
+            textBackgroundPadding = source.textBackgroundPadding,
+            textBackgroundRadius = source.textBackgroundRadius,
+            strokeColor = source.strokeColor,
+            strokeWidth = source.strokeWidth,
+            strokePosition = source.strokePosition,
+            strokeJoin = source.strokeJoin,
+            strokeCap = source.strokeCap,
+            strokePattern = source.strokePattern,
+            strokeDashLength = source.strokeDashLength,
+            strokeDashGap = source.strokeDashGap,
+            strokePhase = source.strokePhase,
+            strokeMiterLimit = source.strokeMiterLimit,
+            glowEnabled = source.glowEnabled,
+            glowColor = source.glowColor,
+            glowRadius = source.glowRadius,
+            shadowEnabled = source.shadowEnabled,
+            shadowColor = source.shadowColor,
+            shadowRadius = source.shadowRadius,
+            shadowDx = source.shadowDx,
+            shadowDy = source.shadowDy,
+            is3D = source.is3D,
+            depth3D = source.depth3D,
+            darken3D = source.darken3D,
+            angle3D = source.angle3D,
+            shadow3DEnabled = source.shadow3DEnabled,
+            shadow3DColor = source.shadow3DColor,
+            shadow3DScale = source.shadow3DScale,
+            shadow3DOpacity = source.shadow3DOpacity,
+            reflectionEnabled = source.reflectionEnabled,
+            reflectionDistance = source.reflectionDistance,
+            reflectionOpacity = source.reflectionOpacity,
+            shapeFillColor = source.shapeFillColor,
+            shapeGradientEnabled = source.shapeGradientEnabled,
+            shapeGradientEndColor = source.shapeGradientEndColor,
+            shapeGradientAngle = source.shapeGradientAngle,
+            shapeStrokeColor = source.shapeStrokeColor,
+            shapeStrokeWidth = source.shapeStrokeWidth,
+            shapeCornerRadius = source.shapeCornerRadius
+        )
+    }
+}
+
+@Immutable
+@Serializable
+data class SavedLayerStyle(
+    val id: String,
+    val name: String,
+    val styleLayer: Layer
 )

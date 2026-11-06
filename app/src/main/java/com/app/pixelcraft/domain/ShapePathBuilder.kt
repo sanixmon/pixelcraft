@@ -11,9 +11,9 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * Builds pure vector `android.graphics.Path` contours centered at `(0, 0)` for all 24 PicSay Pro
- * inspired `ShapeType` entries. Shared by `PixelCraftShapeDialog` previews, `CanvasRenderer`,
- * and `ImageExporter` so shapes and Ivy Draw vector strokes match pixel-for-pixel at any resolution.
+ * Builds pure vector `android.graphics.Path` contours centered at `(0, 0)` for all 24
+ * `ShapeType` entries (basic geometry, word balloons, arrows, and badges). Shared by shape picker
+ * previews, `CanvasRenderer`, and `ImageExporter` so shapes and vector strokes match pixel-for-pixel.
  */
 object ShapePathBuilder {
 
@@ -278,7 +278,7 @@ object ShapePathBuilder {
             cloud.op(puff, Path.Op.UNION)
         }
 
-        // Two trailing PicSay Pro thought bubbles leading toward bottom-left
+        // Two trailing thought bubbles leading toward bottom-left
         val bubble1 = Path().apply {
             val cx = -halfW * 0.36f
             val cy = halfH * 0.70f

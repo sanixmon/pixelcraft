@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.PixelCraft" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">#1E1E1E</item>
-        <item name="android:navigationBarColor">#121212</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">#14161D</item>
+    </style>
+
+    <style name="Theme.PixelCraft.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#14161D</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.PixelCraft</item>
     </style>
 </resources>

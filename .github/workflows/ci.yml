@@ -12,12 +12,14 @@ concurrency:
 
 jobs:
   build:
-    name: Build & Test
+    name: Test, Lint & Assemble Debug
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -36,6 +38,9 @@ jobs:
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
+      - name: Run Android Lint
+        run: ./gradlew lintDebug --no-daemon --stacktrace
+
       - name: Assemble Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
@@ -47,10 +52,20 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Upload Lint Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results-debug
+          path: app/build/reports/lint-results-debug.*
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: ignore
           retention-days: 7

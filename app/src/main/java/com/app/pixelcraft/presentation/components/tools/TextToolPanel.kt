@@ -23,40 +23,51 @@ import androidx.compose.material.icons.automirrored.filled.AlignHorizontalLeft
 import androidx.compose.material.icons.automirrored.filled.AlignHorizontalRight
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AlignHorizontalCenter
 import androidx.compose.material.icons.filled.AlignVerticalBottom
 import androidx.compose.material.icons.filled.AlignVerticalCenter
 import androidx.compose.material.icons.filled.AlignVerticalTop
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.BorderStyle
+import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatColorFill
+import androidx.compose.material.icons.filled.FormatLineSpacing
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Looks
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Slider
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,25 +80,47 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.data.model.LayerBlendMode
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.TextAlignment
 import com.app.pixelcraft.data.presets.FontCatalog
+import com.app.pixelcraft.domain.TextCaseMode
 import com.app.pixelcraft.presentation.ActiveSubTool
 import com.app.pixelcraft.presentation.AlignmentAction
+import com.app.pixelcraft.presentation.EyedropperTarget
 import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
+import kotlin.math.roundToInt
 
 private val TextColorPalette = listOf(
     0xFFFFFFFF, 0xFF000000, 0xFFFF0055, 0xFFFF5722, 0xFFFFEB3B,
     0xFF00E676, 0xFF00E5FF, 0xFF2979FF, 0xFF651FFF, 0xFFFF80AB
 )
 
+private enum class TextToolGroup(val label: String) {
+    ALL("All"),
+    TYPE("Type"),
+    FX("Color & FX"),
+    LAYOUT("Layout")
+}
+
 @Composable
 fun TextToolPanel(
     selectedLayer: Layer?,
     activeSubTool: ActiveSubTool,
+    recentColors: List<Long> = emptyList(),
+    favoriteFontKeys: Set<String> = emptySet(),
+    availableFontsCount: Int = 16,
+    hasCopiedStyle: Boolean = false,
     onSubToolSelected: (ActiveSubTool) -> Unit,
     onUpdateLayer: (Boolean, (Layer) -> Layer) -> Unit,
     onFinishContinuousEdit: () -> Unit,
+    onApplyTextCase: (TextCaseMode) -> Unit = {},
+    onToggleFavoriteFont: (String) -> Unit = {},
+    onImportFont: () -> Unit = {},
+    onStartEyedropper: (EyedropperTarget) -> Unit = {},
+    onCopyStyle: () -> Unit = {},
+    onPasteStyle: () -> Unit = {},
+    onOpenSavedStyles: () -> Unit = {},
     onDeleteLayer: () -> Unit,
     onDuplicateLayer: () -> Unit,
     onBringToFront: () -> Unit,
@@ -99,12 +132,14 @@ fun TextToolPanel(
     modifier: Modifier = Modifier
 ) {
     if (selectedLayer == null || selectedLayer.type != LayerType.TEXT) {
-        Box(
+        Row(
             modifier = modifier
                 .fillMaxWidth()
-                .height(60.dp)
-                .background(Color(0xFF232730)),
-            contentAlignment = Alignment.Center
+                .height(62.dp)
+                .background(Color(0xFF1E222D))
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
                 onClick = onAddText,
@@ -114,145 +149,272 @@ fun TextToolPanel(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("+ New Text", color = Color.Black, fontWeight = FontWeight.Bold)
             }
+            OutlinedButton(onClick = onOpenSavedStyles) {
+                Icon(Icons.Default.Bookmarks, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Saved Styles", color = Color.White, fontSize = 12.sp)
+            }
         }
         return
     }
 
+    var selectedGroup by remember { mutableStateOf(TextToolGroup.ALL) }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF232730))
+            .background(Color(0xFF1E222D))
     ) {
         if (activeSubTool != ActiveSubTool.NONE) {
             SubToolInspector(
                 subTool = activeSubTool,
                 layer = selectedLayer,
+                recentColors = recentColors,
+                favoriteFontKeys = favoriteFontKeys,
+                availableFontsCount = availableFontsCount,
                 onUpdate = onUpdateLayer,
                 onFinishContinuousEdit = onFinishContinuousEdit,
+                onApplyTextCase = onApplyTextCase,
+                onToggleFavoriteFont = onToggleFavoriteFont,
+                onImportFont = onImportFont,
+                onStartEyedropper = onStartEyedropper,
                 onNudge = onNudge,
                 onAlign = onAlign,
                 onClose = { onSubToolSelected(ActiveSubTool.NONE) }
             )
         }
 
+        // Compact group filter + Style Clipboard bar (§ 5.2e & § 7.1)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
+                .background(Color(0xFF181B24))
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            for (group in TextToolGroup.entries) {
+                val active = selectedGroup == group
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (active) Color(0xFF00E5FF).copy(alpha = 0.2f) else Color.Transparent)
+                        .border(
+                            width = 1.dp,
+                            color = if (active) Color(0xFF00E5FF) else Color(0xFF2D3343),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable { selectedGroup = group }
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = group.label,
+                        color = if (active) Color(0xFF00E5FF) else Color(0xFFB5BDCE),
+                        fontSize = 11.sp,
+                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            MiniActionPill(
+                icon = Icons.Default.ContentCopy,
+                label = "Copy Style",
+                onClick = onCopyStyle
+            )
+            if (hasCopiedStyle) {
+                MiniActionPill(
+                    icon = Icons.Default.ContentPaste,
+                    label = "Paste Style",
+                    accent = true,
+                    onClick = onPasteStyle
+                )
+            }
+            MiniActionPill(
+                icon = Icons.Default.Bookmarks,
+                label = "Styles",
+                onClick = onOpenSavedStyles
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(66.dp)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            ToolButton(
-                icon = Icons.Default.Edit,
-                label = "Edit",
-                isActive = false,
-                onClick = { onOpenEditDialog() }
-            )
-            ToolButton(
-                icon = Icons.Default.FontDownload,
-                label = "Font",
-                isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatSize,
-                label = "Size",
-                isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
-            )
-            ToolButton(
-                icon = Icons.Default.ColorLens,
-                label = "Color",
-                isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
-            )
-            ToolButton(
-                icon = Icons.Default.BorderStyle,
-                label = "Stroke",
-                isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatBold,
-                label = "Style",
-                isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
-            )
-            ToolButton(
-                icon = Icons.Default.Lightbulb,
-                label = "Shadow",
-                isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatColorFill,
-                label = "Background",
-                isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
-            )
-            ToolButton(
-                icon = Icons.Default.ViewInAr,
-                label = "3D Text",
-                isActive = activeSubTool == ActiveSubTool.TEXT_3D,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_3D) }
-            )
-            ToolButton(
-                icon = Icons.Default.SettingsBackupRestore,
-                label = "Reflection",
-                isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
-            )
-            ToolButton(
-                icon = Icons.Default.Opacity,
-                label = "Opacity",
-                isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
-            )
-            ToolButton(
-                icon = Icons.Default.Rotate90DegreesCcw,
-                label = "Rotate",
-                isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
-            )
-            ToolButton(
-                icon = Icons.Default.ArrowUpward,
-                label = "Position",
-                isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
-            )
-            ToolButton(
-                icon = Icons.Default.AlignHorizontalCenter,
-                label = "Relative Pos",
-                isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
-            )
-            ToolButton(
-                icon = Icons.Default.Layers,
-                label = "To Front",
-                isActive = false,
-                onClick = { onBringToFront() }
-            )
-            ToolButton(
-                icon = Icons.Default.Layers,
-                label = "To Back",
-                isActive = false,
-                onClick = { onSendToBack() }
-            )
-            ToolButton(
-                icon = Icons.Default.ContentCopy,
-                label = "Copy",
-                isActive = false,
-                onClick = { onDuplicateLayer() }
-            )
-            ToolButton(
-                icon = Icons.Default.Delete,
-                label = "Delete",
-                isActive = false,
-                onClick = { onDeleteLayer() }
-            )
+            val showType = selectedGroup == TextToolGroup.ALL || selectedGroup == TextToolGroup.TYPE
+            val showFx = selectedGroup == TextToolGroup.ALL || selectedGroup == TextToolGroup.FX
+            val showLayout = selectedGroup == TextToolGroup.ALL || selectedGroup == TextToolGroup.LAYOUT
+
+            if (showType) {
+                ToolButton(
+                    icon = Icons.Default.Edit,
+                    label = "Edit",
+                    isActive = false,
+                    onClick = onOpenEditDialog
+                )
+                ToolButton(
+                    icon = Icons.Default.FontDownload,
+                    label = "Font",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
+                )
+                ToolButton(
+                    icon = Icons.Default.FormatSize,
+                    label = "Size",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
+                )
+                ToolButton(
+                    icon = Icons.Default.FormatBold,
+                    label = "Style",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
+                )
+                ToolButton(
+                    icon = Icons.Default.FormatLineSpacing,
+                    label = "Spacing",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_SPACING,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_SPACING) }
+                )
+                ToolButton(
+                    icon = Icons.Default.Looks,
+                    label = "Curve",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_CURVE,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_CURVE) }
+                )
+            }
+
+            if (showFx) {
+                ToolButton(
+                    icon = Icons.Default.ColorLens,
+                    label = "Color",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
+                )
+                ToolButton(
+                    icon = Icons.Default.BorderStyle,
+                    label = "Stroke",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
+                )
+                ToolButton(
+                    icon = Icons.Default.AutoAwesome,
+                    label = "Glow",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_GLOW,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_GLOW) }
+                )
+                ToolButton(
+                    icon = Icons.Default.Lightbulb,
+                    label = "Shadow",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
+                )
+                ToolButton(
+                    icon = Icons.Default.FormatColorFill,
+                    label = "Bg Pill",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
+                )
+                ToolButton(
+                    icon = Icons.Default.ViewInAr,
+                    label = "3D Text",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_3D,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_3D) }
+                )
+                ToolButton(
+                    icon = Icons.Default.SettingsBackupRestore,
+                    label = "Reflect",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
+                )
+                ToolButton(
+                    icon = Icons.Default.BlurOn,
+                    label = "Blend",
+                    isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
+                    onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
+                )
+                ToolButton(
+                    icon = Icons.Default.Opacity,
+                    label = "Opacity",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
+                )
+            }
+
+            if (showLayout) {
+                ToolButton(
+                    icon = Icons.Default.Rotate90DegreesCcw,
+                    label = "Rotate",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
+                )
+                ToolButton(
+                    icon = Icons.Default.ArrowUpward,
+                    label = "Nudge",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
+                )
+                ToolButton(
+                    icon = Icons.Default.AlignHorizontalCenter,
+                    label = "Align",
+                    isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
+                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
+                )
+                ToolButton(
+                    icon = Icons.Default.Layers,
+                    label = "To Front",
+                    isActive = false,
+                    onClick = onBringToFront
+                )
+                ToolButton(
+                    icon = Icons.Default.Layers,
+                    label = "To Back",
+                    isActive = false,
+                    onClick = onSendToBack
+                )
+                ToolButton(
+                    icon = Icons.Default.ContentCopy,
+                    label = "Duplicate",
+                    isActive = false,
+                    onClick = onDuplicateLayer
+                )
+                ToolButton(
+                    icon = Icons.Default.Delete,
+                    label = "Delete",
+                    isActive = false,
+                    onClick = onDeleteLayer
+                )
+            }
         }
+    }
+}
+
+@Composable
+internal fun MiniActionPill(
+    icon: ImageVector,
+    label: String,
+    accent: Boolean = false,
+    onClick: () -> Unit
+) {
+    val fg = if (accent) Color(0xFF00E5FF) else Color(0xFFD5DAE5)
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFF252A38))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(13.dp))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(label, color = fg, fontSize = 11.sp)
     }
 }
 
@@ -268,10 +430,10 @@ private fun ToolButton(
 
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .background(if (isActive) activeColor.copy(alpha = 0.18f) else Color.Transparent)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = 9.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -284,7 +446,7 @@ private fun ToolButton(
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             color = if (isActive) activeColor else Color(0xFFCCCCCC)
         )
     }
@@ -294,8 +456,15 @@ private fun ToolButton(
 private fun SubToolInspector(
     subTool: ActiveSubTool,
     layer: Layer,
+    recentColors: List<Long>,
+    favoriteFontKeys: Set<String>,
+    availableFontsCount: Int,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
     onFinishContinuousEdit: () -> Unit,
+    onApplyTextCase: (TextCaseMode) -> Unit,
+    onToggleFavoriteFont: (String) -> Unit,
+    onImportFont: () -> Unit,
+    onStartEyedropper: (EyedropperTarget) -> Unit,
     onNudge: (Float, Float) -> Unit,
     onAlign: (AlignmentAction) -> Unit,
     onClose: () -> Unit
@@ -303,8 +472,8 @@ private fun SubToolInspector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 225.dp)
-            .background(Color(0xFF1B1D24))
+            .heightIn(max = 240.dp)
+            .background(Color(0xFF161922))
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
     ) {
@@ -314,69 +483,146 @@ private fun SubToolInspector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = subTool.name.replace("TEXT_", "").replace("_", " "),
+                text = subTool.name
+                    .removePrefix("TEXT_")
+                    .removePrefix("LAYER_")
+                    .replace("_", " "),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
-            IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
+            IconButton(onClick = onClose, modifier = Modifier.size(26.dp)) {
                 Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.White)
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         when (subTool) {
             ActiveSubTool.TEXT_FONT -> {
-                Text(
-                    text = "Bundled Free Fonts (${FontCatalog.fonts.size})",
-                    color = Color(0xFFCCCCCC),
-                    fontSize = 11.sp
-                )
+                var searchQuery by remember { mutableStateOf("") }
+                var selectedCategory by remember { mutableStateOf("All") }
+                val allFonts = remember(availableFontsCount) { FontCatalog.allFonts() }
+                val categories = remember(allFonts, favoriteFontKeys) {
+                    buildList {
+                        add("All")
+                        if (favoriteFontKeys.isNotEmpty()) add("Favorites")
+                        if (allFonts.any { it.category == "Imported" }) add("Imported")
+                        allFonts.map { it.category }.distinct().filter { it != "Imported" }.forEach { add(it) }
+                    }
+                }
+                val filteredFonts = remember(allFonts, searchQuery, selectedCategory, favoriteFontKeys) {
+                    allFonts.filter { font ->
+                        val matchesCategory = when (selectedCategory) {
+                            "All" -> true
+                            "Favorites" -> font.key in favoriteFontKeys
+                            else -> font.category.equals(selectedCategory, ignoreCase = true)
+                        }
+                        val matchesSearch = searchQuery.isBlank() ||
+                            font.displayName.contains(searchQuery.trim(), ignoreCase = true) ||
+                            font.category.contains(searchQuery.trim(), ignoreCase = true)
+                        matchesCategory && matchesSearch
+                    }
+                }
+                val previewSample = remember(layer.text) {
+                    layer.text.lineSequence().firstOrNull()?.trim()?.take(10)?.ifBlank { "Abc" } ?: "Abc"
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search ${allFonts.size} fonts...", fontSize = 12.sp) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedButton(onClick = onImportFont) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(".ttf/.otf", color = Color(0xFF00E5FF), fontSize = 12.sp)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    for (cat in categories) {
+                        FilterChip(
+                            selected = selectedCategory == cat,
+                            onClick = { selectedCategory = cat },
+                            label = { Text(cat, fontSize = 11.sp) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    for (font in FontCatalog.fonts) {
+                    for (font in filteredFonts) {
                         val isSelected = layer.fontKey == font.key
+                        val isFav = font.key in favoriteFontKeys
                         val composeFamily = remember(font.key) {
                             FontCatalog.resolveComposeFontFamily(font.key)
                         }
                         Column(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Color(0xFF283344) else Color(0xFF14161D))
+                                .background(if (isSelected) Color(0xFF263346) else Color(0xFF11141C))
                                 .border(
                                     width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF333742),
+                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF2D3240),
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .clickable { onUpdate(false) { it.copy(fontKey = font.key) } }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = "Abc",
-                                fontFamily = composeFamily,
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                maxLines = 1
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = previewSample,
+                                    fontFamily = composeFamily,
+                                    color = Color.White,
+                                    fontSize = 17.sp,
+                                    maxLines = 1
+                                )
+                                Icon(
+                                    imageVector = if (isFav) Icons.Default.Star else Icons.Default.StarBorder,
+                                    contentDescription = "Favorite ${font.displayName}",
+                                    tint = if (isFav) Color(0xFFFFD54F) else Color(0xFF687082),
+                                    modifier = Modifier
+                                        .size(15.dp)
+                                        .clickable { onToggleFavoriteFont(font.key) }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = font.displayName,
-                                color = if (isSelected) Color(0xFF00E5FF) else Color(0xFFBBBBBB),
-                                fontSize = 10.sp,
+                                color = if (isSelected) Color(0xFF00E5FF) else Color(0xFFCCCCCC),
+                                fontSize = 11.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = font.category,
-                                color = Color(0xFF777777),
-                                fontSize = 9.sp,
+                                color = Color(0xFF7D8597),
+                                fontSize = 10.sp,
                                 maxLines = 1
                             )
                         }
@@ -386,11 +632,15 @@ private fun SubToolInspector(
 
             ActiveSubTool.TEXT_POSITION -> {
                 var stepPx by remember { mutableFloatStateOf(10f) }
-                Text("Step: ${stepPx.toInt()} px", color = Color.White, fontSize = 12.sp)
-                Slider(
+                PrecisionSlider(
+                    label = "Nudge Step",
                     value = stepPx,
-                    onValueChange = { stepPx = it },
-                    valueRange = 1f..50f
+                    valueRange = 1f..50f,
+                    defaultValue = 10f,
+                    fineStep = 1f,
+                    unitSuffix = "px",
+                    onValueChange = { next, _ -> stepPx = next },
+                    onValueChangeFinished = {}
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -398,18 +648,18 @@ private fun SubToolInspector(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { onNudge(-stepPx, 0f) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Left", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nudge Left", tint = Color.White)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(onClick = { onNudge(0f, -stepPx) }) {
-                            Icon(Icons.Default.ArrowUpward, contentDescription = "Up", tint = Color.White)
+                            Icon(Icons.Default.ArrowUpward, contentDescription = "Nudge Up", tint = Color.White)
                         }
                         IconButton(onClick = { onNudge(0f, stepPx) }) {
-                            Icon(Icons.Default.ArrowDownward, contentDescription = "Down", tint = Color.White)
+                            Icon(Icons.Default.ArrowDownward, contentDescription = "Nudge Down", tint = Color.White)
                         }
                     }
                     IconButton(onClick = { onNudge(stepPx, 0f) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Right", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Nudge Right", tint = Color.White)
                     }
                 }
             }
@@ -420,75 +670,205 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_LEFT) }) {
-                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = "Left", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = "Align Left", tint = Color.White)
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.CENTER_HORIZONTAL) }) {
-                        Icon(Icons.Default.AlignHorizontalCenter, contentDescription = "Center H", tint = Color(0xFF00E5FF))
+                        Icon(Icons.Default.AlignHorizontalCenter, contentDescription = "Center Horizontally", tint = Color(0xFF00E5FF))
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_RIGHT) }) {
-                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = "Right", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = "Align Right", tint = Color.White)
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_TOP) }) {
-                        Icon(Icons.Default.AlignVerticalTop, contentDescription = "Top", tint = Color.White)
+                        Icon(Icons.Default.AlignVerticalTop, contentDescription = "Align Top", tint = Color.White)
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.CENTER_VERTICAL) }) {
-                        Icon(Icons.Default.AlignVerticalCenter, contentDescription = "Center V", tint = Color(0xFF00E5FF))
+                        Icon(Icons.Default.AlignVerticalCenter, contentDescription = "Center Vertically", tint = Color(0xFF00E5FF))
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_BOTTOM) }) {
-                        Icon(Icons.Default.AlignVerticalBottom, contentDescription = "Bottom", tint = Color.White)
+                        Icon(Icons.Default.AlignVerticalBottom, contentDescription = "Align Bottom", tint = Color.White)
                     }
                 }
             }
 
             ActiveSubTool.TEXT_SIZE -> {
-                Text("Size: ${layer.fontSize.toInt()} sp", color = Color.White, fontSize = 12.sp)
-                Slider(
-                    value = layer.fontSize.coerceIn(12f, 180f),
-                    onValueChange = { newSize -> onUpdate(true) { it.copy(fontSize = newSize) } },
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 12f..180f
+                PrecisionSlider(
+                    label = "Font Size",
+                    value = layer.fontSize,
+                    valueRange = 10f..260f,
+                    defaultValue = 44f,
+                    fineStep = 1f,
+                    unitSuffix = "sp",
+                    onValueChange = { sz, cont -> onUpdate(cont) { it.copy(fontSize = sz) } },
+                    onValueChangeFinished = onFinishContinuousEdit
+                )
+            }
+
+            ActiveSubTool.TEXT_SPACING -> {
+                PrecisionSlider(
+                    label = "Letter Spacing",
+                    value = layer.letterSpacing,
+                    valueRange = -0.15f..1.0f,
+                    defaultValue = 0f,
+                    fineStep = 0.02f,
+                    unitSuffix = "em",
+                    valueFormatter = { "%.2f".format(it) },
+                    onValueChange = { ls, cont -> onUpdate(cont) { it.copy(letterSpacing = ls) } },
+                    onValueChangeFinished = onFinishContinuousEdit
+                )
+                PrecisionSlider(
+                    label = "Line Spacing",
+                    value = layer.lineHeightMultiplier,
+                    valueRange = 0.8f..2.2f,
+                    defaultValue = 1.15f,
+                    fineStep = 0.05f,
+                    unitSuffix = "x",
+                    valueFormatter = { "%.2f".format(it) },
+                    onValueChange = { lh, cont -> onUpdate(cont) { it.copy(lineHeightMultiplier = lh) } },
+                    onValueChangeFinished = onFinishContinuousEdit
+                )
+            }
+
+            ActiveSubTool.TEXT_CURVE -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(
+                        "Arch +90°" to 90f,
+                        "Arch +45°" to 45f,
+                        "Straight 0°" to 0f,
+                        "Smile -45°" to -45f,
+                        "Smile -90°" to -90f
+                    ).forEach { (label, deg) ->
+                        FilterChip(
+                            selected = layer.curveAngle.roundToInt() == deg.roundToInt(),
+                            onClick = { onUpdate(false) { it.copy(curveAngle = deg) } },
+                            label = { Text(label, fontSize = 11.sp) }
+                        )
+                    }
+                }
+                PrecisionSlider(
+                    label = "Arc Curve Angle",
+                    value = layer.curveAngle,
+                    valueRange = -180f..180f,
+                    defaultValue = 0f,
+                    fineStep = 2f,
+                    unitSuffix = "°",
+                    onValueChange = { deg, cont -> onUpdate(cont) { it.copy(curveAngle = deg) } },
+                    onValueChangeFinished = onFinishContinuousEdit
                 )
             }
 
             ActiveSubTool.TEXT_COLOR -> {
-                Text("Text Color (Palette / Wheel / Hex)", color = Color.White, fontSize = 12.sp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = !layer.textGradientEnabled,
+                        onClick = { onUpdate(false) { it.copy(textGradientEnabled = false) } },
+                        label = { Text("Solid Fill", fontSize = 12.sp) }
+                    )
+                    FilterChip(
+                        selected = layer.textGradientEnabled && !layer.textGradientRadial,
+                        onClick = {
+                            onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = false) }
+                        },
+                        label = { Text("Linear Gradient", fontSize = 12.sp) }
+                    )
+                    FilterChip(
+                        selected = layer.textGradientEnabled && layer.textGradientRadial,
+                        onClick = {
+                            onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = true) }
+                        },
+                        label = { Text("Radial Gradient", fontSize = 12.sp) }
+                    )
+                }
+
+                Text(
+                    text = if (layer.textGradientEnabled) "Start Color" else "Text Color",
+                    color = Color(0xFFCCCCCC),
+                    fontSize = 12.sp
+                )
                 ColorPaletteRow(
                     colors = TextColorPalette,
+                    recentColors = recentColors,
                     selectedColor = layer.textColor,
                     onSelectColor = { colorValue -> onUpdate(false) { it.copy(textColor = colorValue) } },
+                    onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_COLOR) },
                     allowAlpha = true,
                     pickerTitle = "Text Color"
                 )
+
+                if (layer.textGradientEnabled) {
+                    Text("End Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                    ColorPaletteRow(
+                        colors = TextColorPalette,
+                        recentColors = recentColors,
+                        selectedColor = layer.textGradientEndColor,
+                        onSelectColor = { endCol -> onUpdate(false) { it.copy(textGradientEndColor = endCol) } },
+                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_GRADIENT_END) },
+                        allowAlpha = true,
+                        pickerTitle = "Gradient End Color"
+                    )
+                    if (!layer.textGradientRadial) {
+                        PrecisionSlider(
+                            label = "Gradient Angle",
+                            value = layer.textGradientAngle,
+                            valueRange = 0f..360f,
+                            defaultValue = 0f,
+                            fineStep = 5f,
+                            unitSuffix = "°",
+                            onValueChange = { ang, cont -> onUpdate(cont) { it.copy(textGradientAngle = ang) } },
+                            onValueChangeFinished = onFinishContinuousEdit
+                        )
+                    }
+                }
             }
 
             ActiveSubTool.TEXT_OPACITY -> {
-                Text("Opacity: ${(layer.opacity * 100).toInt()}%", color = Color.White, fontSize = 12.sp)
-                Slider(
-                    value = layer.opacity.coerceIn(0f, 1f),
-                    onValueChange = { newOpacity -> onUpdate(true) { it.copy(opacity = newOpacity) } },
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 0f..1f
+                PrecisionSlider(
+                    label = "Opacity",
+                    value = layer.opacity * 100f,
+                    valueRange = 0f..100f,
+                    defaultValue = 100f,
+                    fineStep = 2f,
+                    unitSuffix = "%",
+                    onValueChange = { pct, cont ->
+                        onUpdate(cont) { it.copy(opacity = (pct / 100f).coerceIn(0f, 1f)) }
+                    },
+                    onValueChangeFinished = onFinishContinuousEdit
                 )
             }
 
             ActiveSubTool.TEXT_ROTATE -> {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text("Angle: ${layer.rotation.toInt()}°", color = Color.White, fontSize = 12.sp)
-                    if (layer.rotation != 0f) {
-                        TextButton(onClick = { onUpdate(false) { it.copy(rotation = 0f) } }) {
-                            Text("Reset 0°", color = Color(0xFF00E5FF), fontSize = 11.sp)
-                        }
+                    listOf(-90f, -45f, 0f, 45f, 90f).forEach { deg ->
+                        FilterChip(
+                            selected = layer.rotation.roundToInt() == deg.roundToInt(),
+                            onClick = { onUpdate(false) { it.copy(rotation = deg) } },
+                            label = { Text("${deg.toInt()}°", fontSize = 11.sp) }
+                        )
                     }
                 }
-                Slider(
-                    value = layer.rotation.coerceIn(-180f, 180f),
-                    onValueChange = { newRot -> onUpdate(true) { it.copy(rotation = newRot) } },
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = -180f..180f
+                PrecisionSlider(
+                    label = "Rotation Angle",
+                    value = layer.rotation,
+                    valueRange = -180f..180f,
+                    defaultValue = 0f,
+                    fineStep = 1f,
+                    unitSuffix = "°",
+                    onValueChange = { newRot, cont -> onUpdate(cont) { it.copy(rotation = newRot) } },
+                    onValueChangeFinished = onFinishContinuousEdit
                 )
             }
 
@@ -502,19 +882,31 @@ private fun SubToolInspector(
                     FilterChip(
                         selected = layer.isBold,
                         onClick = { onUpdate(false) { it.copy(isBold = !it.isBold) } },
-                        label = { Text("Bold") }
+                        label = { Text("Bold", fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.isItalic,
                         onClick = { onUpdate(false) { it.copy(isItalic = !it.isItalic) } },
-                        label = { Text("Italic") }
+                        label = { Text("Italic", fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.isUnderline,
                         onClick = { onUpdate(false) { it.copy(isUnderline = !it.isUnderline) } },
-                        label = { Text("Underline") }
+                        label = { Text("Underline", fontSize = 12.sp) }
+                    )
+                    FilterChip(
+                        selected = layer.flipHorizontal,
+                        onClick = { onUpdate(false) { it.copy(flipHorizontal = !it.flipHorizontal) } },
+                        leadingIcon = { Icon(Icons.Default.Flip, contentDescription = null, modifier = Modifier.size(14.dp)) },
+                        label = { Text("Flip H", fontSize = 12.sp) }
+                    )
+                    FilterChip(
+                        selected = layer.flipVertical,
+                        onClick = { onUpdate(false) { it.copy(flipVertical = !it.flipVertical) } },
+                        label = { Text("Flip V", fontSize = 12.sp) }
                     )
                 }
+
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier
@@ -526,18 +918,34 @@ private fun SubToolInspector(
                         FilterChip(
                             selected = layer.textAlign == align,
                             onClick = { onUpdate(false) { it.copy(textAlign = align) } },
-                            label = { Text("Align ${align.name.lowercase().replaceFirstChar { it.uppercase() }}") }
+                            label = {
+                                Text(
+                                    text = "Align ${align.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                                    fontSize = 12.sp
+                                )
+                            }
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("Line Spacing: ${"%.2f".format(layer.lineHeightMultiplier)}x", color = Color.White, fontSize = 11.sp)
-                Slider(
-                    value = layer.lineHeightMultiplier.coerceIn(0.85f, 2.0f),
-                    onValueChange = { lh -> onUpdate(true) { it.copy(lineHeightMultiplier = lh) } },
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 0.85f..2.0f
-                )
+                Text("Transform Case", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.UPPERCASE) }) {
+                        Text("UPPERCASE", color = Color.White, fontSize = 11.sp)
+                    }
+                    OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.LOWERCASE) }) {
+                        Text("lowercase", color = Color.White, fontSize = 11.sp)
+                    }
+                    OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.TITLE_CASE) }) {
+                        Text("Title Case", color = Color.White, fontSize = 11.sp)
+                    }
+                }
             }
 
             ActiveSubTool.TEXT_BACKGROUND -> {
@@ -546,7 +954,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Text Background", color = Color.White, fontSize = 12.sp)
+                    Text("Enable Text Background Pill", color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.textBackgroundColor != null,
                         onCheckedChange = { enable ->
@@ -563,30 +971,38 @@ private fun SubToolInspector(
                     )
                     ColorPaletteRow(
                         colors = bgPalette,
+                        recentColors = recentColors,
                         selectedColor = layer.textBackgroundColor,
                         onSelectColor = { c -> onUpdate(false) { it.copy(textBackgroundColor = c) } },
+                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_BACKGROUND) },
                         allowAlpha = true,
                         pickerTitle = "Text Background Color"
                     )
-                    Text("Padding: ${layer.textBackgroundPadding.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.textBackgroundPadding.coerceIn(0f, 60f),
-                        onValueChange = { p -> onUpdate(true) { it.copy(textBackgroundPadding = p) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0f..60f
+                    PrecisionSlider(
+                        label = "Pill Padding",
+                        value = layer.textBackgroundPadding,
+                        valueRange = 0f..60f,
+                        defaultValue = 16f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { p, cont -> onUpdate(cont) { it.copy(textBackgroundPadding = p) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
-                    Text("Radius: ${layer.textBackgroundRadius.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.textBackgroundRadius.coerceIn(0f, 40f),
-                        onValueChange = { r -> onUpdate(true) { it.copy(textBackgroundRadius = r) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0f..40f
+                    PrecisionSlider(
+                        label = "Corner Radius",
+                        value = layer.textBackgroundRadius,
+                        valueRange = 0f..48f,
+                        defaultValue = 8f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { r, cont -> onUpdate(cont) { it.copy(textBackgroundRadius = r) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
                 }
             }
 
             ActiveSubTool.TEXT_STROKE -> {
-                IvyStrokeInspector(
+                VectorStrokeInspector(
                     strokeWidth = layer.strokeWidth,
                     maxStrokeWidth = 36f,
                     defaultEnableWidth = 4f,
@@ -600,21 +1016,61 @@ private fun SubToolInspector(
                     miterLimit = layer.strokeMiterLimit,
                     strokeCap = layer.strokeCap,
                     palette = TextColorPalette,
+                    recentColors = recentColors,
+                    onPickFromCanvas = { onStartEyedropper(EyedropperTarget.STROKE_COLOR) },
                     onToggleEnable = { _, width ->
                         onUpdate(false) { it.copy(strokeWidth = width) }
                     },
-                    onWidthChange = { w -> onUpdate(true) { it.copy(strokeWidth = w) } },
+                    onWidthChange = { w, cont -> onUpdate(cont) { it.copy(strokeWidth = w) } },
                     onColorChange = { c -> onUpdate(false) { it.copy(strokeColor = c) } },
                     onPositionChange = { pos -> onUpdate(false) { it.copy(strokePosition = pos) } },
                     onPatternChange = { pat -> onUpdate(false) { it.copy(strokePattern = pat) } },
-                    onDashLengthChange = { d -> onUpdate(true) { it.copy(strokeDashLength = d) } },
-                    onDashGapChange = { g -> onUpdate(true) { it.copy(strokeDashGap = g) } },
-                    onDashPhaseChange = { p -> onUpdate(true) { it.copy(strokePhase = p) } },
+                    onDashLengthChange = { d, cont -> onUpdate(cont) { it.copy(strokeDashLength = d) } },
+                    onDashGapChange = { g, cont -> onUpdate(cont) { it.copy(strokeDashGap = g) } },
+                    onDashPhaseChange = { p, cont -> onUpdate(cont) { it.copy(strokePhase = p) } },
                     onJoinChange = { j -> onUpdate(false) { it.copy(strokeJoin = j) } },
-                    onMiterLimitChange = { m -> onUpdate(true) { it.copy(strokeMiterLimit = m) } },
+                    onMiterLimitChange = { m, cont -> onUpdate(cont) { it.copy(strokeMiterLimit = m) } },
                     onCapChange = { c -> onUpdate(false) { it.copy(strokeCap = c) } },
                     onFinishContinuousEdit = onFinishContinuousEdit
                 )
+            }
+
+            ActiveSubTool.TEXT_GLOW -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Enable Outer Neon Glow", color = Color.White, fontSize = 12.sp)
+                    Switch(
+                        checked = layer.glowEnabled,
+                        onCheckedChange = { enable -> onUpdate(false) { it.copy(glowEnabled = enable) } }
+                    )
+                }
+                if (layer.glowEnabled) {
+                    ColorPaletteRow(
+                        colors = listOf(
+                            0xFF00E5FFL, 0xFFFF007FL, 0xFF76FF03L, 0xFFFFEA00L,
+                            0xFFD500F9L, 0xFFFF6D00L, 0xFFFFFFFFL
+                        ),
+                        recentColors = recentColors,
+                        selectedColor = layer.glowColor,
+                        onSelectColor = { c -> onUpdate(false) { it.copy(glowColor = c) } },
+                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.GLOW_COLOR) },
+                        allowAlpha = true,
+                        pickerTitle = "Outer Glow Color"
+                    )
+                    PrecisionSlider(
+                        label = "Glow Blur Radius",
+                        value = layer.glowRadius,
+                        valueRange = 2f..60f,
+                        defaultValue = 18f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { rad, cont -> onUpdate(cont) { it.copy(glowRadius = rad) } },
+                        onValueChangeFinished = onFinishContinuousEdit
+                    )
+                }
             }
 
             ActiveSubTool.TEXT_SHADOW -> {
@@ -623,44 +1079,54 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Shadow", color = Color.White, fontSize = 12.sp)
+                    Text("Enable Drop Shadow", color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.shadowEnabled,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(shadowEnabled = enable) } }
                     )
                 }
                 if (layer.shadowEnabled) {
-                    Text("Shadow Color", color = Color(0xFFCCCCCC), fontSize = 11.sp)
                     ColorPaletteRow(
                         colors = listOf(
                             0xAA000000L, 0xFF000000L, 0xCCFFFFFFL, 0xFFFF0055L,
                             0xFF00E5FFL, 0xFFFFEB3BL, 0xFF651FFFL
                         ),
+                        recentColors = recentColors,
                         selectedColor = layer.shadowColor,
                         onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
+                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHADOW_COLOR) },
                         allowAlpha = true,
                         pickerTitle = "Text Shadow Color"
                     )
-                    Text("Blur Radius: ${layer.shadowRadius.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.shadowRadius.coerceIn(1f, 40f),
-                        onValueChange = { r -> onUpdate(true) { it.copy(shadowRadius = r) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 1f..40f
+                    PrecisionSlider(
+                        label = "Blur Radius",
+                        value = layer.shadowRadius,
+                        valueRange = 0f..48f,
+                        defaultValue = 10f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { r, cont -> onUpdate(cont) { it.copy(shadowRadius = r) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
-                    Text("Offset X: ${layer.shadowDx.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.shadowDx.coerceIn(-30f, 30f),
-                        onValueChange = { dx -> onUpdate(true) { it.copy(shadowDx = dx) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = -30f..30f
+                    PrecisionSlider(
+                        label = "Offset X",
+                        value = layer.shadowDx,
+                        valueRange = -40f..40f,
+                        defaultValue = 4f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { dx, cont -> onUpdate(cont) { it.copy(shadowDx = dx) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
-                    Text("Offset Y: ${layer.shadowDy.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.shadowDy.coerceIn(-30f, 30f),
-                        onValueChange = { dy -> onUpdate(true) { it.copy(shadowDy = dy) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = -30f..30f
+                    PrecisionSlider(
+                        label = "Offset Y",
+                        value = layer.shadowDy,
+                        valueRange = -40f..40f,
+                        defaultValue = 6f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { dy, cont -> onUpdate(cont) { it.copy(shadowDy = dy) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
                 }
             }
@@ -671,33 +1137,42 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable 3D Text", color = Color.White, fontSize = 12.sp)
+                    Text("Enable 3D Extrusion", color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.is3D,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(is3D = enable) } }
                     )
                 }
                 if (layer.is3D) {
-                    Text("Depth: ${layer.depth3D.toInt()}", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.depth3D.coerceIn(1f, 35f),
-                        onValueChange = { d -> onUpdate(true) { it.copy(depth3D = d) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 1f..35f
+                    PrecisionSlider(
+                        label = "3D Depth",
+                        value = layer.depth3D,
+                        valueRange = 1f..36f,
+                        defaultValue = 16f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { d, cont -> onUpdate(cont) { it.copy(depth3D = d) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
-                    Text("Darken: ${(layer.darken3D * 100).toInt()}%", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.darken3D.coerceIn(0f, 0.8f),
-                        onValueChange = { dk -> onUpdate(true) { it.copy(darken3D = dk) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0f..0.8f
+                    PrecisionSlider(
+                        label = "Side Darken",
+                        value = layer.darken3D * 100f,
+                        valueRange = 0f..85f,
+                        defaultValue = 40f,
+                        fineStep = 2f,
+                        unitSuffix = "%",
+                        onValueChange = { dk, cont -> onUpdate(cont) { it.copy(darken3D = dk / 100f) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
-                    Text("Angle: ${layer.angle3D.toInt()}°", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.angle3D.coerceIn(0f, 360f),
-                        onValueChange = { a -> onUpdate(true) { it.copy(angle3D = a) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0f..360f
+                    PrecisionSlider(
+                        label = "Extrusion Angle",
+                        value = layer.angle3D,
+                        valueRange = 0f..360f,
+                        defaultValue = 30f,
+                        fineStep = 5f,
+                        unitSuffix = "°",
+                        onValueChange = { a, cont -> onUpdate(cont) { it.copy(angle3D = a) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
                 }
                 Row(
@@ -714,6 +1189,7 @@ private fun SubToolInspector(
                 if (layer.shadow3DEnabled) {
                     ColorPaletteRow(
                         colors = listOf(0x66000000L, 0xAA000000L, 0x6600E5FFL, 0x66FF007FL),
+                        recentColors = recentColors,
                         selectedColor = layer.shadow3DColor,
                         onSelectColor = { c -> onUpdate(false) { it.copy(shadow3DColor = c) } },
                         allowAlpha = true,
@@ -728,27 +1204,52 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Reflection", color = Color.White, fontSize = 12.sp)
+                    Text("Enable Mirror Reflection", color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.reflectionEnabled,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(reflectionEnabled = enable) } }
                     )
                 }
                 if (layer.reflectionEnabled) {
-                    Text("Distance: ${layer.reflectionDistance.toInt()} px", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.reflectionDistance.coerceIn(0f, 40f),
-                        onValueChange = { d -> onUpdate(true) { it.copy(reflectionDistance = d) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0f..40f
+                    PrecisionSlider(
+                        label = "Gap Distance",
+                        value = layer.reflectionDistance,
+                        valueRange = 0f..48f,
+                        defaultValue = 4f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { d, cont -> onUpdate(cont) { it.copy(reflectionDistance = d) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
-                    Text("Opacity: ${(layer.reflectionOpacity * 100).toInt()}%", color = Color.White, fontSize = 12.sp)
-                    Slider(
-                        value = layer.reflectionOpacity.coerceIn(0.05f, 0.8f),
-                        onValueChange = { op -> onUpdate(true) { it.copy(reflectionOpacity = op) } },
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 0.05f..0.8f
+                    PrecisionSlider(
+                        label = "Reflection Opacity",
+                        value = layer.reflectionOpacity * 100f,
+                        valueRange = 5f..85f,
+                        defaultValue = 35f,
+                        fineStep = 2f,
+                        unitSuffix = "%",
+                        onValueChange = { op, cont -> onUpdate(cont) { it.copy(reflectionOpacity = op / 100f) } },
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
+                }
+            }
+
+            ActiveSubTool.LAYER_BLEND -> {
+                Text("Composite Blend Mode", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    for (mode in LayerBlendMode.entries) {
+                        FilterChip(
+                            selected = layer.blendMode == mode,
+                            onClick = { onUpdate(false) { it.copy(blendMode = mode) } },
+                            label = { Text(mode.label, fontSize = 12.sp) }
+                        )
+                    }
                 }
             }
 

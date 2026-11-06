@@ -3,14 +3,16 @@ package com.app.pixelcraft.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Category
@@ -18,13 +20,16 @@ import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.BottomNavTab
 
 @Composable
@@ -36,39 +41,39 @@ fun PixelCraftBottomNavigation(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF1E212B))
+            .background(Color(0xFF151821))
             .navigationBarsPadding()
-            .height(48.dp)
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
+            .height(56.dp)
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BottomNavIconItem(
-            contentDescription = "Projects & Presets",
+        BottomNavTabItem(
+            label = "Templates",
             icon = Icons.Default.DashboardCustomize,
             isSelected = activeTab == BottomNavTab.PRESETS,
             onClick = { onTabSelected(BottomNavTab.PRESETS) }
         )
-        BottomNavIconItem(
-            contentDescription = "Text Tools",
+        BottomNavTabItem(
+            label = "Text",
             icon = Icons.Default.TextFields,
             isSelected = activeTab == BottomNavTab.TEXT,
             onClick = { onTabSelected(BottomNavTab.TEXT) }
         )
-        BottomNavIconItem(
-            contentDescription = "Shapes & Photos",
+        BottomNavTabItem(
+            label = "Objects",
             icon = Icons.Default.Category,
             isSelected = activeTab == BottomNavTab.OBJECTS,
             onClick = { onTabSelected(BottomNavTab.OBJECTS) }
         )
-        BottomNavIconItem(
-            contentDescription = "Canvas Background",
+        BottomNavTabItem(
+            label = "Canvas",
             icon = Icons.Default.ColorLens,
             isSelected = activeTab == BottomNavTab.BACKGROUND,
             onClick = { onTabSelected(BottomNavTab.BACKGROUND) }
         )
-        BottomNavIconItem(
-            contentDescription = "Filters",
+        BottomNavTabItem(
+            label = "Effects",
             icon = Icons.Default.AutoAwesome,
             isSelected = activeTab == BottomNavTab.FILTERS,
             onClick = { onTabSelected(BottomNavTab.FILTERS) }
@@ -77,28 +82,38 @@ fun PixelCraftBottomNavigation(
 }
 
 @Composable
-private fun BottomNavIconItem(
-    contentDescription: String,
+private fun BottomNavTabItem(
+    label: String,
     icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     val activeColor = Color(0xFF00E5FF)
-    val inactiveColor = Color(0xFF9E9E9E)
+    val inactiveColor = Color(0xFF949CB0)
 
-    Box(
+    Column(
         modifier = Modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) activeColor.copy(alpha = 0.16f) else Color.Transparent)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+            .defaultMinSize(minWidth = 56.dp, minHeight = 48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isSelected) activeColor.copy(alpha = 0.14f) else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = contentDescription,
+            contentDescription = label,
             tint = if (isSelected) activeColor else inactiveColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isSelected) activeColor else inactiveColor,
+            maxLines = 1
         )
     }
 }

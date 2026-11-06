@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="file" path="pixelcraft_projects" />
+    <include domain="file" path="images" />
+    <include domain="file" path="fonts" />
+    <include domain="file" path="datastore" />
+    <exclude domain="file" path="draft.json" />
+</full-backup-content>

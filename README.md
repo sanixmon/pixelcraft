@@ -1,55 +1,56 @@
-# PixelCraft (Jetpack Compose & Material 3)
+# PixelCraft
 
-**PixelCraft** is an open-source Android typography, vector shape, and photo editor built with **Android Jetpack Compose**, **Material 3**, and declarative state-driven rendering.
+**PixelCraft** is an offline-first Android typography, vector graphics, and photo composition studio built with **Kotlin**, **Jetpack Compose**, and **Material 3**.
 
----
+## Features
 
-## ✨ Features
+- **Home Workspace & Safe Autosave**
+  - Project gallery with 256px WebP thumbnails, search, rename, duplicate, and Undo delete
+  - Debounced `draft.json` autosave with crash recovery banner and ordered `BackHandler` protection
+  - Portable `.pixelcraft` ZIP project archive export & import
+  - 20 categorized starter templates (*Quote*, *YouTube*, *Promo*, *Greeting*, *Meme*, *Story*) and 20 curated gradients
+- **Direct Canvas Manipulation**
+  - Two-finger pinch-scale & twist-rotate on layers with `±4°` cardinal/diagonal snapping and haptic feedback
+  - `0.5x–6x` canvas viewport zoom & pan, double-tap text editing, long-press context menu, and overlap tap-cycling
+  - 48dp accessible corner & side handles (*Delete*, *Edit/Duplicate*, *Scale+Rotate*, *Width/Height Stretch*)
+  - Screen-space magnetic grid & inter-layer Smart Guides + Social Safe Zone overlay
+- **Rich Typography**
+  - 15 bundled open-source fonts (SIL OFL 1.1 & Apache 2.0) + custom `.ttf`/`.otf` font import, search & favorites
+  - Circular arc curved text (`-180°..180°`), letter & line spacing, and case transforms (`UPPER`, `lower`, `Title`)
+  - Solid, linear, and radial text gradients, vector path contour strokes (*Outside / Center / Inside*, dash patterns, joins & caps), neon outer glow, drop shadows, 3D extrusion, and mirror reflection
+  - Style Copy/Paste clipboard & persistent Saved Styles library
+- **Vector Shapes & Photo Composition**
+  - 24 procedural vector shapes across *Basic*, *Word Balloons*, *Arrows*, and *Badges*
+  - Photo layers with non-destructive crop, brightness/contrast/saturation/warmth sliders, 8 photo filter presets, shape clipping masks, borders, and corner radius
+  - Per-layer composite `BlendMode`, multi-select, layer grouping, and universal horizontal/vertical flip
+- **Color & High-Resolution Export**
+  - 2D HSV color wheel + `#AARRGGBB` hex input, Canvas Eyedropper pixel sampler, and recent color swatches
+  - Memory-safe **PNG**, **JPEG**, and **WebP (Lossy & Lossless)** export up to 4K Ultra HD (`Pictures/PixelCraft`)
+  - Selected-layer transparent sticker export, transparent border trimming, and direct `FileProvider` sharing without cluttering the device gallery
+  - External `ACTION_SEND` / `ACTION_EDIT` / `ACTION_VIEW` (`image/*`) intent handling
 
-### 1. 🔤 Typography, 15 Bundled Open-Source Fonts & Ivy Draw Vector Strokes
-- **15 Bundled Commercial-Safe Fonts**: Packaged directly in `res/font/` under SIL OFL 1.1 & Apache 2.0 (*Poppins*, *Lato*, *Bebas Neue*, *Anton*, *Archivo Black*, *Russo One*, *Bangers*, *Luckiest Guy*, *Abril Fatface*, *PT Serif*, *Permanent Marker*, *Pacifico*, *Great Vibes*, *Press Start 2P*, and *Space Mono*, plus *System Sans* — see `assets/FONT_LICENSES.txt`).
-- **Ivy Draw Vector Path Strokes**: True glyph/contour `Path` strokes supporting **Position** (`Outside`, `Center`, `Inside` via `clipOutPath` / `clipPath`), **Dash Patterns** (`Solid`, `Dashed`, `Dotted`, `Dash-Dot` with `Dash`, `Gap`, and `Phase` controls), **Corner Joins** (`Round`, `Miter` + `Miter Limit`, `Bevel`), and **Line Caps** (`Round`, `Butt`, `Square`).
-- **3D Text Extrusion**: Configurable 3D extrusion depth, darkening ratio, floor shadow, and light angle.
-- **Mirror Reflection & Drop Shadows**: Studio floor mirror reflection and customizable blur drop shadows.
-- **Typography Styles & Pill Background**: Bold, Italic, Underline, multi-line alignment, line spacing, and rounded text background pills.
+## Tech Stack & Requirements
 
-### 2. 🔷 PicSay Pro Vector Shapes, Word Balloons & Pointers
-- **24 Pure Vector Shapes in 4 Categories**:
-  - **Basic**: Rectangle, Rounded Rect, Circle / Oval, Triangle, Diamond, Pentagon, Hexagon, Octagon
-  - **Word Balloons**: Oval Balloon, Speech Box, Thought Cloud, Comic Shout Burst
-  - **Arrows**: Block Arrow, Double Arrow, Chevron, Callout Pin
-  - **Badges & Symbols**: 5-Point Star, 12-Point Starburst, Heart, Shield, Ribbon Banner, Crown, Lightning, Cross
-- **Flip Horizontal / Vertical**: Instantly flip word balloon tails and arrow directions toward any subject.
-- **Solid, 2-Color Gradient & Hollow Fills**: Combine solid or linear gradient fills with Ivy Draw vector strokes and shape drop shadows.
+- **Language**: Kotlin 2.0 (`jvmTarget = 17`)
+- **UI**: Jetpack Compose + Material 3 + Navigation Compose (`gradle/libs.versions.toml`)
+- **SDK**: `minSdk = 28` (Android 9.0+), `targetSdk = 35`, `compileSdk = 35`
+- **Persistence**: `kotlinx.serialization` JSON (`AtomicFile`) + Jetpack DataStore Preferences
+- **Architecture**: [`docs/architecture.md`](docs/architecture.md)
 
-### 3. 🎨 Interactive Color Wheel & Hex Picker Everywhere
-- **2D HSV Color Wheel + Brightness & Alpha Sliders + Hex (`#RRGGBB` / `#AARRGGBB`)**: Accessible from every color palette in the editor (Text Color, Text Background, Vector Stroke, Drop Shadows, Shape Fill & Gradients, Canvas Background, and Vignette).
+## Testing & CI
 
-### 4. 🖼️ Photos, Fixed Canvas & Grid-Activated Magnetic Anchors
-- **Fixed Canvas Viewport**: Static canvas slot + compact icon-only bottom navigation bar so opening or switching any tool/inspector never shifts or rescales the canvas.
-- **Freemove by Default, Anchors When Grid ON**: Smooth un-anchored freemove dragging by default; toggle **Grid** on to activate magnetic snapping and guide lines on canvas center axes and grid divisions.
-- **Photo Layers & Backgrounds**: Import photos via the Android Photo Picker into movable layers or center-cropped canvas backgrounds.
+Run JVM unit tests locally:
 
-### 5. 💾 High-Resolution Export & Project Persistence
-- **Save to Gallery & Share**: Exports to `Pictures/PixelCraft` (MediaStore) in **PNG** (preserving transparency) or **JPEG** up to **4K Ultra HD (`3.0x`)**.
-- **Project Storage & Undo/Redo**: Local JSON project snapshots (`kotlinx.serialization`) and 50-step undo/redo history.
-
----
-
-## 🚀 Building & Testing
-
-### Run Unit Tests
 ```bash
-./gradlew testDebugUnitTest
+./gradlew testDebugUnitTest --no-daemon
 ```
 
-### Compile Debug APK
-```bash
-./gradlew assembleDebug
-```
+GitHub Actions workflows:
+- [`.github/workflows/ci.yml`](.github/workflows/ci.yml): Runs `testDebugUnitTest`, `lintDebug`, and `assembleDebug` on every push and pull request.
+- [`.github/workflows/release.yml`](.github/workflows/release.yml): Runs `testReleaseUnitTest`, builds R8-minified signed `.apk` and Play Store `.aab` bundles, verifies signatures, and publishes GitHub Releases on `v*` tags.
 
----
+## Documentation
 
-## 📄 License
-
-Licensed under the [Apache License, Version 2.0](LICENSE). Bundled font licenses are documented in [`app/src/main/assets/FONT_LICENSES.txt`](app/src/main/assets/FONT_LICENSES.txt).
+- [Architecture Guide](docs/architecture.md)
+- [Changelog](CHANGELOG.md)
+- [Contributing Guide](CONTRIBUTING.md)

@@ -1,5 +1,6 @@
 package com.app.pixelcraft.domain
 
+import android.content.Context
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.StrokePosition
@@ -11,6 +12,10 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
+
+fun interface TextMeasurer {
+    fun measureBounds(layer: Layer): Pair<Float, Float>?
+}
 
 /**
  * Pure ARGB, HSV, and Hex color operations (zero Android framework calls,
@@ -127,14 +132,30 @@ object ColorMath {
     }
 }
 
-/** Pure text sizing helpers so selection bounds and alignment fit text content across bundled fonts. */
+/**
+ * Accurate text bounds calculator using [TextGeometryCache] via [TextMeasurer] on Android devices,
+ * with a calibrated JVM fallback so unit tests run cleanly without Android layoutlib.
+ */
 object TextSizing {
+
+    fun androidMeasurer(context: Context): TextMeasurer = TextMeasurer { layer ->
+        runCatching {
+            val tf = FontCatalog.resolveTypeface(context, layer.fontKey, layer.isBold, layer.isItalic)
+            val geom = TextGeometryCache.getOrBuild(layer, tf)
+            if (geom.maxLineWidth > 1f && geom.totalHeight > 1f) {
+                geom.maxLineWidth to geom.totalHeight
+            } else {
+                null
+            }
+        }.getOrNull()
+    }
 
     fun estimateLineWidth(
         line: String,
         fontSize: Float,
         isBold: Boolean,
-        fontKey: String = FontCatalog.DEFAULT_KEY
+        fontKey: String = FontCatalog.DEFAULT_KEY,
+        letterSpacing: Float = 0f
     ): Float {
         var units = 0f
         for (ch in line) {
@@ -149,18 +170,24 @@ object TextSizing {
         }
         val boldFactor = if (isBold) 1.08f else 1.0f
         val fontFactor = FontCatalog.widthFactor(fontKey)
-        return units * fontSize * boldFactor * fontFactor
+        val spacingPx = if (line.length > 1) (line.length - 1) * letterSpacing * fontSize else 0f
+        return (units * fontSize * boldFactor * fontFactor + spacingPx).coerceAtLeast(0f)
     }
 
-    fun withEstimatedBounds(layer: Layer): Layer {
+    fun withEstimatedBounds(layer: Layer, measurer: TextMeasurer? = null): Layer {
         return when (layer.type) {
             LayerType.TEXT -> {
-                val lines = layer.text.split("\n").ifEmpty { listOf("") }
-                val maxLineW = lines.maxOfOrNull {
-                    estimateLineWidth(it, layer.fontSize, layer.isBold, layer.fontKey)
-                } ?: 0f
-                val lineHeight = layer.fontSize * 1.2f * layer.lineHeightMultiplier
-                val rawH = lines.size * lineHeight
+                val measured = measurer?.measureBounds(layer)
+                val (rawW, rawH) = if (measured != null) {
+                    measured
+                } else {
+                    val lines = layer.text.split("\n").ifEmpty { listOf("") }
+                    val maxLineW = lines.maxOfOrNull {
+                        estimateLineWidth(it, layer.fontSize, layer.isBold, layer.fontKey, layer.letterSpacing)
+                    } ?: 0f
+                    val lineHeight = layer.fontSize * 1.2f * layer.lineHeightMultiplier
+                    maxLineW to (lines.size * lineHeight)
+                }
 
                 val bgPad = if (layer.textBackgroundColor != null) layer.textBackgroundPadding * 2f else 0f
                 val strokePad = when {
@@ -169,14 +196,31 @@ object TextSizing {
                     layer.strokePosition == StrokePosition.CENTER -> layer.strokeWidth
                     else -> 0f
                 }
+                val glowPad = if (layer.glowEnabled) layer.glowRadius * 1.5f else 0f
                 val extrudeX = if (layer.is3D) abs(cos(layer.angle3D * PI / 180.0)).toFloat() * layer.depth3D else 0f
                 val extrudeY = if (layer.is3D) abs(sin(layer.angle3D * PI / 180.0)).toFloat() * layer.depth3D else 0f
 
-                val estW = (maxLineW + bgPad + strokePad + extrudeX + 24f).coerceAtLeast(80f)
-                val estH = (rawH + bgPad + strokePad + extrudeY + 20f).coerceAtLeast(48f)
+                val estW = (rawW + bgPad + strokePad + glowPad + extrudeX + 24f).coerceAtLeast(80f)
+                val estH = (rawH + bgPad + strokePad + glowPad + extrudeY + 20f).coerceAtLeast(48f)
                 layer.copy(width = estW, height = estH)
             }
             else -> layer
         }
     }
+
+    fun transformCase(text: String, mode: TextCaseMode): String = when (mode) {
+        TextCaseMode.UPPERCASE -> text.uppercase()
+        TextCaseMode.LOWERCASE -> text.lowercase()
+        TextCaseMode.TITLE_CASE -> text.split("\n").joinToString("\n") { line ->
+            line.split(" ").joinToString(" ") { word ->
+                word.lowercase().replaceFirstChar { it.titlecase() }
+            }
+        }
+    }
+}
+
+enum class TextCaseMode {
+    UPPERCASE,
+    LOWERCASE,
+    TITLE_CASE
 }

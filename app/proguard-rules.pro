@@ -35,11 +35,11 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# Preserve serialized model, generated serializers, & enum names in PixelCraft project JSON snapshots
--keep @kotlinx.serialization.Serializable class com.app.pixelcraft.data.model.** { *; }
--keep class com.app.pixelcraft.data.model.**$$serializer { *; }
--keep class com.app.pixelcraft.data.model.**$Companion { *; }
--keepclassmembers enum com.app.pixelcraft.data.model.** {
+# Preserve serialized models, custom font entries, generated serializers, & enum names in PixelCraft snapshots
+-keep @kotlinx.serialization.Serializable class com.app.pixelcraft.** { *; }
+-keep class com.app.pixelcraft.**$$serializer { *; }
+-keep class com.app.pixelcraft.**$Companion { *; }
+-keepclassmembers enum com.app.pixelcraft.** {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }

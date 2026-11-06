@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_subtitle">Studio Teks di Atas Foto</string>
+    <string name="home_new_canvas">Kanvas Baru</string>
+    <string name="home_from_photo">Dari Foto</string>
+    <string name="home_templates">Template</string>
+    <string name="home_my_projects">Proyek Saya</string>
+    <string name="home_continue_draft">Lanjutkan Draf Terakhir</string>
+    <string name="home_import_project">Impor .pixelcraft</string>
+    <string name="home_search_projects">Cari proyek tersimpan…</string>
+    <string name="home_no_projects">Belum ada proyek tersimpan. Buat kanvas baru atau pilih template di atas.</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_discard">Buang</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_export">Ekspor</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_duplicate">Duplikat</string>
+    <string name="action_rename">Ganti Nama</string>
+    <string name="action_reset">Atur Ulang</string>
+    <string name="unsaved_changes_title">Simpan perubahan?</string>
+    <string name="unsaved_changes_body">Desain memiliki perubahan belum disimpan. Simpan sebagai proyek sebelum keluar?</string>
+    <string name="autosaved_indicator">Tersimpan otomatis</string>
+    <string name="nav_templates">Template</string>
+    <string name="nav_text">Teks</string>
+    <string name="nav_objects">Objek</string>
+    <string name="nav_canvas">Kanvas</string>
+    <string name="nav_effects">Efek</string>
+    <string name="onboarding_tip">Tips: Ketuk untuk memilih, cubit 2 jari untuk skala &amp; putar, ketuk dua kali teks untuk mengedit.</string>
+</resources>

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,11 +25,10 @@ import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import kotlin.math.roundToInt
 
 /**
- * Ivy Draw-inspired vector path stroke inspector shared by both Text (`TEXT_STROKE`)
- * and Shape (`SHAPE_STROKE`) tools.
+ * Vector path contour stroke inspector shared by both Text (`TEXT_STROKE`) and Shape (`SHAPE_STROKE`) tools.
  */
 @Composable
-fun IvyStrokeInspector(
+fun VectorStrokeInspector(
     strokeWidth: Float,
     maxStrokeWidth: Float,
     defaultEnableWidth: Float = 5f,
@@ -44,16 +42,18 @@ fun IvyStrokeInspector(
     miterLimit: Float,
     strokeCap: StrokeCapStyle,
     palette: List<Long>,
+    recentColors: List<Long> = emptyList(),
+    onPickFromCanvas: (() -> Unit)? = null,
     onToggleEnable: (Boolean, Float) -> Unit,
-    onWidthChange: (Float) -> Unit,
+    onWidthChange: (Float, Boolean) -> Unit,
     onColorChange: (Long) -> Unit,
     onPositionChange: (StrokePosition) -> Unit,
     onPatternChange: (StrokePattern) -> Unit,
-    onDashLengthChange: (Float) -> Unit,
-    onDashGapChange: (Float) -> Unit,
-    onDashPhaseChange: (Float) -> Unit,
+    onDashLengthChange: (Float, Boolean) -> Unit,
+    onDashGapChange: (Float, Boolean) -> Unit,
+    onDashPhaseChange: (Float, Boolean) -> Unit,
     onJoinChange: (StrokeJoinStyle) -> Unit,
-    onMiterLimitChange: (Float) -> Unit,
+    onMiterLimitChange: (Float, Boolean) -> Unit,
     onCapChange: (StrokeCapStyle) -> Unit,
     onFinishContinuousEdit: () -> Unit
 ) {
@@ -73,25 +73,31 @@ fun IvyStrokeInspector(
         }
 
         if (strokeWidth > 0f) {
-            Text("Width: ${strokeWidth.roundToInt()} px", color = Color.White, fontSize = 12.sp)
-            Slider(
-                value = strokeWidth.coerceIn(1f, maxStrokeWidth),
+            PrecisionSlider(
+                label = "Stroke Width",
+                value = strokeWidth,
+                valueRange = 1f..maxStrokeWidth,
+                defaultValue = defaultEnableWidth,
+                fineStep = 1f,
+                unitSuffix = "px",
+                valueFormatter = { "${it.roundToInt()}" },
                 onValueChange = onWidthChange,
-                onValueChangeFinished = onFinishContinuousEdit,
-                valueRange = 1f..maxStrokeWidth
+                onValueChangeFinished = onFinishContinuousEdit
             )
 
-            Text("Stroke Color", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+            Text("Stroke Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
             ColorPaletteRow(
                 colors = palette,
+                recentColors = recentColors,
                 selectedColor = strokeColor,
                 onSelectColor = onColorChange,
+                onPickFromCanvas = onPickFromCanvas,
                 allowAlpha = true,
                 pickerTitle = "Stroke Color"
             )
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Position (Alignment)", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+            Text("Stroke Alignment", color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,13 +108,13 @@ fun IvyStrokeInspector(
                     FilterChip(
                         selected = strokePosition == pos,
                         onClick = { onPositionChange(pos) },
-                        label = { Text(pos.label, fontSize = 11.sp) }
+                        label = { Text(pos.label, fontSize = 12.sp) }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Dash Pattern", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+            Text("Dash Pattern", color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,39 +125,48 @@ fun IvyStrokeInspector(
                     FilterChip(
                         selected = strokePattern == pat,
                         onClick = { onPatternChange(pat) },
-                        label = { Text(pat.label, fontSize = 11.sp) }
+                        label = { Text(pat.label, fontSize = 12.sp) }
                     )
                 }
             }
 
             if (strokePattern != StrokePattern.SOLID) {
                 if (strokePattern == StrokePattern.DASHED || strokePattern == StrokePattern.DASH_DOT) {
-                    Text("Dash Length: ${dashLength.roundToInt()} px", color = Color.White, fontSize = 11.sp)
-                    Slider(
-                        value = dashLength.coerceIn(4f, 60f),
+                    PrecisionSlider(
+                        label = "Dash Length",
+                        value = dashLength,
+                        valueRange = 4f..60f,
+                        defaultValue = 16f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
                         onValueChange = onDashLengthChange,
-                        onValueChangeFinished = onFinishContinuousEdit,
-                        valueRange = 4f..60f
+                        onValueChangeFinished = onFinishContinuousEdit
                     )
                 }
-                Text("Gap: ${dashGap.roundToInt()} px", color = Color.White, fontSize = 11.sp)
-                Slider(
-                    value = dashGap.coerceIn(2f, 50f),
+                PrecisionSlider(
+                    label = "Dash Gap",
+                    value = dashGap,
+                    valueRange = 2f..50f,
+                    defaultValue = 10f,
+                    fineStep = 1f,
+                    unitSuffix = "px",
                     onValueChange = onDashGapChange,
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 2f..50f
+                    onValueChangeFinished = onFinishContinuousEdit
                 )
-                Text("Phase Offset: ${dashPhase.roundToInt()} px", color = Color.White, fontSize = 11.sp)
-                Slider(
-                    value = dashPhase.coerceIn(0f, 60f),
+                PrecisionSlider(
+                    label = "Phase Offset",
+                    value = dashPhase,
+                    valueRange = 0f..60f,
+                    defaultValue = 0f,
+                    fineStep = 1f,
+                    unitSuffix = "px",
                     onValueChange = onDashPhaseChange,
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 0f..60f
+                    onValueChangeFinished = onFinishContinuousEdit
                 )
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Corner Join", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+            Text("Corner Join", color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -162,22 +177,25 @@ fun IvyStrokeInspector(
                     FilterChip(
                         selected = strokeJoin == join,
                         onClick = { onJoinChange(join) },
-                        label = { Text(join.label, fontSize = 11.sp) }
+                        label = { Text(join.label, fontSize = 12.sp) }
                     )
                 }
             }
             if (strokeJoin == StrokeJoinStyle.MITER) {
-                Text("Miter Limit: ${"%.1f".format(miterLimit)}", color = Color.White, fontSize = 11.sp)
-                Slider(
-                    value = miterLimit.coerceIn(1f, 16f),
+                PrecisionSlider(
+                    label = "Miter Limit",
+                    value = miterLimit,
+                    valueRange = 1f..16f,
+                    defaultValue = 4f,
+                    fineStep = 0.5f,
+                    valueFormatter = { "%.1f".format(it) },
                     onValueChange = onMiterLimitChange,
-                    onValueChangeFinished = onFinishContinuousEdit,
-                    valueRange = 1f..16f
+                    onValueChangeFinished = onFinishContinuousEdit
                 )
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Line Cap", color = Color(0xFFCCCCCC), fontSize = 11.sp)
+            Text("Line Cap", color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -188,7 +206,7 @@ fun IvyStrokeInspector(
                     FilterChip(
                         selected = strokeCap == cap,
                         onClick = { onCapChange(cap) },
-                        label = { Text(cap.label, fontSize = 11.sp) }
+                        label = { Text(cap.label, fontSize = 12.sp) }
                     )
                 }
             }

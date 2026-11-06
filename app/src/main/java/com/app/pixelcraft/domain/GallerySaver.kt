@@ -7,13 +7,19 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
 
-/** Writes exported images into the shared gallery under Pictures/PixelCraft and returns a shareable content URI. */
+/**
+ * Writes exported images into either:
+ * 1. The public gallery under `Pictures/PixelCraft` (`save`), OR
+ * 2. A temporary `cacheDir/share/` directory served via `FileProvider` (`saveToShareCache`) so direct sharing
+ *    does not clutter the user's gallery (fixes Bug 2.16).
+ */
 class GallerySaver(private val context: Context) {
 
     suspend fun save(bitmap: Bitmap, options: ExportOptions, baseName: String): Result<Uri> =
@@ -28,8 +34,38 @@ class GallerySaver(private val context: Context) {
             }
         }
 
+    suspend fun saveToShareCache(bitmap: Bitmap, options: ExportOptions, baseName: String): Result<Uri> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val shareDir = File(context.cacheDir, "share").apply { if (!exists()) mkdirs() }
+                pruneOldShareFiles(shareDir)
+                val displayName = "$baseName.${options.format.extension}"
+                val file = File(shareDir, displayName)
+                FileOutputStream(file).use { compress(bitmap, options, it) }
+                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            }
+        }
+
+    fun getFileProviderUri(file: File): Uri {
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    private fun pruneOldShareFiles(dir: File) {
+        val cutoff = System.currentTimeMillis() - 6L * 60L * 60L * 1000L
+        dir.listFiles()?.forEach { f ->
+            if (f.isFile && f.lastModified() < cutoff) {
+                f.delete()
+            }
+        }
+    }
+
     private fun compress(bitmap: Bitmap, options: ExportOptions, out: OutputStream) {
-        check(bitmap.compress(options.format.compressFormat, options.jpegQuality, out)) {
+        val quality = if (options.format == ExportFormat.WEBP_LOSSLESS) {
+            100
+        } else {
+            options.jpegQuality.coerceIn(10, 100)
+        }
+        check(bitmap.compress(options.format.resolveCompressFormat(), quality, out)) {
             "Could not encode the image"
         }
     }
@@ -57,7 +93,7 @@ class GallerySaver(private val context: Context) {
         return uri
     }
 
-    /** Android 8–9: needs WRITE_EXTERNAL_STORAGE, which the screen requests before exporting. */
+    /** Android 9 (API 28): requires WRITE_EXTERNAL_STORAGE, requested before gallery export. */
     @Suppress("DEPRECATION")
     private fun saveLegacy(bitmap: Bitmap, options: ExportOptions, displayName: String): Uri {
         val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ALBUM)

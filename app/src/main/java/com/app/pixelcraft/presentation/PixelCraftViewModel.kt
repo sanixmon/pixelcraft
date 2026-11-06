@@ -4,81 +4,274 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.pixelcraft.PixelCraftApp
 import com.app.pixelcraft.data.model.ActiveDialog
 import com.app.pixelcraft.data.model.AspectRatioPreset
 import com.app.pixelcraft.data.model.BackgroundType
 import com.app.pixelcraft.data.model.BottomNavTab
+import com.app.pixelcraft.data.model.CanvasConfig
 import com.app.pixelcraft.data.model.CanvasFilters
+import com.app.pixelcraft.data.model.DraftPayload
 import com.app.pixelcraft.data.model.EditorSnapshot
+import com.app.pixelcraft.data.model.GradientType
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PointF
 import com.app.pixelcraft.data.model.ProjectData
+import com.app.pixelcraft.data.model.ProjectSummary
+import com.app.pixelcraft.data.model.SavedLayerStyle
 import com.app.pixelcraft.data.model.ShapeCategory
 import com.app.pixelcraft.data.model.ShapeType
 import com.app.pixelcraft.data.model.StrokePosition
 import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.presets.DefaultPresets
+import com.app.pixelcraft.data.presets.FontCatalog
+import com.app.pixelcraft.domain.CanvasRenderer
+import com.app.pixelcraft.domain.DraftStore
+import com.app.pixelcraft.domain.ExportFormat
 import com.app.pixelcraft.domain.ExportOptions
+import com.app.pixelcraft.domain.ExportQuality
 import com.app.pixelcraft.domain.GallerySaver
 import com.app.pixelcraft.domain.ImageExporter
 import com.app.pixelcraft.domain.ImageFit
 import com.app.pixelcraft.domain.ImageStore
 import com.app.pixelcraft.domain.ProjectStorage
 import com.app.pixelcraft.domain.SnappingEngine
+import com.app.pixelcraft.domain.TextCaseMode
 import com.app.pixelcraft.domain.TextSizing
+import com.app.pixelcraft.domain.UserPreferencesStore
+import com.app.pixelcraft.domain.editor.EditorHistory
+import com.app.pixelcraft.domain.editor.LayerOperations
+import com.app.pixelcraft.domain.editor.LayerOperations.bringToFront
+import com.app.pixelcraft.domain.editor.LayerOperations.deleteUnlocked
+import com.app.pixelcraft.domain.editor.LayerOperations.duplicate
+import com.app.pixelcraft.domain.editor.LayerOperations.groupLayers
+import com.app.pixelcraft.domain.editor.LayerOperations.moveDown
+import com.app.pixelcraft.domain.editor.LayerOperations.moveUp
+import com.app.pixelcraft.domain.editor.LayerOperations.normalizeZIndices
+import com.app.pixelcraft.domain.editor.LayerOperations.sendToBack
+import com.app.pixelcraft.domain.editor.LayerOperations.ungroupLayers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class PixelCraftViewModel internal constructor(
     application: Application,
-    private val projectStorage: ProjectStorage
+    private val projectStorage: ProjectStorage,
+    private val draftStore: DraftStore? = null,
+    private val imageStore: ImageStore = ImageStore(
+        imagesDirProvider = {
+            val base = runCatching { application.filesDir }.getOrNull()
+                ?: File(System.getProperty("java.io.tmpdir"), "pixelcraft_test_images")
+            File(base, "images")
+        },
+        context = runCatching { application.applicationContext }.getOrNull()
+    ),
+    private val imageExporter: ImageExporter = ImageExporter(
+        runCatching { application.applicationContext }.getOrNull()
+    ),
+    private val gallerySaver: GallerySaver? = runCatching {
+        application.applicationContext?.let { GallerySaver(it) }
+    }.getOrNull(),
+    private val preferencesStore: UserPreferencesStore = UserPreferencesStore(
+        runCatching { application.applicationContext }.getOrNull()
+    )
 ) : AndroidViewModel(application) {
 
-    constructor(application: Application) : this(application, ProjectStorage(application))
+    constructor(application: Application) : this(
+        application = application,
+        projectStorage = (application as? PixelCraftApp)?.container?.projectStorage
+            ?: ProjectStorage(application),
+        draftStore = (application as? PixelCraftApp)?.container?.draftStore
+            ?: DraftStore(application),
+        imageStore = (application as? PixelCraftApp)?.container?.imageStore
+            ?: ImageStore(application),
+        imageExporter = (application as? PixelCraftApp)?.container?.imageExporter
+            ?: ImageExporter(application),
+        gallerySaver = (application as? PixelCraftApp)?.container?.gallerySaver
+            ?: GallerySaver(application),
+        preferencesStore = (application as? PixelCraftApp)?.container?.preferencesStore
+            ?: UserPreferencesStore(application)
+    )
 
     companion object {
         const val MIN_CANVAS_DIMENSION = 64
         const val MAX_CANVAS_DIMENSION = 4096
+        private const val AUTOSAVE_DEBOUNCE_MS = 1500L
+        private val SNAP_ROTATION_ANGLES = floatArrayOf(-180f, -135f, -90f, -45f, 0f, 45f, 90f, 135f, 180f)
+        private const val SNAP_ROTATION_THRESHOLD_DEG = 4f
     }
-
-    private val imageExporter = ImageExporter(application)
-    private val imageStore = ImageStore(application)
-    private val gallerySaver = GallerySaver(application)
 
     private val _uiState = MutableStateFlow(PixelCraftUiState())
     val uiState: StateFlow<PixelCraftUiState> = _uiState.asStateFlow()
 
-    private val undoStack = mutableListOf<EditorSnapshot>()
-    private val redoStack = mutableListOf<EditorSnapshot>()
-    private var isContinuousEditing = false
+    private val history = EditorHistory<EditorSnapshot>(limit = 50)
 
-    // Tracks true un-snapped finger trajectory during active drag so Grid snapping never sticks
+    // Tracks true un-snapped finger trajectory & rotation during active gesture so snapping never sticks
     private var rawDragPosition: PointF? = null
     private var rawDragLayerId: String? = null
+    private var rawGestureRotation: Float? = null
+    private var lastSnappedCardinalAngle: Float? = null
+
+    private var autosaveJob: Job? = null
+    private var exportJob: Job? = null
+    private var recentlyDeletedProject: ProjectData? = null
+
+    val thumbnailsDirectory: File
+        get() = projectStorage.thumbnailsDir
 
     init {
         val defaultPreset = DefaultPresets.presets.first()
-        applyPreset(defaultPreset, recordHistory = false)
+        applyPreset(defaultPreset, recordHistory = false, markDirty = false)
+        _uiState.update { it.copy(isReady = true) }
         refreshSavedProjects()
+        observeUserPreferences()
+        checkRecoverableDraft()
+    }
+
+    private fun observeUserPreferences() {
+        val flow = preferencesStore.preferencesFlow ?: return
+        viewModelScope.launch {
+            flow.collect { snap ->
+                val resolvedFormat = ExportFormat.entries.find { it.name == snap.lastExportFormat }
+                    ?: ExportFormat.PNG
+                val resolvedQuality = ExportQuality.entries.find { it.name == snap.lastExportQuality }
+                    ?: ExportQuality.MEDIUM
+                _uiState.update { state ->
+                    state.copy(
+                        exportOptions = state.exportOptions.copy(
+                            format = resolvedFormat,
+                            qualityPreset = resolvedQuality
+                        ),
+                        recentColors = snap.recentColors,
+                        favoriteFontKeys = snap.favoriteFontKeys,
+                        savedStyles = snap.savedStyles,
+                        onboardingDismissed = snap.onboardingDismissed,
+                        availableFontsCount = FontCatalog.allFonts().size
+                    )
+                }
+            }
+        }
+    }
+
+    private fun checkRecoverableDraft() {
+        val ds = draftStore ?: return
+        viewModelScope.launch {
+            val loaded = ds.load()
+            if (loaded != null && loaded.isDirty) {
+                _uiState.update {
+                    it.copy(
+                        hasRecoverableDraft = true,
+                        draftTimestamp = loaded.timestamp,
+                        draftProjectName = loaded.currentProjectName
+                    )
+                }
+            }
+        }
+    }
+
+    private fun scheduleAutosave() {
+        val ds = draftStore ?: return
+        autosaveJob?.cancel()
+        autosaveJob = viewModelScope.launch {
+            delay(AUTOSAVE_DEBOUNCE_MS)
+            val state = _uiState.value
+            if (!state.isDirty) return@launch
+            val now = System.currentTimeMillis()
+            val payload = DraftPayload(
+                timestamp = now,
+                currentProjectId = state.currentProjectId,
+                currentProjectName = state.currentProjectName,
+                isDirty = true,
+                snapshot = takeSnapshot()
+            )
+            ds.save(payload).onSuccess {
+                _uiState.update {
+                    it.copy(
+                        lastAutosavedAt = now,
+                        hasRecoverableDraft = true,
+                        draftTimestamp = now,
+                        draftProjectName = state.currentProjectName
+                    )
+                }
+            }
+        }
+    }
+
+    fun resumeSavedDraft() {
+        val ds = draftStore ?: return
+        viewModelScope.launch {
+            val draft = ds.load() ?: return@launch
+            history.clear()
+            resetDragTracking()
+            val normalized = draft.snapshot.layers.map { TextSizing.withEstimatedBounds(it) }.normalizeZIndices()
+            val validSelected = draft.snapshot.selectedLayerId
+                ?.takeIf { sel -> normalized.any { it.id == sel } }
+                ?: normalized.maxByOrNull { it.zIndex }?.id
+            _uiState.update {
+                it.copy(
+                    canvasConfig = draft.snapshot.canvasConfig,
+                    layers = normalized,
+                    selectedLayerId = validSelected,
+                    selectedLayerIds = setOfNotNull(validSelected),
+                    currentProjectId = draft.currentProjectId,
+                    currentProjectName = draft.currentProjectName,
+                    isDirty = true,
+                    activeSubTool = ActiveSubTool.NONE,
+                    activeDialog = null
+                )
+            }
+            syncHistoryFlags(markDirty = null)
+        }
+    }
+
+    fun discardRecoverableDraft() {
+        autosaveJob?.cancel()
+        viewModelScope.launch {
+            draftStore?.clear()
+            _uiState.update {
+                it.copy(
+                    hasRecoverableDraft = false,
+                    draftTimestamp = null,
+                    draftProjectName = null,
+                    lastAutosavedAt = null
+                )
+            }
+        }
+    }
+
+    fun markCleanAndDiscardDraft() {
+        autosaveJob?.cancel()
+        _uiState.update { it.copy(isDirty = false, activeDialog = null) }
+        viewModelScope.launch {
+            draftStore?.clear()
+            _uiState.update {
+                it.copy(
+                    hasRecoverableDraft = false,
+                    draftTimestamp = null,
+                    draftProjectName = null
+                )
+            }
+        }
     }
 
     private fun resetDragTracking() {
         rawDragPosition = null
         rawDragLayerId = null
-    }
-
-    private fun normalizeZIndices(layers: List<Layer>): List<Layer> {
-        return layers.sortedBy { it.zIndex }.mapIndexed { index, layer ->
-            layer.copy(zIndex = index)
-        }
+        rawGestureRotation = null
+        lastSnappedCardinalAngle = null
     }
 
     private fun takeSnapshot(): EditorSnapshot {
@@ -90,94 +283,108 @@ class PixelCraftViewModel internal constructor(
         )
     }
 
-    private fun recordHistory() {
-        undoStack.add(takeSnapshot())
-        if (undoStack.size > 50) {
-            undoStack.removeAt(0)
-        }
-        redoStack.clear()
-        updateHistoryFlags()
-    }
-
-    private fun beginHistoryStep(continuous: Boolean) {
-        if (continuous) {
-            if (!isContinuousEditing) {
-                isContinuousEditing = true
-                recordHistory()
-            }
-        } else {
-            isContinuousEditing = false
-            recordHistory()
-        }
+    private fun beginHistoryStep(
+        continuous: Boolean,
+        label: String = "Edit",
+        coalesceTag: String? = null
+    ) {
+        history.beginStep(
+            currentSnapshot = takeSnapshot(),
+            label = label,
+            continuous = continuous,
+            coalesceTag = coalesceTag
+        )
+        syncHistoryFlags(markDirty = true)
+        scheduleAutosave()
     }
 
     fun finishContinuousEdit() {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
+        rawGestureRotation = null
+        lastSnappedCardinalAngle = null
     }
 
-    private fun updateHistoryFlags() {
-        _uiState.update {
-            it.copy(
-                canUndo = undoStack.isNotEmpty(),
-                canRedo = redoStack.isNotEmpty()
+    private fun syncHistoryFlags(markDirty: Boolean? = null) {
+        _uiState.update { state ->
+            state.copy(
+                canUndo = history.canUndo,
+                canRedo = history.canRedo,
+                lastUndoLabel = history.lastUndoLabel,
+                lastRedoLabel = history.lastRedoLabel,
+                undoHistoryLabels = history.undoEntries().map { it.label },
+                isDirty = markDirty ?: state.isDirty
             )
         }
     }
 
     fun undo() {
-        isContinuousEditing = false
         resetDragTracking()
-        if (undoStack.isEmpty()) return
-        val currentState = takeSnapshot()
-        redoStack.add(currentState)
-        val previousState = undoStack.removeAt(undoStack.lastIndex)
-
+        val previousState = history.undo(takeSnapshot()) ?: return
         _uiState.update {
             it.copy(
                 layers = previousState.layers,
                 canvasConfig = previousState.canvasConfig,
                 selectedLayerId = previousState.selectedLayerId,
+                selectedLayerIds = setOfNotNull(previousState.selectedLayerId),
                 activeVerticalGuideX = null,
                 activeHorizontalGuideY = null
             )
         }
-        updateHistoryFlags()
+        syncHistoryFlags(markDirty = history.canUndo)
+        if (history.canUndo) scheduleAutosave()
     }
 
     fun redo() {
-        isContinuousEditing = false
         resetDragTracking()
-        if (redoStack.isEmpty()) return
-        val currentState = takeSnapshot()
-        undoStack.add(currentState)
-        val nextState = redoStack.removeAt(redoStack.lastIndex)
-
+        val nextState = history.redo(takeSnapshot()) ?: return
         _uiState.update {
             it.copy(
                 layers = nextState.layers,
                 canvasConfig = nextState.canvasConfig,
                 selectedLayerId = nextState.selectedLayerId,
+                selectedLayerIds = setOfNotNull(nextState.selectedLayerId),
                 activeVerticalGuideX = null,
                 activeHorizontalGuideY = null
             )
         }
-        updateHistoryFlags()
+        syncHistoryFlags(markDirty = true)
+        scheduleAutosave()
     }
 
-    // --- Tab and Dialog Management ---
+    fun jumpToHistoryIndex(index: Int) {
+        resetDragTracking()
+        val restored = history.jumpToUndoIndex(index, takeSnapshot()) ?: return
+        _uiState.update {
+            it.copy(
+                layers = restored.layers,
+                canvasConfig = restored.canvasConfig,
+                selectedLayerId = restored.selectedLayerId,
+                selectedLayerIds = setOfNotNull(restored.selectedLayerId),
+                activeDialog = null,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
+            )
+        }
+        syncHistoryFlags(markDirty = history.canUndo)
+    }
+
+    // --- Tab, Dialog, Coach Mark & Eyedropper Management ---
 
     fun setActiveTab(tab: BottomNavTab) {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
         _uiState.update { it.copy(activeTab = tab, activeSubTool = ActiveSubTool.NONE) }
     }
 
     fun setActiveSubTool(subTool: ActiveSubTool) {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
         _uiState.update { it.copy(activeSubTool = subTool) }
     }
 
     fun openDialog(dialog: ActiveDialog) {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
+        if (dialog == ActiveDialog.TEXT_EDIT && _uiState.value.selectedLayer?.type != LayerType.TEXT) {
+            return
+        }
         _uiState.update { it.copy(activeDialog = dialog) }
     }
 
@@ -193,7 +400,95 @@ class PixelCraftViewModel internal constructor(
         _uiState.update { it.copy(isLayersDrawerOpen = open) }
     }
 
-    // --- Grid ---
+    fun dismissOnboarding() {
+        _uiState.update { it.copy(onboardingDismissed = true) }
+        viewModelScope.launch {
+            preferencesStore.dismissOnboarding()
+        }
+    }
+
+    fun startEyedropper(target: EyedropperTarget) {
+        _uiState.update { it.copy(activeEyedropperTarget = target) }
+    }
+
+    fun cancelEyedropper() {
+        _uiState.update { it.copy(activeEyedropperTarget = null) }
+    }
+
+    fun applyEyedropperColor(colorArgb: Long) {
+        val target = _uiState.value.activeEyedropperTarget ?: return
+        _uiState.update { it.copy(activeEyedropperTarget = null) }
+        recordRecentColor(colorArgb)
+        when (target) {
+            EyedropperTarget.TEXT_COLOR -> updateSelectedLayer(label = "Eyedropper Text Color") {
+                it.copy(textColor = colorArgb)
+            }
+            EyedropperTarget.TEXT_GRADIENT_END -> updateSelectedLayer(label = "Eyedropper Gradient") {
+                it.copy(textGradientEnabled = true, textGradientEndColor = colorArgb)
+            }
+            EyedropperTarget.TEXT_BACKGROUND -> updateSelectedLayer(label = "Eyedropper Text Pill") {
+                it.copy(textBackgroundColor = colorArgb)
+            }
+            EyedropperTarget.STROKE_COLOR -> updateSelectedLayer(label = "Eyedropper Stroke") {
+                if (it.type == LayerType.SHAPE) it.copy(shapeStrokeColor = colorArgb)
+                else it.copy(strokeColor = colorArgb)
+            }
+            EyedropperTarget.GLOW_COLOR -> updateSelectedLayer(label = "Eyedropper Glow") {
+                it.copy(glowEnabled = true, glowColor = colorArgb)
+            }
+            EyedropperTarget.SHADOW_COLOR -> updateSelectedLayer(label = "Eyedropper Shadow") {
+                it.copy(shadowEnabled = true, shadowColor = colorArgb)
+            }
+            EyedropperTarget.SHAPE_FILL -> updateSelectedLayer(label = "Eyedropper Shape Fill") {
+                it.copy(shapeFillColor = colorArgb)
+            }
+            EyedropperTarget.SHAPE_GRADIENT_END -> updateSelectedLayer(label = "Eyedropper Shape Gradient") {
+                it.copy(shapeGradientEnabled = true, shapeGradientEndColor = colorArgb)
+            }
+            EyedropperTarget.SHAPE_STROKE -> updateSelectedLayer(label = "Eyedropper Shape Stroke") {
+                it.copy(shapeStrokeColor = colorArgb)
+            }
+            EyedropperTarget.IMAGE_BORDER -> updateSelectedLayer(label = "Eyedropper Photo Border") {
+                it.copy(imageBorderColor = colorArgb, imageBorderWidth = it.imageBorderWidth.coerceAtLeast(4f))
+            }
+            EyedropperTarget.CANVAS_BACKGROUND -> setBackgroundColor(colorArgb)
+        }
+    }
+
+    fun recordRecentColor(colorArgb: Long) {
+        viewModelScope.launch {
+            preferencesStore.recordRecentColor(colorArgb)
+        }
+    }
+
+    fun toggleFavoriteFont(fontKey: String) {
+        viewModelScope.launch {
+            preferencesStore.toggleFavoriteFont(fontKey)
+        }
+    }
+
+    fun importCustomFont(uri: Uri) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            FontCatalog.importCustomFont(ctx, uri).onSuccess { imported ->
+                _uiState.update {
+                    it.copy(
+                        availableFontsCount = FontCatalog.allFonts().size,
+                        userMessage = "Imported font \"${imported.displayName}\""
+                    )
+                }
+                if (_uiState.value.selectedLayer?.type == LayerType.TEXT) {
+                    updateSelectedLayer(label = "Apply Custom Font") { layer ->
+                        layer.copy(fontKey = imported.key)
+                    }
+                }
+            }.onFailure { err ->
+                _uiState.update { it.copy(userMessage = "Font import failed: ${err.message}") }
+            }
+        }
+    }
+
+    // --- Grid & Safe Zone ---
 
     fun toggleGrid() {
         resetDragTracking()
@@ -207,13 +502,22 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
-    // --- Layer Selection & Navigation ---
+    fun toggleSafeZone() {
+        _uiState.update { it.copy(showSafeZone = !it.showSafeZone) }
+    }
+
+    // --- Layer Selection, Multi-Select & Grouping ---
 
     fun selectLayer(layerId: String?) {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
         resetDragTracking()
         _uiState.update { state ->
             val layer = state.layers.find { it.id == layerId }
+            val groupMembers = if (layer?.groupId != null) {
+                state.layers.filter { it.groupId == layer.groupId }.map { it.id }.toSet()
+            } else {
+                setOfNotNull(layerId)
+            }
             val newTab = when (layer?.type) {
                 LayerType.TEXT -> BottomNavTab.TEXT
                 LayerType.SHAPE, LayerType.IMAGE -> BottomNavTab.OBJECTS
@@ -226,6 +530,7 @@ class PixelCraftViewModel internal constructor(
             }
             state.copy(
                 selectedLayerId = layerId,
+                selectedLayerIds = groupMembers,
                 activeTab = newTab,
                 activeSubTool = nextSubTool,
                 activeVerticalGuideX = null,
@@ -234,10 +539,197 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
+    fun toggleLayerMultiSelection(layerId: String) {
+        _uiState.update { state ->
+            if (state.layers.none { it.id == layerId }) return@update state
+            val nextSet = state.selectedLayerIds.toMutableSet()
+            if (!nextSet.add(layerId)) {
+                nextSet.remove(layerId)
+            }
+            val primary = if (state.selectedLayerId in nextSet) {
+                state.selectedLayerId
+            } else {
+                nextSet.lastOrNull()
+            }
+            state.copy(
+                selectedLayerId = primary,
+                selectedLayerIds = nextSet
+            )
+        }
+    }
+
+    fun groupSelectedLayers() {
+        val ids = _uiState.value.selectedLayerIds
+        if (ids.size < 2) return
+        beginHistoryStep(continuous = false, label = "Group Layers")
+        _uiState.update { state ->
+            state.copy(
+                layers = state.layers.groupLayers(ids),
+                userMessage = "Grouped ${ids.size} layers"
+            )
+        }
+    }
+
+    fun ungroupSelectedLayers() {
+        val ids = _uiState.value.selectedLayerIds.ifEmpty {
+            setOfNotNull(_uiState.value.selectedLayerId)
+        }
+        if (ids.isEmpty()) return
+        beginHistoryStep(continuous = false, label = "Ungroup Layers")
+        _uiState.update { state ->
+            state.copy(
+                layers = state.layers.ungroupLayers(ids),
+                userMessage = "Ungrouped layers"
+            )
+        }
+    }
+
+    // --- Style Copy / Paste & Saved Styles ---
+
+    fun copySelectedStyle() {
+        val layer = _uiState.value.selectedLayer ?: return
+        _uiState.update {
+            it.copy(
+                copiedStyleLayer = layer,
+                userMessage = "Style copied from \"${layer.name}\""
+            )
+        }
+    }
+
+    fun pasteStyleToSelected() {
+        val copied = _uiState.value.copiedStyleLayer ?: return
+        val target = _uiState.value.selectedLayer ?: return
+        if (target.isLocked) return
+        updateSelectedLayer(continuous = false, label = "Paste Style") {
+            it.copyVisualStyleFrom(copied)
+        }
+    }
+
+    fun saveCurrentStyle(styleName: String) {
+        val layer = _uiState.value.selectedLayer ?: return
+        val clean = styleName.trim().ifBlank { "${layer.name} Style" }
+        val entry = SavedLayerStyle(
+            id = UUID.randomUUID().toString(),
+            name = clean,
+            styleLayer = layer
+        )
+        viewModelScope.launch {
+            preferencesStore.saveLayerStyle(entry)
+            _uiState.update { it.copy(userMessage = "Saved style \"$clean\"") }
+        }
+    }
+
+    fun applySavedStyle(style: SavedLayerStyle) {
+        val target = _uiState.value.selectedLayer ?: return
+        if (target.isLocked) return
+        updateSelectedLayer(continuous = false, label = "Apply Style") {
+            it.copyVisualStyleFrom(style.styleLayer)
+        }
+    }
+
+    fun deleteSavedStyle(styleId: String) {
+        viewModelScope.launch {
+            preferencesStore.deleteLayerStyle(styleId)
+        }
+    }
+
+    // --- Home Screen /Blank Canvas / External Intent Flows ---
+
+    fun createNewBlankCanvas(
+        preset: AspectRatioPreset = AspectRatioPreset.SQUARE,
+        customW: Int? = null,
+        customH: Int? = null,
+        backgroundColor: Long = 0xFF1F2430L
+    ) {
+        autosaveJob?.cancel()
+        history.clear()
+        resetDragTracking()
+        val w = (customW ?: preset.defaultWidth).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
+        val h = (customH ?: preset.defaultHeight).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
+        val starterText = TextSizing.withEstimatedBounds(
+            Layer(
+                id = UUID.randomUUID().toString(),
+                name = "Headline",
+                type = LayerType.TEXT,
+                text = "Tap to Edit",
+                fontKey = "poppins",
+                fontSize = (minOf(w, h) * 0.055f).coerceIn(28f, 96f),
+                textColor = 0xFFFFFFFF,
+                zIndex = 0
+            )
+        )
+        _uiState.update {
+            it.copy(
+                canvasConfig = CanvasConfig(
+                    width = w,
+                    height = h,
+                    preset = preset,
+                    backgroundType = BackgroundType.SOLID_COLOR,
+                    backgroundColor = backgroundColor
+                ),
+                layers = listOf(starterText),
+                selectedLayerId = starterText.id,
+                selectedLayerIds = setOf(starterText.id),
+                currentProjectId = null,
+                currentProjectName = "Untitled",
+                isDirty = false,
+                activeTab = BottomNavTab.TEXT,
+                activeSubTool = ActiveSubTool.NONE,
+                activeDialog = null,
+                activeVerticalGuideX = null,
+                activeHorizontalGuideY = null
+            )
+        }
+        syncHistoryFlags(markDirty = false)
+    }
+
+    /** Starts a fresh canvas sized proportionally to an imported photo (Home "From Photo" & ACTION_SEND/EDIT). */
+    fun startCanvasFromPhoto(uri: Uri) {
+        viewModelScope.launch {
+            imageStore.import(uri).onSuccess { imported ->
+                autosaveJob?.cancel()
+                history.clear()
+                resetDragTracking()
+                val fit = ImageFit.fitWithin(
+                    imported.width,
+                    imported.height,
+                    MAX_CANVAS_DIMENSION.toFloat().coerceAtMost(2160f),
+                    MAX_CANVAS_DIMENSION.toFloat().coerceAtMost(2160f)
+                )
+                val canvasW = fit.width.roundToInt().coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
+                val canvasH = fit.height.roundToInt().coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
+                _uiState.update {
+                    it.copy(
+                        canvasConfig = CanvasConfig(
+                            width = canvasW,
+                            height = canvasH,
+                            preset = AspectRatioPreset.CUSTOM,
+                            backgroundType = BackgroundType.CUSTOM_IMAGE,
+                            customImageUri = imported.path
+                        ),
+                        layers = emptyList(),
+                        selectedLayerId = null,
+                        selectedLayerIds = emptySet(),
+                        currentProjectId = null,
+                        currentProjectName = "Photo Design",
+                        isDirty = true,
+                        activeTab = BottomNavTab.TEXT,
+                        activeSubTool = ActiveSubTool.NONE,
+                        activeDialog = null
+                    )
+                }
+                syncHistoryFlags(markDirty = true)
+                scheduleAutosave()
+            }.onFailure { err ->
+                _uiState.update { it.copy(userMessage = "Couldn't open picture: ${err.message}") }
+            }
+        }
+    }
+
     // --- Layer Operations ---
 
     fun addTextLayer(initialText: String = "New Text") {
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Add Text")
         resetDragTracking()
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val labelIndex = _uiState.value.layers.count { it.type == LayerType.TEXT } + 1
@@ -257,22 +749,48 @@ class PixelCraftViewModel internal constructor(
         )
         _uiState.update { state ->
             state.copy(
-                layers = normalizeZIndices(state.layers + newLayer),
+                layers = (state.layers + newLayer).normalizeZIndices(),
                 selectedLayerId = newLayer.id,
+                selectedLayerIds = setOf(newLayer.id),
                 activeTab = BottomNavTab.TEXT,
                 activeSubTool = ActiveSubTool.NONE
             )
         }
     }
 
-    fun addCurrentDateLayer() {
-        val dateFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault())
-        val dateString = dateFormat.format(Date())
-        addTextLayer(dateString)
+    fun addCurrentDateLayer(pattern: String = "EEEE, d MMMM yyyy") {
+        val formatted = runCatching {
+            SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
+        }.getOrElse {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        }
+        addTextLayer(formatted)
+    }
+
+    fun applyTextCase(mode: TextCaseMode) {
+        val current = _uiState.value.selectedLayer ?: return
+        if (current.type != LayerType.TEXT || current.isLocked) return
+        updateSelectedLayer(continuous = false, label = "Change Text Case") {
+            it.copy(text = TextSizing.transformCase(it.text, mode))
+        }
+    }
+
+    fun renameLayer(layerId: String, newName: String) {
+        val clean = newName.trim().ifBlank { return }
+        if (_uiState.value.layers.none { it.id == layerId }) return
+        beginHistoryStep(continuous = false, label = "Rename Layer")
+        _uiState.update { state ->
+            state.copy(
+                layers = state.layers.map {
+                    if (it.id == layerId) it.copy(name = clean) else it
+                },
+                activeDialog = null
+            )
+        }
     }
 
     fun addShapeLayer(shapeType: ShapeType) {
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Add Shape")
         resetDragTracking()
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val labelIndex = _uiState.value.layers.count { it.type == LayerType.SHAPE } + 1
@@ -294,8 +812,9 @@ class PixelCraftViewModel internal constructor(
         )
         _uiState.update { state ->
             state.copy(
-                layers = normalizeZIndices(state.layers + newLayer),
+                layers = (state.layers + newLayer).normalizeZIndices(),
                 selectedLayerId = newLayer.id,
+                selectedLayerIds = setOf(newLayer.id),
                 activeTab = BottomNavTab.OBJECTS,
                 activeSubTool = ActiveSubTool.NONE
             )
@@ -306,7 +825,7 @@ class PixelCraftViewModel internal constructor(
     fun addImageLayer(uri: Uri) {
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { image ->
-                beginHistoryStep(continuous = false)
+                beginHistoryStep(continuous = false, label = "Add Photo")
                 resetDragTracking()
                 val config = _uiState.value.canvasConfig
                 val fit = ImageFit.fitWithin(image.width, image.height, config.width * 0.6f, config.height * 0.6f)
@@ -323,8 +842,9 @@ class PixelCraftViewModel internal constructor(
                 )
                 _uiState.update { state ->
                     state.copy(
-                        layers = normalizeZIndices(state.layers + newLayer),
+                        layers = (state.layers + newLayer).normalizeZIndices(),
                         selectedLayerId = newLayer.id,
+                        selectedLayerIds = setOf(newLayer.id),
                         activeTab = BottomNavTab.OBJECTS,
                         activeSubTool = ActiveSubTool.NONE
                     )
@@ -335,11 +855,15 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
-    fun updateSelectedLayer(continuous: Boolean = false, transform: (Layer) -> Layer) {
+    fun updateSelectedLayer(
+        continuous: Boolean = false,
+        label: String = "Edit Layer",
+        transform: (Layer) -> Layer
+    ) {
         val currentLayer = _uiState.value.selectedLayer ?: return
         if (currentLayer.isLocked) return
 
-        beginHistoryStep(continuous = continuous)
+        beginHistoryStep(continuous = continuous, label = label)
         val selectedId = currentLayer.id
         _uiState.update { state ->
             state.copy(
@@ -354,11 +878,15 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
-    fun updateLayerPositionWithSnapping(deltaX: Float, deltaY: Float) {
+    fun updateLayerPositionWithSnapping(
+        deltaX: Float,
+        deltaY: Float,
+        snapThresholdPx: Float = SnappingEngine.SNAP_THRESHOLD_PX
+    ) {
         val currentLayer = _uiState.value.selectedLayer ?: return
         if (currentLayer.isLocked) return
 
-        beginHistoryStep(continuous = true)
+        beginHistoryStep(continuous = true, label = "Move Layer")
         val selectedId = currentLayer.id
         val baseRaw = if (rawDragLayerId == selectedId && rawDragPosition != null) {
             rawDragPosition!!
@@ -370,49 +898,136 @@ class PixelCraftViewModel internal constructor(
         rawDragPosition = nextRaw
 
         val stateSnapshot = _uiState.value
+        val activeGroupId = currentLayer.groupId
+        val targetX: Float
+        val targetY: Float
+        val vGuide: Float?
+        val hGuide: Float?
+
         if (!stateSnapshot.isGridEnabled) {
-            // Freemove default: no magnetic anchor snapping when Grid is disabled
-            _uiState.update { s ->
-                s.copy(
-                    layers = s.layers.map {
-                        if (it.id == selectedId) {
-                            it.copy(
-                                positionX = nextRaw.x,
-                                positionY = nextRaw.y
-                            )
-                        } else it
-                    },
-                    activeVerticalGuideX = null,
-                    activeHorizontalGuideY = null
-                )
-            }
+            targetX = nextRaw.x
+            targetY = nextRaw.y
+            vGuide = null
+            hGuide = null
         } else {
+            val others = stateSnapshot.layers.filter { layer ->
+                layer.id != selectedId && (activeGroupId == null || layer.groupId != activeGroupId)
+            }
             val snapResult = SnappingEngine.calculateSnap(
                 rawPosition = nextRaw,
                 canvasWidth = stateSnapshot.canvasConfig.width.toFloat(),
                 canvasHeight = stateSnapshot.canvasConfig.height.toFloat(),
                 gridColumns = stateSnapshot.gridColumns,
-                gridRows = stateSnapshot.gridRows
+                gridRows = stateSnapshot.gridRows,
+                thresholdPx = snapThresholdPx,
+                layerWidth = currentLayer.width,
+                layerHeight = currentLayer.height,
+                otherLayers = others
             )
-            _uiState.update { s ->
-                s.copy(
-                    layers = s.layers.map {
-                        if (it.id == selectedId) {
-                            it.copy(
-                                positionX = snapResult.snappedPosition.x,
-                                positionY = snapResult.snappedPosition.y
+            targetX = snapResult.snappedPosition.x
+            targetY = snapResult.snappedPosition.y
+            vGuide = snapResult.verticalGuideX
+            hGuide = snapResult.horizontalGuideY
+        }
+
+        val appliedDx = targetX - currentLayer.positionX
+        val appliedDy = targetY - currentLayer.positionY
+
+        _uiState.update { s ->
+            s.copy(
+                layers = s.layers.map { layer ->
+                    when {
+                        layer.id == selectedId -> layer.copy(positionX = targetX, positionY = targetY)
+                        activeGroupId != null && layer.groupId == activeGroupId && !layer.isLocked -> {
+                            layer.copy(
+                                positionX = layer.positionX + appliedDx,
+                                positionY = layer.positionY + appliedDy
                             )
-                        } else it
-                    },
-                    activeVerticalGuideX = snapResult.verticalGuideX,
-                    activeHorizontalGuideY = snapResult.horizontalGuideY
-                )
-            }
+                        }
+                        else -> layer
+                    }
+                },
+                activeVerticalGuideX = vGuide,
+                activeHorizontalGuideY = hGuide
+            )
         }
     }
 
+    /**
+     * Applies 2-finger pinch-scale, twist-rotate (with `±4°` cardinal/diagonal snap), and pan to
+     * the selected layer (§ 5.1). Returns `true` when rotation freshly snaps to a cardinal/diagonal angle
+     * so the canvas UI can trigger haptic feedback!
+     */
+    fun transformSelectedLayerGesture(
+        panDeltaX: Float,
+        panDeltaY: Float,
+        zoomFactor: Float,
+        rotationDeltaDeg: Float,
+        snapRotation: Boolean = true
+    ): Boolean {
+        val currentLayer = _uiState.value.selectedLayer ?: return false
+        if (currentLayer.isLocked) return false
+
+        beginHistoryStep(continuous = true, label = "Transform Layer")
+        val selectedId = currentLayer.id
+
+        val unSnappedRot = ((rawGestureRotation ?: currentLayer.rotation) + rotationDeltaDeg)
+            .let { raw ->
+                var a = raw % 360f
+                if (a > 180f) a -= 360f
+                if (a < -180f) a += 360f
+                a
+            }
+        rawGestureRotation = unSnappedRot
+
+        var triggeredSnapHaptic = false
+        val finalRotation = if (snapRotation) {
+            val snapped = SNAP_ROTATION_ANGLES.firstOrNull { abs(unSnappedRot - it) <= SNAP_ROTATION_THRESHOLD_DEG }
+            if (snapped != null) {
+                if (lastSnappedCardinalAngle != snapped) {
+                    lastSnappedCardinalAngle = snapped
+                    triggeredSnapHaptic = true
+                }
+                snapped
+            } else {
+                lastSnappedCardinalAngle = null
+                unSnappedRot
+            }
+        } else {
+            unSnappedRot
+        }
+
+        val safeZoom = zoomFactor.coerceIn(0.5f, 2.0f)
+        _uiState.update { state ->
+            state.copy(
+                layers = state.layers.map { layer ->
+                    if (layer.id != selectedId) {
+                        layer
+                    } else {
+                        val moved = layer.copy(
+                            positionX = layer.positionX + panDeltaX,
+                            positionY = layer.positionY + panDeltaY,
+                            rotation = finalRotation
+                        )
+                        if (layer.type == LayerType.TEXT) {
+                            TextSizing.withEstimatedBounds(
+                                moved.copy(fontSize = (layer.fontSize * safeZoom).coerceIn(8f, 520f))
+                            )
+                        } else {
+                            moved.copy(
+                                width = (layer.width * safeZoom).coerceIn(24f, 4096f),
+                                height = (layer.height * safeZoom).coerceIn(24f, 4096f)
+                            )
+                        }
+                    }
+                }
+            )
+        }
+        return triggeredSnapHaptic
+    }
+
     fun clearSnappingGuides() {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
         resetDragTracking()
         _uiState.update {
             it.copy(activeVerticalGuideX = null, activeHorizontalGuideY = null)
@@ -420,39 +1035,35 @@ class PixelCraftViewModel internal constructor(
     }
 
     fun nudgeSelectedLayer(dx: Float, dy: Float) {
+        val currentLayer = _uiState.value.selectedLayer ?: return
+        if (currentLayer.isLocked) return
         resetDragTracking()
-        updateSelectedLayer(continuous = false) {
-            it.copy(positionX = it.positionX + dx, positionY = it.positionY + dy)
+        beginHistoryStep(continuous = false, label = "Nudge Layer", coalesceTag = "nudge_${currentLayer.id}")
+        val selectedId = currentLayer.id
+        val groupId = currentLayer.groupId
+        _uiState.update { state ->
+            state.copy(
+                layers = state.layers.map { layer ->
+                    if (layer.id == selectedId || (groupId != null && layer.groupId == groupId && !layer.isLocked)) {
+                        layer.copy(positionX = layer.positionX + dx, positionY = layer.positionY + dy)
+                    } else {
+                        layer
+                    }
+                }
+            )
         }
     }
 
     fun alignSelectedLayer(action: AlignmentAction) {
+        val currentLayer = _uiState.value.selectedLayer ?: return
+        if (currentLayer.isLocked) return
         resetDragTracking()
         val state = _uiState.value
         val canvasW = state.canvasConfig.width.toFloat()
         val canvasH = state.canvasConfig.height.toFloat()
 
-        updateSelectedLayer(continuous = false) { layer ->
-            val shapeOuterStroke = if (layer.type == LayerType.SHAPE && layer.shapeStrokeWidth > 0f) {
-                when (layer.strokePosition) {
-                    StrokePosition.OUTSIDE -> layer.shapeStrokeWidth
-                    StrokePosition.CENTER -> layer.shapeStrokeWidth / 2f
-                    StrokePosition.INSIDE -> 0f
-                }
-            } else {
-                0f
-            }
-            val halfW = (layer.width / 2f) + shapeOuterStroke
-            val halfH = (layer.height / 2f) + shapeOuterStroke
-
-            when (action) {
-                AlignmentAction.CENTER_HORIZONTAL -> layer.copy(positionX = 0f)
-                AlignmentAction.CENTER_VERTICAL -> layer.copy(positionY = 0f)
-                AlignmentAction.ALIGN_LEFT -> layer.copy(positionX = -canvasW / 2f + halfW)
-                AlignmentAction.ALIGN_RIGHT -> layer.copy(positionX = canvasW / 2f - halfW)
-                AlignmentAction.ALIGN_TOP -> layer.copy(positionY = -canvasH / 2f + halfH)
-                AlignmentAction.ALIGN_BOTTOM -> layer.copy(positionY = canvasH / 2f - halfH)
-            }
+        updateSelectedLayer(continuous = false, label = "Align Layer") { layer ->
+            LayerOperations.alignSingleLayer(layer, canvasW, canvasH, action)
         }
     }
 
@@ -460,10 +1071,10 @@ class PixelCraftViewModel internal constructor(
         val target = _uiState.value.layers.find { it.id == layerId } ?: return
         if (target.isLocked) return
 
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Delete Layer")
         resetDragTracking()
         _uiState.update { state ->
-            val remaining = normalizeZIndices(state.layers.filter { it.id != layerId })
+            val remaining = state.layers.deleteUnlocked(layerId)
             val nextSelected = if (state.selectedLayerId == layerId) {
                 remaining.maxByOrNull { it.zIndex }?.id
             } else {
@@ -472,6 +1083,7 @@ class PixelCraftViewModel internal constructor(
             state.copy(
                 layers = remaining,
                 selectedLayerId = nextSelected,
+                selectedLayerIds = setOfNotNull(nextSelected),
                 activeVerticalGuideX = null,
                 activeHorizontalGuideY = null
             )
@@ -484,24 +1096,15 @@ class PixelCraftViewModel internal constructor(
     }
 
     fun duplicateSelectedLayer() {
-        val layer = _uiState.value.selectedLayer ?: return
-        beginHistoryStep(continuous = false)
+        val selectedId = _uiState.value.selectedLayerId ?: return
+        val duplicated = _uiState.value.layers.duplicate(selectedId) ?: return
+        beginHistoryStep(continuous = false, label = "Duplicate Layer")
         resetDragTracking()
-
-        val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
-        val copy = layer.copy(
-            id = UUID.randomUUID().toString(),
-            name = "${layer.name} Copy",
-            isLocked = false,
-            positionX = layer.positionX + 25f,
-            positionY = layer.positionY + 25f,
-            zIndex = nextZ
-        )
-
         _uiState.update { state ->
             state.copy(
-                layers = normalizeZIndices(state.layers + copy),
-                selectedLayerId = copy.id
+                layers = duplicated.first,
+                selectedLayerId = duplicated.second.id,
+                selectedLayerIds = setOf(duplicated.second.id)
             )
         }
     }
@@ -509,68 +1112,40 @@ class PixelCraftViewModel internal constructor(
     fun bringLayerToFront() {
         val current = _uiState.value.selectedLayer ?: return
         if (current.isLocked) return
-        val maxZ = _uiState.value.layers.maxOfOrNull { it.zIndex } ?: 0
-        if (current.zIndex == maxZ && _uiState.value.layers.count { it.zIndex == maxZ } == 1) return
-
-        beginHistoryStep(continuous = false)
-        val selectedId = current.id
-        _uiState.update { state ->
-            val updated = state.layers.map {
-                if (it.id == selectedId) it.copy(zIndex = maxZ + 1) else it
-            }
-            state.copy(layers = normalizeZIndices(updated))
-        }
+        val updated = _uiState.value.layers.bringToFront(current.id)
+        if (updated == _uiState.value.layers) return
+        beginHistoryStep(continuous = false, label = "Bring to Front")
+        _uiState.update { it.copy(layers = updated) }
     }
 
     fun sendLayerToBack() {
         val current = _uiState.value.selectedLayer ?: return
         if (current.isLocked) return
-        val minZ = _uiState.value.layers.minOfOrNull { it.zIndex } ?: 0
-        if (current.zIndex == minZ && _uiState.value.layers.count { it.zIndex == minZ } == 1) return
-
-        beginHistoryStep(continuous = false)
-        val selectedId = current.id
-        _uiState.update { state ->
-            val updated = state.layers.map {
-                if (it.id == selectedId) it.copy(zIndex = minZ - 1) else it
-            }
-            state.copy(layers = normalizeZIndices(updated))
-        }
+        val updated = _uiState.value.layers.sendToBack(current.id)
+        if (updated == _uiState.value.layers) return
+        beginHistoryStep(continuous = false, label = "Send to Back")
+        _uiState.update { it.copy(layers = updated) }
     }
 
     /** Moves [layerId] one step forward (higher `zIndex`) in visual order. */
     fun moveLayerUp(layerId: String) {
-        val sortedAsc = normalizeZIndices(_uiState.value.layers).toMutableList()
-        val idx = sortedAsc.indexOfFirst { it.id == layerId }
-        if (idx < 0 || idx >= sortedAsc.lastIndex) return
-
-        beginHistoryStep(continuous = false)
-        val tmp = sortedAsc[idx]
-        sortedAsc[idx] = sortedAsc[idx + 1]
-        sortedAsc[idx + 1] = tmp
-
-        val reindexed = sortedAsc.mapIndexed { i, layer -> layer.copy(zIndex = i) }
-        _uiState.update { it.copy(layers = reindexed) }
+        val updated = _uiState.value.layers.moveUp(layerId)
+        if (updated == _uiState.value.layers) return
+        beginHistoryStep(continuous = false, label = "Move Layer Up")
+        _uiState.update { it.copy(layers = updated) }
     }
 
     /** Moves [layerId] one step backward (lower `zIndex`) in visual order. */
     fun moveLayerDown(layerId: String) {
-        val sortedAsc = normalizeZIndices(_uiState.value.layers).toMutableList()
-        val idx = sortedAsc.indexOfFirst { it.id == layerId }
-        if (idx <= 0) return
-
-        beginHistoryStep(continuous = false)
-        val tmp = sortedAsc[idx]
-        sortedAsc[idx] = sortedAsc[idx - 1]
-        sortedAsc[idx - 1] = tmp
-
-        val reindexed = sortedAsc.mapIndexed { i, layer -> layer.copy(zIndex = i) }
-        _uiState.update { it.copy(layers = reindexed) }
+        val updated = _uiState.value.layers.moveDown(layerId)
+        if (updated == _uiState.value.layers) return
+        beginHistoryStep(continuous = false, label = "Move Layer Down")
+        _uiState.update { it.copy(layers = updated) }
     }
 
     fun toggleLayerVisibility(layerId: String) {
         if (_uiState.value.layers.none { it.id == layerId }) return
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Toggle Visibility")
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map {
@@ -580,9 +1155,11 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
+    /** Fixes Bug 2.18: Locking and unlocking a layer records an undo step consistently with visibility! */
     fun toggleLayerLock(layerId: String) {
-        isContinuousEditing = false
+        if (_uiState.value.layers.none { it.id == layerId }) return
         resetDragTracking()
+        beginHistoryStep(continuous = false, label = "Toggle Lock")
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map {
@@ -595,7 +1172,7 @@ class PixelCraftViewModel internal constructor(
     // --- Canvas & Background Settings ---
 
     fun setAspectRatioPreset(preset: AspectRatioPreset, customW: Int? = null, customH: Int? = null) {
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Resize Canvas")
         val w = (customW ?: preset.defaultWidth).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
         val h = (customH ?: preset.defaultHeight).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
         _uiState.update { state ->
@@ -610,7 +1187,8 @@ class PixelCraftViewModel internal constructor(
     }
 
     fun setBackgroundColor(color: Long) {
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Background Color")
+        recordRecentColor(color)
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -621,14 +1199,20 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
-    fun setBackgroundGradient(colors: List<Long>, angle: Float = 45f) {
-        beginHistoryStep(continuous = false)
+    fun setBackgroundGradient(
+        colors: List<Long>,
+        angle: Float = _uiState.value.canvasConfig.gradientAngle,
+        type: GradientType = _uiState.value.canvasConfig.gradientType,
+        continuous: Boolean = false
+    ) {
+        beginHistoryStep(continuous = continuous, label = "Background Gradient")
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
                     backgroundType = BackgroundType.GRADIENT,
                     gradientColors = colors,
-                    gradientAngle = angle
+                    gradientAngle = angle,
+                    gradientType = type
                 )
             )
         }
@@ -638,7 +1222,7 @@ class PixelCraftViewModel internal constructor(
     fun setBackgroundImage(uri: Uri) {
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { image ->
-                beginHistoryStep(continuous = false)
+                beginHistoryStep(continuous = false, label = "Background Photo")
                 _uiState.update { state ->
                     state.copy(
                         canvasConfig = state.canvasConfig.copy(
@@ -653,8 +1237,24 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
+    fun updateBackgroundPhotoEffects(
+        blurRadius: Float = _uiState.value.canvasConfig.backgroundBlur,
+        dimAmount: Float = _uiState.value.canvasConfig.backgroundDim,
+        continuous: Boolean = true
+    ) {
+        beginHistoryStep(continuous = continuous, label = "Background Photo Adjustments")
+        _uiState.update { state ->
+            state.copy(
+                canvasConfig = state.canvasConfig.copy(
+                    backgroundBlur = blurRadius.coerceIn(0f, 25f),
+                    backgroundDim = dimAmount.coerceIn(0f, 0.85f)
+                )
+            )
+        }
+    }
+
     fun setBackgroundTransparent() {
-        beginHistoryStep(continuous = false)
+        beginHistoryStep(continuous = false, label = "Transparent Background")
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -665,7 +1265,7 @@ class PixelCraftViewModel internal constructor(
     }
 
     fun updateCanvasFilters(continuous: Boolean = false, transform: (CanvasFilters) -> CanvasFilters) {
-        beginHistoryStep(continuous = continuous)
+        beginHistoryStep(continuous = continuous, label = "Canvas Filters")
         _uiState.update { state ->
             state.copy(
                 canvasConfig = state.canvasConfig.copy(
@@ -677,19 +1277,22 @@ class PixelCraftViewModel internal constructor(
 
     // --- Presets ---
 
-    fun applyPreset(preset: StylePreset, recordHistory: Boolean = true) {
-        isContinuousEditing = false
+    fun applyPreset(preset: StylePreset, recordHistory: Boolean = true, markDirty: Boolean = recordHistory) {
+        history.finishContinuousEdit()
         resetDragTracking()
-        if (recordHistory) recordHistory()
-        val normalizedLayers = normalizeZIndices(
-            preset.initialLayers.map { TextSizing.withEstimatedBounds(it) }
-        )
+        if (recordHistory) {
+            history.beginStep(takeSnapshot(), label = "Apply Template")
+        }
+        val normalizedLayers = preset.initialLayers
+            .map { TextSizing.withEstimatedBounds(it) }
+            .normalizeZIndices()
         val topLayer = normalizedLayers.maxByOrNull { it.zIndex }
         _uiState.update { state ->
             state.copy(
                 canvasConfig = preset.canvasConfig,
                 layers = normalizedLayers,
                 selectedLayerId = topLayer?.id,
+                selectedLayerIds = setOfNotNull(topLayer?.id),
                 currentProjectId = null,
                 currentProjectName = preset.title,
                 activeSubTool = ActiveSubTool.NONE,
@@ -697,46 +1300,83 @@ class PixelCraftViewModel internal constructor(
                 activeHorizontalGuideY = null
             )
         }
+        syncHistoryFlags(markDirty = markDirty)
+        if (markDirty) scheduleAutosave()
     }
 
-    // --- Projects Save / Load ---
+    // --- Projects Save / Load / Rename / Duplicate / Archive ---
 
-    private suspend fun reloadSavedProjects(): List<ProjectData> {
-        return projectStorage.listProjects().getOrElse { _uiState.value.savedProjects }
+    private suspend fun reloadSavedProjects(): Pair<List<ProjectData>, List<ProjectSummary>> {
+        val projects = projectStorage.listProjects().getOrElse { _uiState.value.savedProjects }
+        val summaries = projectStorage.listProjectSummaries().getOrElse {
+            projects.map { it.toSummary() }
+        }
+        return projects to summaries
     }
 
     fun refreshSavedProjects() {
         viewModelScope.launch {
-            projectStorage.listProjects().onSuccess { projects ->
-                _uiState.update { it.copy(savedProjects = projects) }
+            val (projects, summaries) = reloadSavedProjects()
+            _uiState.update {
+                it.copy(
+                    savedProjects = projects,
+                    projectSummaries = summaries
+                )
             }
         }
     }
 
-    fun saveProject(name: String) {
+    fun saveProject(name: String, onSaved: (() -> Unit)? = null) {
         val state = _uiState.value
         val cleanName = name.trim().ifBlank { "Untitled Project" }
         val reuseExistingId = state.currentProjectId != null && cleanName == state.currentProjectName
         val id = if (reuseExistingId) state.currentProjectId!! else UUID.randomUUID().toString()
+        val snapshot = takeSnapshot()
         val project = ProjectData(
             id = id,
             name = cleanName,
             timestamp = System.currentTimeMillis(),
-            snapshot = takeSnapshot()
+            snapshot = snapshot
         )
+        autosaveJob?.cancel()
+
         viewModelScope.launch {
-            projectStorage.saveProject(project).onSuccess {
-                val projects = reloadSavedProjects()
+            val thumbBitmap = runCatching {
+                val appCtx = getApplication<Application>().applicationContext
+                if (appCtx != null) {
+                    CanvasRenderer.renderThumbnail(
+                        config = snapshot.canvasConfig,
+                        layers = snapshot.layers,
+                        bitmapLookup = { imageStore.loadPreviewBitmap(it) },
+                        typefaceResolver = { k, b, i -> FontCatalog.resolveTypeface(appCtx, k, b, i) },
+                        maxSide = 256
+                    )
+                } else {
+                    null
+                }
+            }.getOrNull()
+
+            projectStorage.saveProject(project, thumbBitmap).onSuccess {
+                thumbBitmap?.recycle()
+                draftStore?.clear()
+                val (projects, summaries) = reloadSavedProjects()
                 _uiState.update {
                     it.copy(
                         currentProjectId = id,
                         currentProjectName = cleanName,
                         savedProjects = projects,
+                        projectSummaries = summaries,
+                        isDirty = false,
+                        hasRecoverableDraft = false,
+                        draftTimestamp = null,
+                        draftProjectName = null,
                         activeDialog = null,
                         userMessage = "Saved project \"$cleanName\""
                     )
                 }
+                onSaved?.invoke()
             }.onFailure { err ->
+                thumbBitmap?.recycle()
                 _uiState.update {
                     it.copy(userMessage = "Couldn't save project: ${err.message}")
                 }
@@ -745,14 +1385,15 @@ class PixelCraftViewModel internal constructor(
     }
 
     fun loadProject(id: String) {
-        isContinuousEditing = false
+        history.finishContinuousEdit()
         resetDragTracking()
+        autosaveJob?.cancel()
         viewModelScope.launch {
             projectStorage.loadProject(id).onSuccess { project ->
-                recordHistory()
-                val normalized = normalizeZIndices(
-                    project.snapshot.layers.map { TextSizing.withEstimatedBounds(it) }
-                )
+                history.beginStep(takeSnapshot(), label = "Open Project")
+                val normalized = project.snapshot.layers
+                    .map { TextSizing.withEstimatedBounds(it) }
+                    .normalizeZIndices()
                 val validSelectedId = project.snapshot.selectedLayerId
                     ?.takeIf { sel -> normalized.any { it.id == sel } }
                     ?: normalized.maxByOrNull { it.zIndex }?.id
@@ -766,12 +1407,15 @@ class PixelCraftViewModel internal constructor(
                         ),
                         layers = normalized,
                         selectedLayerId = validSelectedId,
+                        selectedLayerIds = setOfNotNull(validSelectedId),
+                        isDirty = false,
                         activeDialog = null,
                         activeSubTool = ActiveSubTool.NONE,
                         activeVerticalGuideX = null,
                         activeHorizontalGuideY = null
                     )
                 }
+                syncHistoryFlags(markDirty = false)
             }.onFailure { err ->
                 _uiState.update {
                     it.copy(userMessage = "Couldn't open project: ${err.message}")
@@ -780,14 +1424,48 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
+    fun renameSavedProject(id: String, newName: String) {
+        viewModelScope.launch {
+            projectStorage.renameProject(id, newName).onSuccess { updated ->
+                val (projects, summaries) = reloadSavedProjects()
+                _uiState.update { state ->
+                    state.copy(
+                        currentProjectName = if (state.currentProjectId == id) updated.name else state.currentProjectName,
+                        savedProjects = projects,
+                        projectSummaries = summaries,
+                        userMessage = "Renamed to \"${updated.name}\""
+                    )
+                }
+            }
+        }
+    }
+
+    fun duplicateSavedProject(id: String) {
+        viewModelScope.launch {
+            projectStorage.duplicateProject(id).onSuccess { copy ->
+                val (projects, summaries) = reloadSavedProjects()
+                _uiState.update {
+                    it.copy(
+                        savedProjects = projects,
+                        projectSummaries = summaries,
+                        userMessage = "Duplicated \"${copy.name}\""
+                    )
+                }
+            }
+        }
+    }
+
     fun deleteProject(id: String) {
         viewModelScope.launch {
+            val backup = projectStorage.loadProject(id).getOrNull()
             projectStorage.deleteProject(id).onSuccess {
-                val projects = reloadSavedProjects()
+                recentlyDeletedProject = backup
+                val (projects, summaries) = reloadSavedProjects()
                 _uiState.update { state ->
                     state.copy(
                         currentProjectId = if (state.currentProjectId == id) null else state.currentProjectId,
-                        savedProjects = projects
+                        savedProjects = projects,
+                        projectSummaries = summaries
                     )
                 }
             }.onFailure { err ->
@@ -798,34 +1476,100 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
-    // --- Export ---
+    fun undoDeleteProject() {
+        val backup = recentlyDeletedProject ?: return
+        recentlyDeletedProject = null
+        viewModelScope.launch {
+            projectStorage.saveProject(backup).onSuccess {
+                val (projects, summaries) = reloadSavedProjects()
+                _uiState.update {
+                    it.copy(
+                        savedProjects = projects,
+                        projectSummaries = summaries,
+                        userMessage = "Restored \"${backup.name}\""
+                    )
+                }
+            }
+        }
+    }
+
+    fun exportProjectArchive(projectId: String, destinationUri: Uri) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            runCatching {
+                ctx.contentResolver.openOutputStream(destinationUri)?.use { out ->
+                    projectStorage.exportProjectArchive(projectId, imageStore.imagesDir, out).getOrThrow()
+                } ?: error("Cannot write destination file")
+            }.onSuccess {
+                _uiState.update { it.copy(userMessage = "Exported .pixelcraft project archive") }
+            }.onFailure { err ->
+                _uiState.update { it.copy(userMessage = "Archive export failed: ${err.message}") }
+            }
+        }
+    }
+
+    fun importProjectArchive(sourceUri: Uri, onImported: ((String) -> Unit)? = null) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            runCatching {
+                ctx.contentResolver.openInputStream(sourceUri)?.use { input ->
+                    projectStorage.importProjectArchive(input, imageStore.imagesDir).getOrThrow()
+                } ?: error("Cannot open .pixelcraft file")
+            }.onSuccess { imported ->
+                val (projects, summaries) = reloadSavedProjects()
+                _uiState.update {
+                    it.copy(
+                        savedProjects = projects,
+                        projectSummaries = summaries,
+                        userMessage = "Imported \"${imported.name}\""
+                    )
+                }
+                onImported?.invoke(imported.id)
+            }.onFailure { err ->
+                _uiState.update { it.copy(userMessage = "Archive import failed: ${err.message}") }
+            }
+        }
+    }
+
+    // --- Export & Direct Share ---
 
     fun setExportOptions(options: ExportOptions) {
         _uiState.update { it.copy(exportOptions = options) }
+        viewModelScope.launch {
+            preferencesStore.saveExportPreferences(options.format.name, options.qualityPreset.name)
+        }
+    }
+
+    fun cancelExport() {
+        exportJob?.cancel()
+        exportJob = null
+        _uiState.update { it.copy(isExporting = false, userMessage = "Export cancelled") }
     }
 
     fun exportCanvas() {
+        val saver = gallerySaver ?: return
         val state = _uiState.value
+        exportJob?.cancel()
         _uiState.update { it.copy(isExporting = true) }
 
-        viewModelScope.launch {
-            runCatching {
+        exportJob = viewModelScope.launch {
+            try {
                 val bitmap = imageExporter.exportCanvasToBitmap(
                     canvasConfig = state.canvasConfig,
                     layers = state.layers,
-                    options = state.exportOptions
+                    options = state.exportOptions,
+                    selectedLayerIds = state.selectedLayerIds.ifEmpty { setOfNotNull(state.selectedLayerId) }
                 )
-                try {
+                val uri = try {
                     val sanitized = state.currentProjectName
                         .replace("[^A-Za-z0-9_-]+".toRegex(), "_")
                         .trim('_')
                         .ifBlank { "PixelCraft" }
                     val baseName = "${sanitized}_${System.currentTimeMillis()}"
-                    gallerySaver.save(bitmap, state.exportOptions, baseName).getOrThrow()
+                    saver.save(bitmap, state.exportOptions, baseName).getOrThrow()
                 } finally {
                     bitmap.recycle()
                 }
-            }.onSuccess { uri ->
                 _uiState.update {
                     it.copy(
                         isExporting = false,
@@ -834,7 +1578,9 @@ class PixelCraftViewModel internal constructor(
                         activeDialog = null
                     )
                 }
-            }.onFailure { err ->
+            } catch (ce: CancellationException) {
+                throw ce
+            } catch (err: Throwable) {
                 _uiState.update {
                     it.copy(
                         isExporting = false,
@@ -844,6 +1590,58 @@ class PixelCraftViewModel internal constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Fixes Bug 2.16: Renders to temporary `cacheDir/share/` via `FileProvider` and emits `pendingShareUri`
+     * so the user can share straight to WhatsApp/Instagram/Telegram without cluttering the Gallery!
+     */
+    fun shareCanvasDirectly() {
+        val saver = gallerySaver ?: return
+        val state = _uiState.value
+        exportJob?.cancel()
+        _uiState.update { it.copy(isExporting = true) }
+
+        exportJob = viewModelScope.launch {
+            try {
+                val quickOptions = state.exportOptions.copy(selectedLayerOnly = false)
+                val bitmap = imageExporter.exportCanvasToBitmap(
+                    canvasConfig = state.canvasConfig,
+                    layers = state.layers,
+                    options = quickOptions
+                )
+                val uri = try {
+                    val sanitized = state.currentProjectName
+                        .replace("[^A-Za-z0-9_-]+".toRegex(), "_")
+                        .trim('_')
+                        .ifBlank { "PixelCraft" }
+                    val baseName = "${sanitized}_share_${System.currentTimeMillis()}"
+                    saver.saveToShareCache(bitmap, quickOptions, baseName).getOrThrow()
+                } finally {
+                    bitmap.recycle()
+                }
+                _uiState.update {
+                    it.copy(
+                        isExporting = false,
+                        pendingShareUri = uri,
+                        pendingShareMimeType = quickOptions.format.mimeType
+                    )
+                }
+            } catch (ce: CancellationException) {
+                throw ce
+            } catch (err: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isExporting = false,
+                        userMessage = "Share failed: ${err.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun consumePendingShareUri() {
+        _uiState.update { it.copy(pendingShareUri = null) }
     }
 
     fun reportMessage(message: String) {

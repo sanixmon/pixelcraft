@@ -2,20 +2,23 @@ package com.app.pixelcraft
 
 import android.app.Application
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import com.app.pixelcraft.data.model.AspectRatioPreset
 import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.data.model.LayerBlendMode
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.ShapeType
 import com.app.pixelcraft.data.model.StrokePosition
 import com.app.pixelcraft.data.presets.DefaultPresets
 import com.app.pixelcraft.domain.ColorMath
+import com.app.pixelcraft.domain.DraftStore
 import com.app.pixelcraft.domain.ProjectStorage
+import com.app.pixelcraft.domain.TextCaseMode
 import com.app.pixelcraft.domain.TextSizing
 import com.app.pixelcraft.presentation.AlignmentAction
 import com.app.pixelcraft.presentation.PixelCraftViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -31,6 +34,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorBugRegressionTest {
@@ -54,12 +58,17 @@ class EditorBugRegressionTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): PixelCraftViewModel {
+    private fun createViewModel(draftFile: File? = null): PixelCraftViewModel {
         val dir = tempFolder.newFolder()
+        val ds = draftFile?.let { DraftStore { it } }
         val factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return PixelCraftViewModel(Application(), ProjectStorage { dir }) as T
+                return PixelCraftViewModel(
+                    application = Application(),
+                    projectStorage = ProjectStorage { dir },
+                    draftStore = ds
+                ) as T
             }
         }
         return ViewModelProvider(viewModelStore, factory)["vm_${vmCounter++}", PixelCraftViewModel::class.java]
@@ -75,6 +84,7 @@ class EditorBugRegressionTest {
 
     @Test
     fun multiLayerPresetsHaveDistinctAscendingZIndicesAndFittedBounds() {
+        assertEquals("Should provide 20 curated starter templates", 20, DefaultPresets.presets.size)
         for (preset in DefaultPresets.presets) {
             val zIndices = preset.initialLayers.map { it.zIndex }
             assertEquals(
@@ -107,7 +117,6 @@ class EditorBugRegressionTest {
     @Test
     fun moveLayerUpAndDownSwapVisualZOrderRegardlessOfListOrder() {
         val vm = createViewModel()
-        // Initial layer (L0), add Circle Shape (L1), add Speech Balloon Shape (L2)
         val l0 = vm.uiState.value.layers.single().id
         vm.addShapeLayer(ShapeType.CIRCLE)
         val l1 = vm.uiState.value.selectedLayerId!!
@@ -119,15 +128,12 @@ class EditorBugRegressionTest {
 
         assertEquals(listOf(l0, l1, l2), visualBottomToTop())
 
-        // Move top layer L2 down one step -> [L0, L2, L1]
         vm.moveLayerDown(l2)
         assertEquals(listOf(l0, l2, l1), visualBottomToTop())
 
-        // Move bottom layer L0 up one step -> [L2, L0, L1]
         vm.moveLayerUp(l0)
         assertEquals(listOf(l2, l0, l1), visualBottomToTop())
 
-        // Undo restores [L0, L2, L1]
         vm.undo()
         assertEquals(listOf(l0, l2, l1), visualBottomToTop())
     }
@@ -154,7 +160,6 @@ class EditorBugRegressionTest {
         vm.toggleGrid()
         assertTrue(vm.uiState.value.isGridEnabled)
 
-        // Frame 1..3 (+5f each -> raw = 5, 10, 15 <= 18f threshold -> snaps to 0f with active vertical guide)
         vm.updateLayerPositionWithSnapping(5f, 0f)
         vm.updateLayerPositionWithSnapping(5f, 0f)
         vm.updateLayerPositionWithSnapping(5f, 0f)
@@ -166,8 +171,7 @@ class EditorBugRegressionTest {
         assertEquals(20f, vm.uiState.value.selectedLayer!!.positionX, 0.01f)
         assertNull(vm.uiState.value.activeVerticalGuideX)
 
-        // Toggling Grid OFF clears any active guides
-        vm.updateLayerPositionWithSnapping(-12f, 0f) // raw = 8f -> snapped to 0f while Grid ON
+        vm.updateLayerPositionWithSnapping(-12f, 0f)
         assertNotNull(vm.uiState.value.activeVerticalGuideX)
         vm.toggleGrid()
         assertFalse(vm.uiState.value.isGridEnabled)
@@ -179,7 +183,6 @@ class EditorBugRegressionTest {
         val vm = createViewModel()
         assertFalse(vm.uiState.value.canUndo)
 
-        // Drag across several frames
         vm.updateLayerPositionWithSnapping(40f, 30f)
         vm.updateLayerPositionWithSnapping(30f, 20f)
         vm.updateLayerPositionWithSnapping(30f, 10f)
@@ -189,13 +192,11 @@ class EditorBugRegressionTest {
         assertEquals(60f, vm.uiState.value.selectedLayer!!.positionY, 0.01f)
         assertTrue("Canvas drag should be undoable", vm.uiState.value.canUndo)
 
-        // Single undo restores pre-drag origin and exhausts undo stack
         vm.undo()
         assertEquals(0f, vm.uiState.value.selectedLayer!!.positionX, 0.01f)
         assertEquals(0f, vm.uiState.value.selectedLayer!!.positionY, 0.01f)
         assertFalse("Multi-frame drag must coalesce into a single undo entry", vm.uiState.value.canUndo)
 
-        // Redo restores final dragged coordinates
         vm.redo()
         assertEquals(100f, vm.uiState.value.selectedLayer!!.positionX, 0.01f)
         assertEquals(60f, vm.uiState.value.selectedLayer!!.positionY, 0.01f)
@@ -216,7 +217,6 @@ class EditorBugRegressionTest {
         assertEquals(initialSize, vm.uiState.value.selectedLayer!!.fontSize, 0.01f)
         assertFalse("Slider drag must coalesce into one undo step", vm.uiState.value.canUndo)
 
-        // Also verify filter slider coalescing
         for (step in 1..8) {
             vm.updateCanvasFilters(continuous = true) {
                 it.copy(vignetteEnabled = true, vignetteIntensity = 0.1f + step * 0.05f)
@@ -229,14 +229,17 @@ class EditorBugRegressionTest {
     }
 
     @Test
-    fun lockedLayerBlocksNudgeAlignUpdateDragReorderAndDelete() {
+    fun lockedLayerBlocksMutationsAndLockToggleIsUndoable() {
         val vm = createViewModel()
         val layerId = vm.uiState.value.selectedLayerId!!
         val originalText = vm.uiState.value.selectedLayer!!.text
 
+        // Bug 2.18: toggleLayerLock itself records exactly 1 undo step ("Toggle Lock")
         vm.toggleLayerLock(layerId)
         assertTrue(vm.uiState.value.selectedLayer!!.isLocked)
+        assertEquals(listOf("Toggle Lock"), vm.uiState.value.undoHistoryLabels)
 
+        // All blocked operations on a locked layer must be no-ops and NOT add extra undo entries
         vm.nudgeSelectedLayer(50f, 50f)
         vm.alignSelectedLayer(AlignmentAction.ALIGN_LEFT)
         vm.updateSelectedLayer { it.copy(text = "Mutated") }
@@ -245,11 +248,93 @@ class EditorBugRegressionTest {
         vm.deleteLayer(layerId)
 
         val after = vm.uiState.value.layers.find { it.id == layerId }
-        assertTrue("Locked layer must not be deleted", after != null)
+        assertNotNull("Locked layer must not be deleted", after)
         assertEquals(0f, after!!.positionX, 0.01f)
         assertEquals(0f, after.positionY, 0.01f)
         assertEquals(originalText, after.text)
-        assertFalse("Blocked operations on locked layer should not pollute undo stack", vm.uiState.value.canUndo)
+        assertEquals("Blocked operations must not pollute undo stack", listOf("Toggle Lock"), vm.uiState.value.undoHistoryLabels)
+
+        // Undoing unlocks the layer cleanly
+        vm.undo()
+        assertFalse(vm.uiState.value.selectedLayer!!.isLocked)
+        assertFalse(vm.uiState.value.canUndo)
+    }
+
+    @Test
+    fun pinchRotateGestureSnapsToCardinalAnglesAndTriggersSingleHapticPerSnap() {
+        val vm = createViewModel()
+        val initialFontSize = vm.uiState.value.selectedLayer!!.fontSize
+
+        // Rotate to 43° -> within ±4° of 45° -> snaps to 45° and returns true for haptic
+        val snappedFirst = vm.transformSelectedLayerGesture(
+            panDeltaX = 10f,
+            panDeltaY = -5f,
+            zoomFactor = 1.5f,
+            rotationDeltaDeg = 43f
+        )
+        assertTrue("Entering 45° snap zone should trigger haptic once", snappedFirst)
+        assertEquals(45f, vm.uiState.value.selectedLayer!!.rotation, 0.01f)
+        assertEquals(initialFontSize * 1.5f, vm.uiState.value.selectedLayer!!.fontSize, 0.05f)
+
+        // Micro-movement +1° (still 44° -> snapped to 45°) should NOT re-trigger haptic spam
+        val snappedAgain = vm.transformSelectedLayerGesture(0f, 0f, 1.0f, 1f)
+        assertFalse("Staying inside same 45° snap zone must not spam haptics", snappedAgain)
+        assertEquals(45f, vm.uiState.value.selectedLayer!!.rotation, 0.01f)
+
+        // Rotate +8° further (raw = 52° > 49°) -> breaks out of 45° snap cleanly
+        vm.transformSelectedLayerGesture(0f, 0f, 1.0f, 8f)
+        assertEquals(52f, vm.uiState.value.selectedLayer!!.rotation, 0.01f)
+        vm.finishContinuousEdit()
+
+        // Single undo restores initial state
+        vm.undo()
+        assertEquals(0f, vm.uiState.value.selectedLayer!!.rotation, 0.01f)
+        assertEquals(initialFontSize, vm.uiState.value.selectedLayer!!.fontSize, 0.05f)
+    }
+
+    @Test
+    fun styleCopyPasteGroupDragAndTextCaseTransformWorkEndToEnd() {
+        val vm = createViewModel()
+        vm.updateSelectedLayer(label = "Style Source") {
+            it.copy(
+                text = "hello pixel world",
+                textColor = 0xFF00E5FFL,
+                strokeWidth = 8f,
+                glowEnabled = true,
+                blendMode = LayerBlendMode.SCREEN
+            )
+        }
+        vm.applyTextCase(TextCaseMode.TITLE_CASE)
+        assertEquals("Hello Pixel World", vm.uiState.value.selectedLayer!!.text)
+
+        vm.copySelectedStyle()
+        val firstId = vm.uiState.value.selectedLayerId!!
+
+        vm.addTextLayer("Second")
+        val secondId = vm.uiState.value.selectedLayerId!!
+        vm.pasteStyleToSelected()
+        val pasted = vm.uiState.value.selectedLayer!!
+        assertEquals(0xFF00E5FFL, pasted.textColor)
+        assertEquals(8f, pasted.strokeWidth, 0.01f)
+        assertTrue(pasted.glowEnabled)
+        assertEquals(LayerBlendMode.SCREEN, pasted.blendMode)
+
+        // Multi-select & group both layers -> dragging one moves both together!
+        vm.toggleLayerMultiSelection(firstId)
+        assertEquals(setOf(firstId, secondId), vm.uiState.value.selectedLayerIds)
+        vm.groupSelectedLayers()
+        assertNotNull(vm.uiState.value.selectedLayer!!.groupId)
+
+        vm.selectLayer(firstId)
+        vm.updateLayerPositionWithSnapping(50f, -30f)
+        vm.clearSnappingGuides()
+
+        val movedFirst = vm.uiState.value.layers.first { it.id == firstId }
+        val movedSecond = vm.uiState.value.layers.first { it.id == secondId }
+        assertEquals(50f, movedFirst.positionX, 0.01f)
+        assertEquals(-30f, movedFirst.positionY, 0.01f)
+        assertEquals(50f, movedSecond.positionX, 0.01f)
+        assertEquals(-30f, movedSecond.positionY, 0.01f)
     }
 
     @Test
@@ -268,15 +353,18 @@ class EditorBugRegressionTest {
     }
 
     @Test
-    fun projectSaveIsolationAcrossPresetsRenameAndDelete() {
-        val vm = createViewModel()
+    fun projectSaveIsolationRenameDuplicateUndoDeleteAndDraftLifecycle() {
+        val draftFile = File(tempFolder.newFolder(), "draft.json")
+        val vm = createViewModel(draftFile)
 
         vm.saveProject("Poster One")
         awaitCondition { vm.uiState.value.currentProjectId != null && vm.uiState.value.savedProjects.size == 1 }
         val posterOneId = vm.uiState.value.currentProjectId!!
+        assertFalse("Saving project clears dirty flag", vm.uiState.value.isDirty)
 
         vm.applyPreset(DefaultPresets.presets[1])
         assertNull(vm.uiState.value.currentProjectId)
+        assertTrue("Applying template in editor marks state dirty", vm.uiState.value.isDirty)
 
         vm.saveProject("Poster Two")
         awaitCondition {
@@ -286,36 +374,27 @@ class EditorBugRegressionTest {
         }
         val posterTwoId = vm.uiState.value.currentProjectId!!
 
-        vm.clearUserMessage()
-        vm.addTextLayer("Updated")
-        vm.saveProject("Poster Two")
-        awaitCondition { vm.uiState.value.userMessage == "Saved project \"Poster Two\"" }
-        assertEquals(posterTwoId, vm.uiState.value.currentProjectId)
-        assertEquals(2, vm.uiState.value.savedProjects.size)
+        vm.renameSavedProject(posterOneId, "Poster Prime")
+        awaitCondition { vm.uiState.value.projectSummaries.any { it.name == "Poster Prime" } }
 
-        vm.saveProject("Poster Three")
+        vm.duplicateSavedProject(posterTwoId)
         awaitCondition { vm.uiState.value.savedProjects.size == 3 }
-        assertEquals(
-            setOf("Poster One", "Poster Two", "Poster Three"),
-            vm.uiState.value.savedProjects.map { it.name }.toSet()
-        )
 
-        val posterThreeId = vm.uiState.value.currentProjectId!!
-        vm.deleteProject(posterThreeId)
-        awaitCondition { vm.uiState.value.savedProjects.size == 2 && vm.uiState.value.currentProjectId == null }
+        vm.deleteProject(posterTwoId)
+        awaitCondition { vm.uiState.value.savedProjects.size == 2 }
+
+        vm.undoDeleteProject()
+        awaitCondition { vm.uiState.value.savedProjects.size == 3 }
     }
 
     @Test
     fun colorMathHsvHexAndComposeUnsignedArgbRoundTripCleanly() {
-        // Transparent shapeFillColor (0x00000000) must stay alpha 0 even when layer opacity is 1.0f
         assertEquals(0x00000000, ColorMath.scaleAlpha(0x00000000L, 1.0f))
 
-        // Semi-transparent 0x80FF0055 at 50% layer opacity -> alpha 0x40 (64), RGB unchanged
         val scaled = ColorMath.scaleAlpha(0x80FF0055L, 0.5f)
         assertEquals(0x40, (scaled ushr 24) and 0xFF)
         assertEquals(0xFF0055, scaled and 0x00FFFFFF)
 
-        // HSV <-> ARGB round-trip + Compose Color(Long) unsigned 32-bit compatibility
         val samples = listOf(
             0xFFFF0000L, 0xFF00FF00L, 0xFF0000FFL, 0xFF00E5FFL,
             0xFFFF007FL, 0xFFFFFFFFL, 0xFF000000L, 0x80651FFFL
@@ -325,7 +404,6 @@ class EditorBugRegressionTest {
             val alpha = ColorMath.extractAlpha(sample)
             val rebuilt = ColorMath.hsvToArgb(hsv[0], hsv[1], hsv[2], alpha)
             assertEquals("Upper 32 bits must be 0 for Compose Color(Long)", 0L, rebuilt ushr 32)
-            // Must construct Compose Color without IllegalArgumentException
             val composeColor = Color(rebuilt)
             assertNotNull(composeColor)
             assertEquals((sample ushr 24) and 0xFFL, (rebuilt ushr 24) and 0xFFL)
@@ -334,7 +412,6 @@ class EditorBugRegressionTest {
             assertTrue(kotlin.math.abs((sample and 0xFFL) - (rebuilt and 0xFFL)) <= 1L)
         }
 
-        // Hex formatting & parsing
         assertEquals("#00E5FF", ColorMath.formatHex(0xFF00E5FFL, includeAlpha = false))
         assertEquals("#8000E5FF", ColorMath.formatHex(0x8000E5FFL, includeAlpha = true))
         assertEquals(0xFF00E5FFL, ColorMath.parseHexOrNull("#00e5ff"))
@@ -345,7 +422,7 @@ class EditorBugRegressionTest {
     }
 
     @Test
-    fun textSizingScalesWithBundledFontsAndStrokePosition() {
+    fun textSizingScalesWithBundledFontsLetterSpacingAndStrokePosition() {
         val condensed = TextSizing.withEstimatedBounds(
             Layer(id = "1", name = "Condensed", type = LayerType.TEXT, text = "HEADLINE", fontKey = "bebas_neue", fontSize = 48f)
         )
@@ -353,6 +430,11 @@ class EditorBugRegressionTest {
             Layer(id = "2", name = "Pixel", type = LayerType.TEXT, text = "HEADLINE", fontKey = "press_start_2p", fontSize = 48f)
         )
         assertTrue("Press Start 2P must estimate wider than Bebas Neue", pixelWide.width > condensed.width)
+
+        val spaced = TextSizing.withEstimatedBounds(
+            condensed.copy(letterSpacing = 0.4f)
+        )
+        assertTrue("Positive letterSpacing must widen text bounds", spaced.width > condensed.width)
 
         val insideStroke = TextSizing.withEstimatedBounds(
             Layer(
