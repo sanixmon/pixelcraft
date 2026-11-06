@@ -77,7 +77,7 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "About PixelCraft",
+                text = "About PixelCraft v0.1.0",
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp

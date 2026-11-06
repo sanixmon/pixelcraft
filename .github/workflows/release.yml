@@ -1,0 +1,138 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: R8 Minified Release APK & GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Prepare Release Keystore
+        if: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
+        env:
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          KEYSTORE_FILE="$RUNNER_TEMP/pixelcraft-release.jks"
+          echo "$SIGNING_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_FILE"
+
+      - name: Run Release Unit Tests
+        run: ./gradlew testReleaseUnitTest --no-daemon --stacktrace
+
+      - name: Assemble R8-Minified Signed Release APK
+        env:
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/pixelcraft-release.jks
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Verify R8 Mapping, Signature & Package Release Assets
+        run: |
+          TAG_NAME="${{ github.event.inputs.tag_name || github.ref_name }}"
+          VERSION="${TAG_NAME#v}"
+
+          MAPPING_FILE="app/build/outputs/mapping/release/mapping.txt"
+          if [ ! -s "$MAPPING_FILE" ]; then
+            echo "ERROR: R8 mapping.txt was not generated or is empty!"
+            exit 1
+          fi
+          echo "R8 mapping lines: $(wc -l < "$MAPPING_FILE")"
+
+          RAW_APK=$(find app/build/outputs/apk/release -maxdepth 1 -name "*.apk" | head -n 1)
+          if [ -z "$RAW_APK" ] || [ ! -f "$RAW_APK" ]; then
+            echo "ERROR: Release APK not found!"
+            exit 1
+          fi
+
+          BT_VER=$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          "$ANDROID_HOME/build-tools/$BT_VER/apksigner" verify --verbose "$RAW_APK"
+
+          mkdir -p release-dist
+          OUT_APK="release-dist/PixelCraft-${VERSION}-release.apk"
+          cp "$RAW_APK" "$OUT_APK"
+          (cd release-dist && sha256sum "PixelCraft-${VERSION}-release.apk" > "PixelCraft-${VERSION}-release.apk.sha256")
+
+          APK_SIZE=$(du -h "$OUT_APK" | cut -f1)
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "APK_SIZE=$APK_SIZE" >> "$GITHUB_ENV"
+
+          {
+            echo "### Release Build Summary (\`$TAG_NAME\`)"
+            echo "- **APK**: \`PixelCraft-${VERSION}-release.apk\` (**$APK_SIZE**)"
+            echo "- **R8 Minification & Resource Shrinking**: Enabled (\`mapping.txt\` verified)"
+            echo "- **APK Signature (V1/V2/V3)**: Verified via \`apksigner\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload R8 Mapping Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r8-mapping-${{ env.VERSION }}
+          path: app/build/outputs/mapping/release/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+          cat <<EOF > "$NOTES_FILE"
+          ## PixelCraft ${TAG_NAME}
+
+          R8-minified, resource-shrunk, signed Android release APK (**${APK_SIZE}**, \`minSdk 26\` / Android 8.0+).
+
+          ### Highlights
+          - **Fixed Canvas & Compact Icon Navbar**: Static canvas viewport across all tools and inspectors.
+          - **15 Bundled Open-Source Fonts**: Packaged offline in \`res/font/\` (SIL OFL 1.1 & Apache 2.0).
+          - **Ivy Draw Vector Path Strokes**: True vector contour strokes (*Outside / Center / Inside*, *Solid / Dashed / Dotted / Dash-Dot*, *Round / Miter / Bevel* joins, *Round / Butt / Square* caps).
+          - **PicSay Pro Vector Shapes & Word Balloons**: 24 vector shapes across *Basic*, *Word Balloons* (*Oval*, *Speech Box*, *Thought Cloud*, *Shout Burst*), *Arrows*, and *Badges* with *Flip H/V*, *Solid/Gradient/Hollow* fills, and *Drop Shadows*.
+          - **2D HSV Color Wheel + Hex Picker**: Available on every color palette (\`#RRGGBB\` / \`#AARRGGBB\`).
+          - **Freemove Default + Grid Magnetic Anchors**: Pure freemove by default; smooth non-sticky magnetic anchors when Grid is enabled.
+          - **High-Resolution Export**: PNG & JPEG export up to 4K Ultra HD (\`Pictures/PixelCraft\`).
+          EOF
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" release-dist/* --clobber
+            gh release edit "$TAG_NAME" --title "PixelCraft ${TAG_NAME}" --notes-file "$NOTES_FILE"
+          else
+            gh release create "$TAG_NAME" release-dist/* \
+              --title "PixelCraft ${TAG_NAME}" \
+              --notes-file "$NOTES_FILE"
+          fi
+
+      - name: Cleanup Temporary Keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pixelcraft-release.jks"
