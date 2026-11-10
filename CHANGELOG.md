@@ -2,9 +2,11 @@
 
 All notable changes to **PixelCraft** are documented in this file.
 
-## [0.2.0] - 2026-11-06
+## [0.2.0] - Unreleased
 
 ### Added
+- **Full English + Indonesian UI**: All ~430 user-facing strings (screens, dialogs, tool panels, shape/blend/filter/ratio names, undo history, snackbar messages) now come from `strings.xml` with complete `values-in` translations. ViewModel messages use a locale-aware `UiText`.
+- **Rendering & gesture test suite**: Robolectric tests render real pixels through the export pipeline (size, quality scaling, layer positioning, z-order, JPEG/PNG transparency, sticker trim, encode round-trip) and drive real touch input through the canvas (drag, select-on-drag, pinch in/out, locked layers).
 - **Home Screen & Navigation**: Project browser with 256px WebP thumbnails, search, rename, duplicate, delete with Undo, blank canvas ratio selector, "From Photo" quick start, and 20 categorized starter templates (`Quote`, `YouTube`, `Promo`, `Greeting`, `Meme`, `Story`).
 - **Crash-Safe Autosave & Atomic Storage**: Debounced `draft.json` autosave with startup recovery prompt, `AtomicFile` writes for all project/index/draft files, portable relative image filenames (`schemaVersion = 2`), and 24-hour orphan image garbage collection.
 - **Direct Multi-Touch Manipulation**: Two-finger layer pinch-scale & twist-rotate with `±4°` cardinal/diagonal snapping + haptic feedback, 48dp corner/side selection handles, double-tap text editing, long-press quick context menu, tap-to-cycle overlapping layers, and `0.5x–6x` canvas viewport zoom & pan.

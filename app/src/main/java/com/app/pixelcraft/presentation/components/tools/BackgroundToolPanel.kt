@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -81,7 +84,7 @@ fun BackgroundToolPanel(
             .padding(10.dp)
     ) {
         Text(
-            text = "Canvas & Background (${canvasConfig.width}×${canvasConfig.height})",
+            text = stringResource(R.string.ui_canvas_background_size, canvasConfig.width, canvasConfig.height),
             color = Color(0xFF00E5FF),
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
@@ -104,7 +107,7 @@ fun BackgroundToolPanel(
             ) {
                 Icon(Icons.Default.Image, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Photo", fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_photo), fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
             }
 
             Button(
@@ -115,7 +118,7 @@ fun BackgroundToolPanel(
             ) {
                 Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Canvas Size", fontSize = 12.sp)
+                Text(stringResource(R.string.ui_canvas_size), fontSize = 12.sp)
             }
 
             Button(
@@ -126,14 +129,14 @@ fun BackgroundToolPanel(
             ) {
                 Icon(Icons.Default.Texture, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Transparent", fontSize = 12.sp)
+                Text(stringResource(R.string.ui_transparent), fontSize = 12.sp)
             }
         }
 
         if (canvasConfig.backgroundType == BackgroundType.CUSTOM_IMAGE) {
             Spacer(modifier = Modifier.height(8.dp))
             PrecisionSlider(
-                label = "Photo Blur",
+                label = stringResource(R.string.ui_photo_blur),
                 value = canvasConfig.backgroundBlur,
                 valueRange = 0f..25f,
                 defaultValue = 0f,
@@ -145,7 +148,7 @@ fun BackgroundToolPanel(
                 onValueChangeFinished = onFinishContinuousEdit
             )
             PrecisionSlider(
-                label = "Photo Dim Overlay",
+                label = stringResource(R.string.ui_photo_dim_overlay),
                 value = canvasConfig.backgroundDim,
                 valueRange = 0f..0.85f,
                 defaultValue = 0f,
@@ -161,7 +164,7 @@ fun BackgroundToolPanel(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("Solid Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+        Text(stringResource(R.string.ui_solid_color), color = Color(0xFFCCCCCC), fontSize = 12.sp)
         ColorPaletteRow(
             colors = solidColors,
             recentColors = recentColors,
@@ -173,12 +176,12 @@ fun BackgroundToolPanel(
             },
             onSelectColor = { onSetColor(it) },
             allowAlpha = false,
-            pickerTitle = "Canvas Background Color"
+            pickerTitle = stringResource(R.string.ui_canvas_background_color)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text("Curated Gradients (${DefaultPresets.curatedGradients.size})", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+        Text(stringResource(R.string.ui_curated_gradients_count, DefaultPresets.curatedGradients.size), color = Color(0xFFCCCCCC), fontSize = 12.sp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -201,7 +204,7 @@ fun BackgroundToolPanel(
                     .clickable { editingGradientStopIndex = 0 },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Gradient Start", tint = Color.White, modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_gradient_start), tint = Color.White, modifier = Modifier.size(14.dp))
             }
             Box(
                 modifier = Modifier
@@ -212,7 +215,7 @@ fun BackgroundToolPanel(
                     .clickable { editingGradientStopIndex = 1 },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Gradient End", tint = Color.White, modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_gradient_end), tint = Color.White, modifier = Modifier.size(14.dp))
             }
 
             for (grad in DefaultPresets.curatedGradients) {
@@ -249,13 +252,13 @@ fun BackgroundToolPanel(
                         onClick = {
                             onSetGradient(canvasConfig.gradientColors, canvasConfig.gradientAngle, gt, false)
                         },
-                        label = { Text(gt.label, fontSize = 12.sp) }
+                        label = { Text(gt.localizedLabel(), fontSize = 12.sp) }
                     )
                 }
             }
             if (canvasConfig.gradientType != GradientType.RADIAL) {
                 PrecisionSlider(
-                    label = "Gradient Angle",
+                    label = stringResource(R.string.ui_gradient_angle),
                     value = canvasConfig.gradientAngle,
                     valueRange = 0f..360f,
                     defaultValue = 45f,
@@ -279,7 +282,7 @@ fun BackgroundToolPanel(
         }
         val seed = if (stopIdx == 0) currentStops.first() else currentStops.last()
         PixelCraftColorPickerDialog(
-            title = if (stopIdx == 0) "Gradient Start Color" else "Gradient End Color",
+            title = if (stopIdx == 0) stringResource(R.string.ui_gradient_start_color) else stringResource(R.string.ui_gradient_end_color),
             initialColor = seed,
             allowAlpha = false,
             onConfirm = { picked ->

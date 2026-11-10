@@ -1,5 +1,10 @@
 package com.app.pixelcraft.presentation
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.presentation.i18n.asString
+import androidx.compose.ui.platform.LocalContext
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -107,6 +112,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var showNewCanvasSizeDialog by remember { mutableStateOf(false) }
@@ -144,7 +150,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(state.userMessage) {
-        val msg = state.userMessage ?: return@LaunchedEffect
+        val msg = state.userMessage?.asString(context) ?: return@LaunchedEffect
         try {
             snackbarHostState.showSnackbar(msg)
         } finally {
@@ -174,53 +180,7 @@ fun HomeScreen(
         containerColor = Color(0xFF10131A),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF141822))
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF00E5FF), Color(0xFF651FFF))
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("P", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "PixelCraft",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Typography & Graphic Studio",
-                            color = Color(0xFF8E97AA),
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-
-                IconButton(onClick = { showAboutDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "About PixelCraft",
-                        tint = Color(0xFFB8C0D0)
-                    )
-                }
-            }
+            HomeTopBar(onAbout = { showAboutDialog = true })
         }
     ) { innerPadding ->
         LazyVerticalGrid(
@@ -236,7 +196,7 @@ fun HomeScreen(
             if (state.hasRecoverableDraft) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     DraftRecoveryCard(
-                        projectName = state.draftProjectName ?: "Untitled",
+                        projectName = state.draftProjectName ?: stringResource(R.string.ui_untitled),
                         timestamp = state.draftTimestamp,
                         onResume = {
                             viewModel.resumeSavedDraft()
@@ -251,7 +211,7 @@ fun HomeScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Text(
-                        text = "Start Creating",
+                        text = stringResource(R.string.ui_start_creating),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -263,16 +223,16 @@ fun HomeScreen(
                     ) {
                         QuickStartActionCard(
                             icon = Icons.Default.Add,
-                            title = "New Canvas",
-                            subtitle = "Pick ratio & size",
+                            title = stringResource(R.string.home_new_canvas),
+                            subtitle = stringResource(R.string.ui_pick_ratio_size),
                             accentColor = Color(0xFF00E5FF),
                             onClick = { showNewCanvasSizeDialog = true },
                             modifier = Modifier.weight(1f)
                         )
                         QuickStartActionCard(
                             icon = Icons.Default.AddPhotoAlternate,
-                            title = "From Photo",
-                            subtitle = "Gallery picture",
+                            title = stringResource(R.string.home_from_photo),
+                            subtitle = stringResource(R.string.ui_gallery_picture),
                             accentColor = Color(0xFF00E676),
                             onClick = {
                                 pickPhotoLauncher.launch(
@@ -283,7 +243,7 @@ fun HomeScreen(
                         )
                         QuickStartActionCard(
                             icon = Icons.Default.FileOpen,
-                            title = "Import",
+                            title = stringResource(R.string.ui_import),
                             subtitle = ".pixelcraft file",
                             accentColor = Color(0xFFFFAB40),
                             onClick = {
@@ -302,7 +262,7 @@ fun HomeScreen(
                 Column {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Starter Templates (${DefaultPresets.presets.size})",
+                        text = stringResource(R.string.ui_starter_templates_count, DefaultPresets.presets.size),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -317,13 +277,13 @@ fun HomeScreen(
                         FilterChip(
                             selected = selectedTemplateCategory == null,
                             onClick = { selectedTemplateCategory = null },
-                            label = { Text("All", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.ui_all), fontSize = 12.sp) }
                         )
                         for (cat in PresetCategory.entries) {
                             FilterChip(
                                 selected = selectedTemplateCategory == cat,
                                 onClick = { selectedTemplateCategory = cat },
-                                label = { Text(cat.label, fontSize = 12.sp) }
+                                label = { Text(cat.localizedLabel(), fontSize = 12.sp) }
                             )
                         }
                     }
@@ -352,7 +312,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "My Projects (${state.projectSummaries.size})",
+                            text = stringResource(R.string.ui_my_projects_count, state.projectSummaries.size),
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
@@ -363,7 +323,7 @@ fun HomeScreen(
                         OutlinedTextField(
                             value = projectSearchQuery,
                             onValueChange = { projectSearchQuery = it },
-                            placeholder = { Text("Search saved projects...", fontSize = 12.sp) },
+                            placeholder = { Text(stringResource(R.string.ui_search_saved_projects), fontSize = 12.sp) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -391,9 +351,9 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = if (state.projectSummaries.isEmpty()) {
-                                "No saved projects yet"
+                                stringResource(R.string.ui_no_saved_projects_yet)
                             } else {
-                                "No matching projects found"
+                                stringResource(R.string.ui_no_matching_projects)
                             },
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
@@ -401,7 +361,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Pick a template above or start a New Canvas — saved designs appear here with instant previews.",
+                            text = stringResource(R.string.ui_pick_a_template_above_or_start_a_new_can),
                             color = Color(0xFF8E97AA),
                             fontSize = 12.sp
                         )
@@ -453,7 +413,7 @@ fun HomeScreen(
 
     renamingProject?.let { target ->
         PixelCraftRenameDialog(
-            title = "Rename Project",
+            title = stringResource(R.string.ui_rename_project),
             initialName = target.name,
             onConfirm = { nextName ->
                 viewModel.renameSavedProject(target.id, nextName)
@@ -464,355 +424,22 @@ fun HomeScreen(
     }
 
     deletingProject?.let { target ->
-        AlertDialog(
-            onDismissRequest = { deletingProject = null },
-            containerColor = Color(0xFF1E222B),
-            title = {
-                Text("Delete Project?", color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 17.sp)
-            },
-            text = {
-                Text(
-                    text = "Remove \"${target.name}\" from saved projects?",
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val deletedName = target.name
-                        deletingProject = null
-                        viewModel.deleteProject(target.id)
-                        scope.launch {
-                            val res = snackbarHostState.showSnackbar(
-                                message = "Deleted \"$deletedName\"",
-                                actionLabel = "Undo"
-                            )
-                            if (res == SnackbarResult.ActionPerformed) {
-                                viewModel.undoDeleteProject()
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
-                ) {
-                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+        DeleteProjectDialog(
+            projectName = target.name,
+            onConfirm = { deletedMessage, undoLabel ->
+                deletingProject = null
+                viewModel.deleteProject(target.id)
+                scope.launch {
+                    val res = snackbarHostState.showSnackbar(
+                        message = deletedMessage,
+                        actionLabel = undoLabel
+                    )
+                    if (res == SnackbarResult.ActionPerformed) {
+                        viewModel.undoDeleteProject()
+                    }
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { deletingProject = null }) {
-                    Text("Cancel", color = Color.White)
-                }
-            }
+            onDismiss = { deletingProject = null }
         )
-    }
-}
-
-@Composable
-private fun DraftRecoveryCard(
-    projectName: String,
-    timestamp: Long?,
-    onResume: () -> Unit,
-    onDiscard: () -> Unit
-) {
-    val formattedTime = remember(timestamp) {
-        if (timestamp == null) "Recently"
-        else SimpleDateFormat("d MMM, HH:mm", Locale.getDefault()).format(Date(timestamp))
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(Color(0xFF18283B), Color(0xFF1F1D36))
-                )
-            )
-            .border(1.dp, Color(0xFF00E5FF), RoundedCornerShape(14.dp))
-            .padding(14.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.History,
-                contentDescription = null,
-                tint = Color(0xFF00E5FF),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Unsaved Draft Ready: $projectName",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = "Autosaved $formattedTime",
-                    color = Color(0xFFA5B1C6),
-                    fontSize = 11.sp
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(
-                onClick = onResume,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Resume Draft", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            }
-            OutlinedButton(onClick = onDiscard) {
-                Text("Discard", color = Color(0xFFFF8A80), fontSize = 12.sp)
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickStartActionCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    accentColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF181C27))
-            .border(1.dp, Color(0xFF272E40), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(CircleShape)
-                .background(accentColor.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = title, tint = accentColor, modifier = Modifier.size(18.dp))
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
-        Text(subtitle, color = Color(0xFF8E97AA), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-@Composable
-private fun HomeTemplateCard(
-    preset: StylePreset,
-    onClick: () -> Unit
-) {
-    val bgBrush = remember(preset.id) {
-        when (preset.canvasConfig.backgroundType) {
-            BackgroundType.GRADIENT -> {
-                val cols = preset.canvasConfig.gradientColors.map { Color(it.toInt()) }
-                Brush.linearGradient(if (cols.size >= 2) cols else listOf(Color(0xFF1F1C2C), Color(0xFF928DAB)))
-            }
-            else -> {
-                val c = Color(preset.canvasConfig.backgroundColor.toInt())
-                Brush.linearGradient(listOf(c, c.copy(alpha = 0.85f)))
-            }
-        }
-    }
-    val primaryText = remember(preset.id) {
-        preset.initialLayers.firstOrNull { it.type == LayerType.TEXT }
-    }
-
-    Column(
-        modifier = Modifier
-            .width(146.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF171B26))
-            .border(1.dp, Color(0xFF283044), RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(86.dp)
-                .background(bgBrush)
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = primaryText?.text?.lineSequence()?.firstOrNull()?.take(14) ?: preset.title,
-                color = Color((primaryText?.textColor ?: 0xFFFFFFFFL).toInt()),
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 13.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Column(modifier = Modifier.padding(8.dp)) {
-            Text(
-                text = preset.title,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "${preset.category.label} • ${preset.canvasConfig.width}×${preset.canvasConfig.height}",
-                color = Color(0xFF8E97AA),
-                fontSize = 10.sp,
-                maxLines = 1
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProjectThumbnailCard(
-    summary: ProjectSummary,
-    thumbnailsDir: File,
-    onOpen: () -> Unit,
-    onRename: () -> Unit,
-    onDuplicate: () -> Unit,
-    onExportArchive: () -> Unit,
-    onDelete: () -> Unit
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    var thumbImage by remember(summary.thumbnailFileName, summary.timestamp) {
-        mutableStateOf<ImageBitmap?>(null)
-    }
-
-    LaunchedEffect(summary.thumbnailFileName, summary.timestamp) {
-        val fileName = summary.thumbnailFileName
-        if (fileName != null) {
-            val bmp = withContext(Dispatchers.IO) {
-                val file = File(thumbnailsDir, fileName)
-                if (file.exists()) {
-                    BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
-                } else {
-                    null
-                }
-            }
-            thumbImage = bmp
-        } else {
-            thumbImage = null
-        }
-    }
-
-    val dateStr = remember(summary.timestamp) {
-        SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(summary.timestamp))
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF171B26))
-            .border(1.dp, Color(0xFF262D40), RoundedCornerShape(14.dp))
-            .clickable(onClick = onOpen)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.2f)
-                .background(Color(0xFF10131C)),
-            contentAlignment = Alignment.Center
-        ) {
-            val bmp = thumbImage
-            if (bmp != null) {
-                Image(
-                    bitmap = bmp,
-                    contentDescription = summary.name,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Text(
-                    text = "${summary.width}×${summary.height}",
-                    color = Color(0xFF5D667A),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 10.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = summary.name,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${summary.layerCount} layers • $dateStr",
-                    color = Color(0xFF8E97AA),
-                    fontSize = 11.sp,
-                    maxLines = 1
-                )
-            }
-
-            Box {
-                IconButton(
-                    onClick = { menuExpanded = true },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Project Actions",
-                        tint = Color(0xFFB8C0D0),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
-                    modifier = Modifier.background(Color(0xFF1E2330))
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Rename", color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF00E5FF)) },
-                        onClick = {
-                            menuExpanded = false
-                            onRename()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Duplicate", color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White) },
-                        onClick = {
-                            menuExpanded = false
-                            onDuplicate()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Share .pixelcraft", color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFF00E676)) },
-                        onClick = {
-                            menuExpanded = false
-                            onExportArchive()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete", color = Color(0xFFFF5252)) },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252)) },
-                        onClick = {
-                            menuExpanded = false
-                            onDelete()
-                        }
-                    )
-                }
-            }
-        }
     }
 }

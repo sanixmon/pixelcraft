@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,7 +62,7 @@ fun PixelCraftImageSizeDialog(
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "Image Size",
+                text = stringResource(R.string.ui_image_size),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp
@@ -71,7 +74,7 @@ fun PixelCraftImageSizeDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text("Preset Aspect Ratio:", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_preset_aspect_ratio), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
 
                 for (preset in AspectRatioPreset.entries) {
@@ -93,7 +96,7 @@ fun PixelCraftImageSizeDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = preset.title,
+                            text = preset.localizedLabel(),
                             color = if (isSelected) Color(0xFF00E5FF) else Color.White,
                             fontSize = 12.sp
                         )
@@ -107,7 +110,7 @@ fun PixelCraftImageSizeDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
                 Text(
-                    text = "Dimensions ($minDim–$maxDim px):",
+                    text = stringResource(R.string.ui_dimensions_range, minDim, maxDim),
                     color = Color.White,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
@@ -128,7 +131,7 @@ fun PixelCraftImageSizeDialog(
                                 selectedPreset = AspectRatioPreset.CUSTOM
                             }
                         },
-                        label = { Text("Width") },
+                        label = { Text(stringResource(R.string.ui_width)) },
                         isError = parsedW == null || parsedW !in minDim..maxDim,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -144,7 +147,7 @@ fun PixelCraftImageSizeDialog(
                                 selectedPreset = AspectRatioPreset.CUSTOM
                             }
                         },
-                        label = { Text("Height") },
+                        label = { Text(stringResource(R.string.ui_height)) },
                         isError = parsedH == null || parsedH !in minDim..maxDim,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -155,7 +158,7 @@ fun PixelCraftImageSizeDialog(
                 if (!isValid) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Enter width and height between $minDim and $maxDim px.",
+                        text = stringResource(R.string.ui_dimensions_hint, minDim, maxDim),
                         color = Color(0xFFFF5252),
                         fontSize = 11.sp
                     )
@@ -173,12 +176,12 @@ fun PixelCraftImageSizeDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text("OK", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_ok), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = Color.White)
             }
         }
     )

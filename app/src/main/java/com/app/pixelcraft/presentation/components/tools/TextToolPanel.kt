@@ -1,5 +1,9 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.presentation.i18n.labelRes
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -91,16 +95,16 @@ import com.app.pixelcraft.presentation.EyedropperTarget
 import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import kotlin.math.roundToInt
 
-private val TextColorPalette = listOf(
+internal val TextColorPalette = listOf(
     0xFFFFFFFF, 0xFF000000, 0xFFFF0055, 0xFFFF5722, 0xFFFFEB3B,
     0xFF00E676, 0xFF00E5FF, 0xFF2979FF, 0xFF651FFF, 0xFFFF80AB
 )
 
-private enum class TextToolGroup(val label: String) {
-    ALL("All"),
-    TYPE("Type"),
-    FX("Color & FX"),
-    LAYOUT("Layout")
+private enum class TextToolGroup(@androidx.annotation.StringRes val labelRes: Int) {
+    ALL(R.string.ui_tab_all),
+    TYPE(R.string.ui_tab_type),
+    FX(R.string.ui_tab_fx),
+    LAYOUT(R.string.ui_tab_layout)
 }
 
 @Composable
@@ -152,7 +156,7 @@ fun TextToolPanel(
             OutlinedButton(onClick = onOpenSavedStyles) {
                 Icon(Icons.Default.Bookmarks, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Saved Styles", color = Color.White, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_saved_styles), color = Color.White, fontSize = 12.sp)
             }
         }
         return
@@ -209,7 +213,7 @@ fun TextToolPanel(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = group.label,
+                        text = stringResource(group.labelRes),
                         color = if (active) Color(0xFF00E5FF) else Color(0xFFB5BDCE),
                         fontSize = 11.sp,
                         fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
@@ -221,20 +225,20 @@ fun TextToolPanel(
 
             MiniActionPill(
                 icon = Icons.Default.ContentCopy,
-                label = "Copy Style",
+                label = stringResource(R.string.ui_copy_style),
                 onClick = onCopyStyle
             )
             if (hasCopiedStyle) {
                 MiniActionPill(
                     icon = Icons.Default.ContentPaste,
-                    label = "Paste Style",
+                    label = stringResource(R.string.ui_paste_style),
                     accent = true,
                     onClick = onPasteStyle
                 )
             }
             MiniActionPill(
                 icon = Icons.Default.Bookmarks,
-                label = "Styles",
+                label = stringResource(R.string.ui_styles),
                 onClick = onOpenSavedStyles
             )
         }
@@ -255,37 +259,37 @@ fun TextToolPanel(
             if (showType) {
                 ToolButton(
                     icon = Icons.Default.Edit,
-                    label = "Edit",
+                    label = stringResource(R.string.ui_edit),
                     isActive = false,
                     onClick = onOpenEditDialog
                 )
                 ToolButton(
                     icon = Icons.Default.FontDownload,
-                    label = "Font",
+                    label = stringResource(R.string.ui_font),
                     isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatSize,
-                    label = "Size",
+                    label = stringResource(R.string.ui_size),
                     isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatBold,
-                    label = "Style",
+                    label = stringResource(R.string.ui_style),
                     isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatLineSpacing,
-                    label = "Spacing",
+                    label = stringResource(R.string.ui_spacing),
                     isActive = activeSubTool == ActiveSubTool.TEXT_SPACING,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_SPACING) }
                 )
                 ToolButton(
                     icon = Icons.Default.Looks,
-                    label = "Curve",
+                    label = stringResource(R.string.ui_curve),
                     isActive = activeSubTool == ActiveSubTool.TEXT_CURVE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_CURVE) }
                 )
@@ -294,31 +298,31 @@ fun TextToolPanel(
             if (showFx) {
                 ToolButton(
                     icon = Icons.Default.ColorLens,
-                    label = "Color",
+                    label = stringResource(R.string.ui_color),
                     isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
                 )
                 ToolButton(
                     icon = Icons.Default.BorderStyle,
-                    label = "Stroke",
+                    label = stringResource(R.string.ui_stroke),
                     isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
                 )
                 ToolButton(
                     icon = Icons.Default.AutoAwesome,
-                    label = "Glow",
+                    label = stringResource(R.string.ui_glow),
                     isActive = activeSubTool == ActiveSubTool.TEXT_GLOW,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_GLOW) }
                 )
                 ToolButton(
                     icon = Icons.Default.Lightbulb,
-                    label = "Shadow",
+                    label = stringResource(R.string.ui_shadow),
                     isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatColorFill,
-                    label = "Bg Pill",
+                    label = stringResource(R.string.ui_bg_pill),
                     isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
                 )
@@ -330,19 +334,19 @@ fun TextToolPanel(
                 )
                 ToolButton(
                     icon = Icons.Default.SettingsBackupRestore,
-                    label = "Reflect",
+                    label = stringResource(R.string.ui_reflect),
                     isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
                 )
                 ToolButton(
                     icon = Icons.Default.BlurOn,
-                    label = "Blend",
+                    label = stringResource(R.string.ui_blend),
                     isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
                     onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
                 )
                 ToolButton(
                     icon = Icons.Default.Opacity,
-                    label = "Opacity",
+                    label = stringResource(R.string.ui_opacity),
                     isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
                 )
@@ -351,43 +355,43 @@ fun TextToolPanel(
             if (showLayout) {
                 ToolButton(
                     icon = Icons.Default.Rotate90DegreesCcw,
-                    label = "Rotate",
+                    label = stringResource(R.string.ui_rotate),
                     isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
                 )
                 ToolButton(
                     icon = Icons.Default.ArrowUpward,
-                    label = "Nudge",
+                    label = stringResource(R.string.ui_nudge),
                     isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
                 )
                 ToolButton(
                     icon = Icons.Default.AlignHorizontalCenter,
-                    label = "Align",
+                    label = stringResource(R.string.ui_align),
                     isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
                 )
                 ToolButton(
                     icon = Icons.Default.Layers,
-                    label = "To Front",
+                    label = stringResource(R.string.ui_to_front),
                     isActive = false,
                     onClick = onBringToFront
                 )
                 ToolButton(
                     icon = Icons.Default.Layers,
-                    label = "To Back",
+                    label = stringResource(R.string.ui_to_back),
                     isActive = false,
                     onClick = onSendToBack
                 )
                 ToolButton(
                     icon = Icons.Default.ContentCopy,
-                    label = "Duplicate",
+                    label = stringResource(R.string.action_duplicate),
                     isActive = false,
                     onClick = onDuplicateLayer
                 )
                 ToolButton(
                     icon = Icons.Default.Delete,
-                    label = "Delete",
+                    label = stringResource(R.string.action_delete),
                     isActive = false,
                     onClick = onDeleteLayer
                 )
@@ -492,766 +496,46 @@ private fun SubToolInspector(
                 fontSize = 13.sp
             )
             IconButton(onClick = onClose, modifier = Modifier.size(26.dp)) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close), tint = Color.White)
             }
         }
 
         Spacer(modifier = Modifier.height(6.dp))
 
         when (subTool) {
-            ActiveSubTool.TEXT_FONT -> {
-                var searchQuery by remember { mutableStateOf("") }
-                var selectedCategory by remember { mutableStateOf("All") }
-                val allFonts = remember(availableFontsCount) { FontCatalog.allFonts() }
-                val categories = remember(allFonts, favoriteFontKeys) {
-                    buildList {
-                        add("All")
-                        if (favoriteFontKeys.isNotEmpty()) add("Favorites")
-                        if (allFonts.any { it.category == "Imported" }) add("Imported")
-                        allFonts.map { it.category }.distinct().filter { it != "Imported" }.forEach { add(it) }
-                    }
-                }
-                val filteredFonts = remember(allFonts, searchQuery, selectedCategory, favoriteFontKeys) {
-                    allFonts.filter { font ->
-                        val matchesCategory = when (selectedCategory) {
-                            "All" -> true
-                            "Favorites" -> font.key in favoriteFontKeys
-                            else -> font.category.equals(selectedCategory, ignoreCase = true)
-                        }
-                        val matchesSearch = searchQuery.isBlank() ||
-                            font.displayName.contains(searchQuery.trim(), ignoreCase = true) ||
-                            font.category.contains(searchQuery.trim(), ignoreCase = true)
-                        matchesCategory && matchesSearch
-                    }
-                }
-                val previewSample = remember(layer.text) {
-                    layer.text.lineSequence().firstOrNull()?.trim()?.take(10)?.ifBlank { "Abc" } ?: "Abc"
-                }
+            ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont)
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search ${allFonts.size} fonts...", fontSize = 12.sp) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedButton(onClick = onImportFont) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(".ttf/.otf", color = Color(0xFF00E5FF), fontSize = 12.sp)
-                    }
-                }
+            ActiveSubTool.TEXT_POSITION -> TextPositionInspector(onNudge = onNudge)
 
-                Spacer(modifier = Modifier.height(6.dp))
+            ActiveSubTool.TEXT_RELATIVE_POSITION -> TextAlignInspector(onAlign = onAlign)
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    for (cat in categories) {
-                        FilterChip(
-                            selected = selectedCategory == cat,
-                            onClick = { selectedCategory = cat },
-                            label = { Text(cat, fontSize = 11.sp) }
-                        )
-                    }
-                }
+            ActiveSubTool.TEXT_SIZE -> TextSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-                Spacer(modifier = Modifier.height(6.dp))
+            ActiveSubTool.TEXT_SPACING -> TextSpacingInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    for (font in filteredFonts) {
-                        val isSelected = layer.fontKey == font.key
-                        val isFav = font.key in favoriteFontKeys
-                        val composeFamily = remember(font.key) {
-                            FontCatalog.resolveComposeFontFamily(font.key)
-                        }
-                        Column(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Color(0xFF263346) else Color(0xFF11141C))
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF2D3240),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .clickable { onUpdate(false) { it.copy(fontKey = font.key) } }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = previewSample,
-                                    fontFamily = composeFamily,
-                                    color = Color.White,
-                                    fontSize = 17.sp,
-                                    maxLines = 1
-                                )
-                                Icon(
-                                    imageVector = if (isFav) Icons.Default.Star else Icons.Default.StarBorder,
-                                    contentDescription = "Favorite ${font.displayName}",
-                                    tint = if (isFav) Color(0xFFFFD54F) else Color(0xFF687082),
-                                    modifier = Modifier
-                                        .size(15.dp)
-                                        .clickable { onToggleFavoriteFont(font.key) }
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = font.displayName,
-                                color = if (isSelected) Color(0xFF00E5FF) else Color(0xFFCCCCCC),
-                                fontSize = 11.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = font.category,
-                                color = Color(0xFF7D8597),
-                                fontSize = 10.sp,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-            }
+            ActiveSubTool.TEXT_CURVE -> TextCurveInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.TEXT_POSITION -> {
-                var stepPx by remember { mutableFloatStateOf(10f) }
-                PrecisionSlider(
-                    label = "Nudge Step",
-                    value = stepPx,
-                    valueRange = 1f..50f,
-                    defaultValue = 10f,
-                    fineStep = 1f,
-                    unitSuffix = "px",
-                    onValueChange = { next, _ -> stepPx = next },
-                    onValueChangeFinished = {}
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { onNudge(-stepPx, 0f) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nudge Left", tint = Color.White)
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(onClick = { onNudge(0f, -stepPx) }) {
-                            Icon(Icons.Default.ArrowUpward, contentDescription = "Nudge Up", tint = Color.White)
-                        }
-                        IconButton(onClick = { onNudge(0f, stepPx) }) {
-                            Icon(Icons.Default.ArrowDownward, contentDescription = "Nudge Down", tint = Color.White)
-                        }
-                    }
-                    IconButton(onClick = { onNudge(stepPx, 0f) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Nudge Right", tint = Color.White)
-                    }
-                }
-            }
+            ActiveSubTool.TEXT_COLOR -> TextColorInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-            ActiveSubTool.TEXT_RELATIVE_POSITION -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    IconButton(onClick = { onAlign(AlignmentAction.ALIGN_LEFT) }) {
-                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = "Align Left", tint = Color.White)
-                    }
-                    IconButton(onClick = { onAlign(AlignmentAction.CENTER_HORIZONTAL) }) {
-                        Icon(Icons.Default.AlignHorizontalCenter, contentDescription = "Center Horizontally", tint = Color(0xFF00E5FF))
-                    }
-                    IconButton(onClick = { onAlign(AlignmentAction.ALIGN_RIGHT) }) {
-                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = "Align Right", tint = Color.White)
-                    }
-                    IconButton(onClick = { onAlign(AlignmentAction.ALIGN_TOP) }) {
-                        Icon(Icons.Default.AlignVerticalTop, contentDescription = "Align Top", tint = Color.White)
-                    }
-                    IconButton(onClick = { onAlign(AlignmentAction.CENTER_VERTICAL) }) {
-                        Icon(Icons.Default.AlignVerticalCenter, contentDescription = "Center Vertically", tint = Color(0xFF00E5FF))
-                    }
-                    IconButton(onClick = { onAlign(AlignmentAction.ALIGN_BOTTOM) }) {
-                        Icon(Icons.Default.AlignVerticalBottom, contentDescription = "Align Bottom", tint = Color.White)
-                    }
-                }
-            }
+            ActiveSubTool.TEXT_OPACITY -> TextOpacityInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.TEXT_SIZE -> {
-                PrecisionSlider(
-                    label = "Font Size",
-                    value = layer.fontSize,
-                    valueRange = 10f..260f,
-                    defaultValue = 44f,
-                    fineStep = 1f,
-                    unitSuffix = "sp",
-                    onValueChange = { sz, cont -> onUpdate(cont) { it.copy(fontSize = sz) } },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
+            ActiveSubTool.TEXT_ROTATE -> TextRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.TEXT_SPACING -> {
-                PrecisionSlider(
-                    label = "Letter Spacing",
-                    value = layer.letterSpacing,
-                    valueRange = -0.15f..1.0f,
-                    defaultValue = 0f,
-                    fineStep = 0.02f,
-                    unitSuffix = "em",
-                    valueFormatter = { "%.2f".format(it) },
-                    onValueChange = { ls, cont -> onUpdate(cont) { it.copy(letterSpacing = ls) } },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-                PrecisionSlider(
-                    label = "Line Spacing",
-                    value = layer.lineHeightMultiplier,
-                    valueRange = 0.8f..2.2f,
-                    defaultValue = 1.15f,
-                    fineStep = 0.05f,
-                    unitSuffix = "x",
-                    valueFormatter = { "%.2f".format(it) },
-                    onValueChange = { lh, cont -> onUpdate(cont) { it.copy(lineHeightMultiplier = lh) } },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
+            ActiveSubTool.TEXT_STYLE -> TextStyleInspector(layer = layer, onUpdate = onUpdate, onApplyTextCase = onApplyTextCase)
 
-            ActiveSubTool.TEXT_CURVE -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(
-                        "Arch +90°" to 90f,
-                        "Arch +45°" to 45f,
-                        "Straight 0°" to 0f,
-                        "Smile -45°" to -45f,
-                        "Smile -90°" to -90f
-                    ).forEach { (label, deg) ->
-                        FilterChip(
-                            selected = layer.curveAngle.roundToInt() == deg.roundToInt(),
-                            onClick = { onUpdate(false) { it.copy(curveAngle = deg) } },
-                            label = { Text(label, fontSize = 11.sp) }
-                        )
-                    }
-                }
-                PrecisionSlider(
-                    label = "Arc Curve Angle",
-                    value = layer.curveAngle,
-                    valueRange = -180f..180f,
-                    defaultValue = 0f,
-                    fineStep = 2f,
-                    unitSuffix = "°",
-                    onValueChange = { deg, cont -> onUpdate(cont) { it.copy(curveAngle = deg) } },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
+            ActiveSubTool.TEXT_BACKGROUND -> TextBackgroundInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-            ActiveSubTool.TEXT_COLOR -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = !layer.textGradientEnabled,
-                        onClick = { onUpdate(false) { it.copy(textGradientEnabled = false) } },
-                        label = { Text("Solid Fill", fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = layer.textGradientEnabled && !layer.textGradientRadial,
-                        onClick = {
-                            onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = false) }
-                        },
-                        label = { Text("Linear Gradient", fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = layer.textGradientEnabled && layer.textGradientRadial,
-                        onClick = {
-                            onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = true) }
-                        },
-                        label = { Text("Radial Gradient", fontSize = 12.sp) }
-                    )
-                }
+            ActiveSubTool.TEXT_STROKE -> TextStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-                Text(
-                    text = if (layer.textGradientEnabled) "Start Color" else "Text Color",
-                    color = Color(0xFFCCCCCC),
-                    fontSize = 12.sp
-                )
-                ColorPaletteRow(
-                    colors = TextColorPalette,
-                    recentColors = recentColors,
-                    selectedColor = layer.textColor,
-                    onSelectColor = { colorValue -> onUpdate(false) { it.copy(textColor = colorValue) } },
-                    onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_COLOR) },
-                    allowAlpha = true,
-                    pickerTitle = "Text Color"
-                )
+            ActiveSubTool.TEXT_GLOW -> TextGlowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-                if (layer.textGradientEnabled) {
-                    Text("End Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                    ColorPaletteRow(
-                        colors = TextColorPalette,
-                        recentColors = recentColors,
-                        selectedColor = layer.textGradientEndColor,
-                        onSelectColor = { endCol -> onUpdate(false) { it.copy(textGradientEndColor = endCol) } },
-                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_GRADIENT_END) },
-                        allowAlpha = true,
-                        pickerTitle = "Gradient End Color"
-                    )
-                    if (!layer.textGradientRadial) {
-                        PrecisionSlider(
-                            label = "Gradient Angle",
-                            value = layer.textGradientAngle,
-                            valueRange = 0f..360f,
-                            defaultValue = 0f,
-                            fineStep = 5f,
-                            unitSuffix = "°",
-                            onValueChange = { ang, cont -> onUpdate(cont) { it.copy(textGradientAngle = ang) } },
-                            onValueChangeFinished = onFinishContinuousEdit
-                        )
-                    }
-                }
-            }
+            ActiveSubTool.TEXT_SHADOW -> TextShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-            ActiveSubTool.TEXT_OPACITY -> {
-                PrecisionSlider(
-                    label = "Opacity",
-                    value = layer.opacity * 100f,
-                    valueRange = 0f..100f,
-                    defaultValue = 100f,
-                    fineStep = 2f,
-                    unitSuffix = "%",
-                    onValueChange = { pct, cont ->
-                        onUpdate(cont) { it.copy(opacity = (pct / 100f).coerceIn(0f, 1f)) }
-                    },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
+            ActiveSubTool.TEXT_3D -> Text3dInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.TEXT_ROTATE -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(-90f, -45f, 0f, 45f, 90f).forEach { deg ->
-                        FilterChip(
-                            selected = layer.rotation.roundToInt() == deg.roundToInt(),
-                            onClick = { onUpdate(false) { it.copy(rotation = deg) } },
-                            label = { Text("${deg.toInt()}°", fontSize = 11.sp) }
-                        )
-                    }
-                }
-                PrecisionSlider(
-                    label = "Rotation Angle",
-                    value = layer.rotation,
-                    valueRange = -180f..180f,
-                    defaultValue = 0f,
-                    fineStep = 1f,
-                    unitSuffix = "°",
-                    onValueChange = { newRot, cont -> onUpdate(cont) { it.copy(rotation = newRot) } },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
+            ActiveSubTool.TEXT_REFLECTION -> TextReflectionInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.TEXT_STYLE -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = layer.isBold,
-                        onClick = { onUpdate(false) { it.copy(isBold = !it.isBold) } },
-                        label = { Text("Bold", fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = layer.isItalic,
-                        onClick = { onUpdate(false) { it.copy(isItalic = !it.isItalic) } },
-                        label = { Text("Italic", fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = layer.isUnderline,
-                        onClick = { onUpdate(false) { it.copy(isUnderline = !it.isUnderline) } },
-                        label = { Text("Underline", fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = layer.flipHorizontal,
-                        onClick = { onUpdate(false) { it.copy(flipHorizontal = !it.flipHorizontal) } },
-                        leadingIcon = { Icon(Icons.Default.Flip, contentDescription = null, modifier = Modifier.size(14.dp)) },
-                        label = { Text("Flip H", fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = layer.flipVertical,
-                        onClick = { onUpdate(false) { it.copy(flipVertical = !it.flipVertical) } },
-                        label = { Text("Flip V", fontSize = 12.sp) }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    for (align in TextAlignment.entries) {
-                        FilterChip(
-                            selected = layer.textAlign == align,
-                            onClick = { onUpdate(false) { it.copy(textAlign = align) } },
-                            label = {
-                                Text(
-                                    text = "Align ${align.name.lowercase().replaceFirstChar { it.uppercase() }}",
-                                    fontSize = 12.sp
-                                )
-                            }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-                Text("Transform Case", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.UPPERCASE) }) {
-                        Text("UPPERCASE", color = Color.White, fontSize = 11.sp)
-                    }
-                    OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.LOWERCASE) }) {
-                        Text("lowercase", color = Color.White, fontSize = 11.sp)
-                    }
-                    OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.TITLE_CASE) }) {
-                        Text("Title Case", color = Color.White, fontSize = 11.sp)
-                    }
-                }
-            }
-
-            ActiveSubTool.TEXT_BACKGROUND -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable Text Background Pill", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.textBackgroundColor != null,
-                        onCheckedChange = { enable ->
-                            onUpdate(false) {
-                                it.copy(textBackgroundColor = if (enable) 0xCC000000L else null)
-                            }
-                        }
-                    )
-                }
-                if (layer.textBackgroundColor != null) {
-                    val bgPalette = listOf(
-                        0xCC000000L, 0xCCFFFFFFL, 0xCCFF0055L, 0xCC00E5FFL,
-                        0xCC651FFFL, 0xCCFFEB3BL, 0xCC00C853L
-                    )
-                    ColorPaletteRow(
-                        colors = bgPalette,
-                        recentColors = recentColors,
-                        selectedColor = layer.textBackgroundColor,
-                        onSelectColor = { c -> onUpdate(false) { it.copy(textBackgroundColor = c) } },
-                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_BACKGROUND) },
-                        allowAlpha = true,
-                        pickerTitle = "Text Background Color"
-                    )
-                    PrecisionSlider(
-                        label = "Pill Padding",
-                        value = layer.textBackgroundPadding,
-                        valueRange = 0f..60f,
-                        defaultValue = 16f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { p, cont -> onUpdate(cont) { it.copy(textBackgroundPadding = p) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Corner Radius",
-                        value = layer.textBackgroundRadius,
-                        valueRange = 0f..48f,
-                        defaultValue = 8f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { r, cont -> onUpdate(cont) { it.copy(textBackgroundRadius = r) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.TEXT_STROKE -> {
-                VectorStrokeInspector(
-                    strokeWidth = layer.strokeWidth,
-                    maxStrokeWidth = 36f,
-                    defaultEnableWidth = 4f,
-                    strokeColor = layer.strokeColor,
-                    strokePosition = layer.strokePosition,
-                    strokePattern = layer.strokePattern,
-                    dashLength = layer.strokeDashLength,
-                    dashGap = layer.strokeDashGap,
-                    dashPhase = layer.strokePhase,
-                    strokeJoin = layer.strokeJoin,
-                    miterLimit = layer.strokeMiterLimit,
-                    strokeCap = layer.strokeCap,
-                    palette = TextColorPalette,
-                    recentColors = recentColors,
-                    onPickFromCanvas = { onStartEyedropper(EyedropperTarget.STROKE_COLOR) },
-                    onToggleEnable = { _, width ->
-                        onUpdate(false) { it.copy(strokeWidth = width) }
-                    },
-                    onWidthChange = { w, cont -> onUpdate(cont) { it.copy(strokeWidth = w) } },
-                    onColorChange = { c -> onUpdate(false) { it.copy(strokeColor = c) } },
-                    onPositionChange = { pos -> onUpdate(false) { it.copy(strokePosition = pos) } },
-                    onPatternChange = { pat -> onUpdate(false) { it.copy(strokePattern = pat) } },
-                    onDashLengthChange = { d, cont -> onUpdate(cont) { it.copy(strokeDashLength = d) } },
-                    onDashGapChange = { g, cont -> onUpdate(cont) { it.copy(strokeDashGap = g) } },
-                    onDashPhaseChange = { p, cont -> onUpdate(cont) { it.copy(strokePhase = p) } },
-                    onJoinChange = { j -> onUpdate(false) { it.copy(strokeJoin = j) } },
-                    onMiterLimitChange = { m, cont -> onUpdate(cont) { it.copy(strokeMiterLimit = m) } },
-                    onCapChange = { c -> onUpdate(false) { it.copy(strokeCap = c) } },
-                    onFinishContinuousEdit = onFinishContinuousEdit
-                )
-            }
-
-            ActiveSubTool.TEXT_GLOW -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable Outer Neon Glow", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.glowEnabled,
-                        onCheckedChange = { enable -> onUpdate(false) { it.copy(glowEnabled = enable) } }
-                    )
-                }
-                if (layer.glowEnabled) {
-                    ColorPaletteRow(
-                        colors = listOf(
-                            0xFF00E5FFL, 0xFFFF007FL, 0xFF76FF03L, 0xFFFFEA00L,
-                            0xFFD500F9L, 0xFFFF6D00L, 0xFFFFFFFFL
-                        ),
-                        recentColors = recentColors,
-                        selectedColor = layer.glowColor,
-                        onSelectColor = { c -> onUpdate(false) { it.copy(glowColor = c) } },
-                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.GLOW_COLOR) },
-                        allowAlpha = true,
-                        pickerTitle = "Outer Glow Color"
-                    )
-                    PrecisionSlider(
-                        label = "Glow Blur Radius",
-                        value = layer.glowRadius,
-                        valueRange = 2f..60f,
-                        defaultValue = 18f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { rad, cont -> onUpdate(cont) { it.copy(glowRadius = rad) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.TEXT_SHADOW -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable Drop Shadow", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.shadowEnabled,
-                        onCheckedChange = { enable -> onUpdate(false) { it.copy(shadowEnabled = enable) } }
-                    )
-                }
-                if (layer.shadowEnabled) {
-                    ColorPaletteRow(
-                        colors = listOf(
-                            0xAA000000L, 0xFF000000L, 0xCCFFFFFFL, 0xFFFF0055L,
-                            0xFF00E5FFL, 0xFFFFEB3BL, 0xFF651FFFL
-                        ),
-                        recentColors = recentColors,
-                        selectedColor = layer.shadowColor,
-                        onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
-                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHADOW_COLOR) },
-                        allowAlpha = true,
-                        pickerTitle = "Text Shadow Color"
-                    )
-                    PrecisionSlider(
-                        label = "Blur Radius",
-                        value = layer.shadowRadius,
-                        valueRange = 0f..48f,
-                        defaultValue = 10f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { r, cont -> onUpdate(cont) { it.copy(shadowRadius = r) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Offset X",
-                        value = layer.shadowDx,
-                        valueRange = -40f..40f,
-                        defaultValue = 4f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { dx, cont -> onUpdate(cont) { it.copy(shadowDx = dx) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Offset Y",
-                        value = layer.shadowDy,
-                        valueRange = -40f..40f,
-                        defaultValue = 6f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { dy, cont -> onUpdate(cont) { it.copy(shadowDy = dy) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.TEXT_3D -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable 3D Extrusion", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.is3D,
-                        onCheckedChange = { enable -> onUpdate(false) { it.copy(is3D = enable) } }
-                    )
-                }
-                if (layer.is3D) {
-                    PrecisionSlider(
-                        label = "3D Depth",
-                        value = layer.depth3D,
-                        valueRange = 1f..36f,
-                        defaultValue = 16f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { d, cont -> onUpdate(cont) { it.copy(depth3D = d) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Side Darken",
-                        value = layer.darken3D * 100f,
-                        valueRange = 0f..85f,
-                        defaultValue = 40f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { dk, cont -> onUpdate(cont) { it.copy(darken3D = dk / 100f) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Extrusion Angle",
-                        value = layer.angle3D,
-                        valueRange = 0f..360f,
-                        defaultValue = 30f,
-                        fineStep = 5f,
-                        unitSuffix = "°",
-                        onValueChange = { a, cont -> onUpdate(cont) { it.copy(angle3D = a) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Floor Shadow", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.shadow3DEnabled,
-                        onCheckedChange = { en -> onUpdate(false) { it.copy(shadow3DEnabled = en) } }
-                    )
-                }
-                if (layer.shadow3DEnabled) {
-                    ColorPaletteRow(
-                        colors = listOf(0x66000000L, 0xAA000000L, 0x6600E5FFL, 0x66FF007FL),
-                        recentColors = recentColors,
-                        selectedColor = layer.shadow3DColor,
-                        onSelectColor = { c -> onUpdate(false) { it.copy(shadow3DColor = c) } },
-                        allowAlpha = true,
-                        pickerTitle = "3D Floor Shadow Color"
-                    )
-                }
-            }
-
-            ActiveSubTool.TEXT_REFLECTION -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable Mirror Reflection", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.reflectionEnabled,
-                        onCheckedChange = { enable -> onUpdate(false) { it.copy(reflectionEnabled = enable) } }
-                    )
-                }
-                if (layer.reflectionEnabled) {
-                    PrecisionSlider(
-                        label = "Gap Distance",
-                        value = layer.reflectionDistance,
-                        valueRange = 0f..48f,
-                        defaultValue = 4f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { d, cont -> onUpdate(cont) { it.copy(reflectionDistance = d) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Reflection Opacity",
-                        value = layer.reflectionOpacity * 100f,
-                        valueRange = 5f..85f,
-                        defaultValue = 35f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { op, cont -> onUpdate(cont) { it.copy(reflectionOpacity = op / 100f) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.LAYER_BLEND -> {
-                Text("Composite Blend Mode", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    for (mode in LayerBlendMode.entries) {
-                        FilterChip(
-                            selected = layer.blendMode == mode,
-                            onClick = { onUpdate(false) { it.copy(blendMode = mode) } },
-                            label = { Text(mode.label, fontSize = 12.sp) }
-                        )
-                    }
-                }
-            }
+            ActiveSubTool.LAYER_BLEND -> TextBlendInspector(layer = layer, onUpdate = onUpdate)
 
             else -> {}
         }

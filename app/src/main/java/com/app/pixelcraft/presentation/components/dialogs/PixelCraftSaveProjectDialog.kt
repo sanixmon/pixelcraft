@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import com.app.pixelcraft.presentation.i18n.historyLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,13 +57,14 @@ fun PixelCraftSaveProjectDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember(initialName) { mutableStateOf(initialName) }
+    val untitledName = stringResource(R.string.ui_untitled_project)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "Save Project",
+                text = stringResource(R.string.ui_save_project),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp
@@ -68,7 +72,7 @@ fun PixelCraftSaveProjectDialog(
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Project Name", color = Color.White, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_project_name), color = Color.White, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = name,
@@ -80,16 +84,16 @@ fun PixelCraftSaveProjectDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(name.ifBlank { "Untitled Project" }) },
+                onClick = { onSave(name.ifBlank { untitledName }) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text("Save", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_save), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = Color.White)
             }
         }
     )
@@ -107,7 +111,7 @@ fun PixelCraftUnsavedChangesDialog(
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "Save Changes?",
+                text = stringResource(R.string.ui_save_changes),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp
@@ -116,7 +120,7 @@ fun PixelCraftUnsavedChangesDialog(
         text = {
             Column {
                 Text(
-                    text = "You have unsaved edits in \"$projectName\". Save as a project before leaving?",
+                    text = stringResource(R.string.ui_unsaved_edits_in, projectName),
                     color = Color.White,
                     fontSize = 14.sp
                 )
@@ -126,7 +130,7 @@ fun PixelCraftUnsavedChangesDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Discard Changes", color = Color(0xFFFF5252), fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.ui_discard_changes), color = Color(0xFFFF5252), fontWeight = FontWeight.SemiBold)
                 }
             }
         },
@@ -136,12 +140,12 @@ fun PixelCraftUnsavedChangesDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Save & Exit", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_save_exit), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onCancel) {
-                Text("Keep Editing", color = Color.White)
+                Text(stringResource(R.string.ui_keep_editing), color = Color.White)
             }
         }
     )
@@ -174,12 +178,12 @@ fun PixelCraftRenameDialog(
                 onClick = { onConfirm(text.trim().ifBlank { initialName }) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
             ) {
-                Text("Rename", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_rename), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = Color.White)
             }
         }
     )
@@ -198,12 +202,12 @@ fun PixelCraftHistoryDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.History, contentDescription = null, tint = Color(0xFF00E5FF))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Edit History (${undoLabels.size})", color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text(stringResource(R.string.ui_edit_history_count, undoLabels.size), color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
             }
         },
         text = {
             if (undoLabels.isEmpty()) {
-                Text("No edits recorded in this session yet.", color = Color(0xFFA0A8B8), fontSize = 13.sp)
+                Text(stringResource(R.string.ui_no_edits_recorded_in_this_session_yet), color = Color(0xFFA0A8B8), fontSize = 13.sp)
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -224,12 +228,12 @@ fun PixelCraftHistoryDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "${originalIndex + 1}. $label",
+                                text = "${originalIndex + 1}. ${historyLabel(label)}",
                                 color = Color.White,
                                 fontSize = 13.sp
                             )
                             Text(
-                                text = "Restore",
+                                text = stringResource(R.string.ui_restore),
                                 color = Color(0xFF00E5FF),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -241,7 +245,7 @@ fun PixelCraftHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", color = Color.White)
+                Text(stringResource(R.string.ui_close), color = Color.White)
             }
         }
     )
@@ -266,7 +270,7 @@ fun PixelCraftDateFormatDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E222B),
         title = {
-            Text("Insert Date / Time Stamp", color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(stringResource(R.string.ui_insert_date_time_stamp), color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -292,7 +296,7 @@ fun PixelCraftDateFormatDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = Color.White)
             }
         }
     )
@@ -313,7 +317,7 @@ fun PixelCraftSavedStylesDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E222B),
         title = {
-            Text("My Saved Styles", color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(stringResource(R.string.ui_my_saved_styles), color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -325,7 +329,7 @@ fun PixelCraftSavedStylesDialog(
                         OutlinedTextField(
                             value = styleName,
                             onValueChange = { styleName = it },
-                            placeholder = { Text("New style name...", fontSize = 12.sp) },
+                            placeholder = { Text(stringResource(R.string.ui_new_style_name), fontSize = 12.sp) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
@@ -339,7 +343,7 @@ fun PixelCraftSavedStylesDialog(
                         ) {
                             Icon(Icons.Default.BookmarkAdd, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Save", color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.action_save), color = Color.Black, fontWeight = FontWeight.Bold)
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -347,7 +351,7 @@ fun PixelCraftSavedStylesDialog(
 
                 if (savedStyles.isEmpty()) {
                     Text(
-                        text = "Save your favorite text & shape styles here to reuse across any project.",
+                        text = stringResource(R.string.ui_save_your_favorite_text_shape_styles_her),
                         color = Color(0xFFA0A8B8),
                         fontSize = 13.sp
                     )
@@ -372,13 +376,13 @@ fun PixelCraftSavedStylesDialog(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(item.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                     Text(
-                                        text = "Font: ${item.styleLayer.fontKey} • Stroke: ${item.styleLayer.strokeWidth.toInt()}px",
+                                        text = stringResource(R.string.ui_style_summary, item.styleLayer.fontKey, item.styleLayer.strokeWidth.toInt()),
                                         color = Color(0xFF8E96A8),
                                         fontSize = 11.sp
                                     )
                                 }
                                 IconButton(onClick = { onDeleteStyle(item.id) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete Style", tint = Color(0xFFFF5252))
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_style), tint = Color(0xFFFF5252))
                                 }
                             }
                         }
@@ -388,7 +392,7 @@ fun PixelCraftSavedStylesDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Done", color = Color(0xFF00E5FF))
+                Text(stringResource(R.string.ui_done), color = Color(0xFF00E5FF))
             }
         }
     )
@@ -401,7 +405,7 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "PixelCraft v${BuildConfig.VERSION_NAME}",
+                text = stringResource(R.string.ui_about_version, BuildConfig.VERSION_NAME),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp
@@ -410,19 +414,13 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Offline-first typography, vector graphics & photo composition studio built with Jetpack Compose & Material 3.",
+                    text = stringResource(R.string.ui_offline_first_typography_vector_graphics),
                     color = Color.White,
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Highlights:\n" +
-                        "• 15 bundled open-source fonts + custom .ttf/.otf import\n" +
-                        "• Curved arc text, letter spacing, gradient fill, neon glow & 3D extrusion\n" +
-                        "• Vector path strokes (Outside / Center / Inside, Dash patterns, Join & Cap)\n" +
-                        "• 24 vector shapes & word balloons + photo crop, filters & shape masks\n" +
-                        "• 2-finger pinch/rotate gestures, Smart Guides, Canvas Eyedropper & autosave\n" +
-                        "• PNG, JPEG & WebP (Lossy/Lossless) export + portable .pixelcraft archives",
+                    text = stringResource(R.string.ui_about_highlights),
                     color = Color(0xFFCCCCCC),
                     fontSize = 12.sp
                 )
@@ -434,7 +432,7 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text("Close", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_close), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         }
     )

@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,7 +85,7 @@ fun ColorPaletteRow(
     recentColors: List<Long> = emptyList(),
     onPickFromCanvas: (() -> Unit)? = null,
     allowAlpha: Boolean = true,
-    pickerTitle: String = "Custom Color",
+    pickerTitle: String = stringResource(R.string.ui_custom_color),
     leadingContent: (@Composable () -> Unit)? = null
 ) {
     var showCustomDialog by remember { mutableStateOf(false) }
@@ -126,7 +128,7 @@ fun ColorPaletteRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.Colorize,
-                    contentDescription = "Pick Color from Canvas",
+                    contentDescription = stringResource(R.string.ui_pick_color_from_canvas),
                     tint = Color(0xFF00E5FF),
                     modifier = Modifier.size(18.dp)
                 )
@@ -156,7 +158,7 @@ fun ColorPaletteRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Custom Color Wheel & Hex",
+                    contentDescription = stringResource(R.string.ui_custom_color_wheel_hex),
                     tint = if (isCustomSelected && ColorMath.argbToHsv(normalizedSelected)[2] > 0.65f) {
                         Color.Black
                     } else {
@@ -204,7 +206,7 @@ fun ColorPaletteRow(
  */
 @Composable
 fun PixelCraftColorPickerDialog(
-    title: String = "Custom Color",
+    title: String = stringResource(R.string.ui_custom_color),
     initialColor: Long,
     allowAlpha: Boolean = true,
     onConfirm: (Long) -> Unit,
@@ -273,7 +275,7 @@ fun PixelCraftColorPickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Brightness", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_brightness), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                     Text("${(value * 100).roundToInt()}%", color = Color.White, fontSize = 12.sp)
                 }
                 Slider(
@@ -290,7 +292,7 @@ fun PixelCraftColorPickerDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Alpha", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                        Text(stringResource(R.string.ui_alpha), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                         Text("${(alpha * 100).roundToInt()}%", color = Color.White, fontSize = 12.sp)
                     }
                     Slider(
@@ -339,7 +341,7 @@ fun PixelCraftColorPickerDialog(
                         },
                         label = {
                             Text(
-                                text = if (allowAlpha) "Hex (#RRGGBB / #AARRGGBB)" else "Hex (#RRGGBB)",
+                                text = if (allowAlpha) stringResource(R.string.ui_hex_rrggbb_aarrggbb) else stringResource(R.string.ui_hex_rrggbb),
                                 fontSize = 11.sp
                             )
                         },
@@ -361,12 +363,12 @@ fun PixelCraftColorPickerDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text("Apply", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_apply), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = Color.White)
             }
         }
     )

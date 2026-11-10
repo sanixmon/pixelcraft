@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -72,7 +75,7 @@ import com.app.pixelcraft.presentation.EyedropperTarget
 import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import kotlin.math.roundToInt
 
-private val ObjectPalette = listOf(
+internal val ObjectPalette = listOf(
     0xFFFFFFFF, 0xFF000000, 0xFF00B0FF, 0xFFFF0055,
     0xFFFFEB3B, 0xFF00E676, 0xFF651FFF, 0xFFFF9100
 )
@@ -120,7 +123,7 @@ fun ObjectToolPanel(
             ) {
                 Icon(Icons.Default.FormatShapes, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Shapes & Balloons", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_shapes_balloons), color = Color.Black, fontWeight = FontWeight.Bold)
             }
 
             Button(
@@ -129,7 +132,7 @@ fun ObjectToolPanel(
             ) {
                 Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Photo Layer", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_photo_layer), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         }
         return
@@ -174,20 +177,20 @@ fun ObjectToolPanel(
             )
             MiniActionPill(
                 icon = Icons.Default.ContentCopy,
-                label = "Copy Style",
+                label = stringResource(R.string.ui_copy_style),
                 onClick = onCopyStyle
             )
             if (hasCopiedStyle) {
                 MiniActionPill(
                     icon = Icons.Default.ContentPaste,
-                    label = "Paste Style",
+                    label = stringResource(R.string.ui_paste_style),
                     accent = true,
                     onClick = onPasteStyle
                 )
             }
             MiniActionPill(
                 icon = Icons.Default.Bookmarks,
-                label = "Styles",
+                label = stringResource(R.string.ui_styles),
                 onClick = onOpenSavedStyles
             )
         }
@@ -204,19 +207,19 @@ fun ObjectToolPanel(
             if (selectedLayer.type == LayerType.SHAPE) {
                 ObjectToolItem(
                     icon = Icons.Default.Category,
-                    label = "Shape",
+                    label = stringResource(R.string.ui_shape),
                     isActive = activeSubTool == ActiveSubTool.SHAPE_TYPE,
                     onClick = { onSubToolSelected(ActiveSubTool.SHAPE_TYPE) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.FormatColorFill,
-                    label = "Fill",
+                    label = stringResource(R.string.ui_fill),
                     isActive = activeSubTool == ActiveSubTool.SHAPE_COLOR,
                     onClick = { onSubToolSelected(ActiveSubTool.SHAPE_COLOR) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.BorderStyle,
-                    label = "Stroke",
+                    label = stringResource(R.string.ui_stroke),
                     isActive = activeSubTool == ActiveSubTool.SHAPE_STROKE,
                     onClick = { onSubToolSelected(ActiveSubTool.SHAPE_STROKE) }
                 )
@@ -225,19 +228,19 @@ fun ObjectToolPanel(
             if (selectedLayer.type == LayerType.IMAGE) {
                 ObjectToolItem(
                     icon = Icons.Default.Crop,
-                    label = "Crop",
+                    label = stringResource(R.string.ui_crop),
                     isActive = activeSubTool == ActiveSubTool.IMAGE_CROP,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_CROP) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.Tune,
-                    label = "Adjust",
+                    label = stringResource(R.string.ui_adjust),
                     isActive = activeSubTool == ActiveSubTool.IMAGE_ADJUST,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_ADJUST) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.FilterVintage,
-                    label = "Mask",
+                    label = stringResource(R.string.ui_mask),
                     isActive = activeSubTool == ActiveSubTool.IMAGE_MASK,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_MASK) }
                 )
@@ -246,19 +249,19 @@ fun ObjectToolPanel(
             // Shared across BOTH Shape AND Image layers (Fixes Bug 2.17!)
             ObjectToolItem(
                 icon = Icons.Default.Lightbulb,
-                label = "Shadow",
+                label = stringResource(R.string.ui_shadow),
                 isActive = activeSubTool == ActiveSubTool.SHAPE_SHADOW,
                 onClick = { onSubToolSelected(ActiveSubTool.SHAPE_SHADOW) }
             )
             ObjectToolItem(
                 icon = Icons.Default.BlurOn,
-                label = "Blend",
+                label = stringResource(R.string.ui_blend),
                 isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
                 onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Flip,
-                label = "Flip H",
+                label = stringResource(R.string.ui_flip_h),
                 isActive = selectedLayer.flipHorizontal,
                 onClick = {
                     onUpdateLayer(false) { it.copy(flipHorizontal = !it.flipHorizontal) }
@@ -266,7 +269,7 @@ fun ObjectToolPanel(
             )
             ObjectToolItem(
                 icon = Icons.Default.Flip,
-                label = "Flip V",
+                label = stringResource(R.string.ui_flip_v),
                 isActive = selectedLayer.flipVertical,
                 iconRotation = 90f,
                 onClick = {
@@ -275,43 +278,43 @@ fun ObjectToolPanel(
             )
             ObjectToolItem(
                 icon = Icons.Default.AspectRatio,
-                label = "Size",
+                label = stringResource(R.string.ui_size),
                 isActive = activeSubTool == ActiveSubTool.OBJECT_SIZE,
                 onClick = { onSubToolSelected(ActiveSubTool.OBJECT_SIZE) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Rotate90DegreesCcw,
-                label = "Rotate",
+                label = stringResource(R.string.ui_rotate),
                 isActive = activeSubTool == ActiveSubTool.OBJECT_ROTATE,
                 onClick = { onSubToolSelected(ActiveSubTool.OBJECT_ROTATE) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Opacity,
-                label = "Opacity",
+                label = stringResource(R.string.ui_opacity),
                 isActive = activeSubTool == ActiveSubTool.SHAPE_OPACITY,
                 onClick = { onSubToolSelected(ActiveSubTool.SHAPE_OPACITY) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Layers,
-                label = "To Front",
+                label = stringResource(R.string.ui_to_front),
                 isActive = false,
                 onClick = onBringToFront
             )
             ObjectToolItem(
                 icon = Icons.Default.Layers,
-                label = "To Back",
+                label = stringResource(R.string.ui_to_back),
                 isActive = false,
                 onClick = onSendToBack
             )
             ObjectToolItem(
                 icon = Icons.Default.ContentCopy,
-                label = "Duplicate",
+                label = stringResource(R.string.action_duplicate),
                 isActive = false,
                 onClick = onDuplicateLayer
             )
             ObjectToolItem(
                 icon = Icons.Default.Delete,
-                label = "Delete",
+                label = stringResource(R.string.action_delete),
                 isActive = false,
                 onClick = onDeleteLayer
             )
@@ -389,624 +392,34 @@ private fun ObjectSubToolInspector(
                 fontSize = 13.sp
             )
             IconButton(onClick = onClose, modifier = Modifier.size(26.dp)) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close), tint = Color.White)
             }
         }
 
         Spacer(modifier = Modifier.height(6.dp))
 
         when (subTool) {
-            ActiveSubTool.OBJECT_SIZE -> {
-                var lockAspect by remember { mutableStateOf(layer.type == LayerType.IMAGE) }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Lock Aspect Ratio", color = Color(0xFFD5DAE5), fontSize = 12.sp)
-                    Switch(checked = lockAspect, onCheckedChange = { lockAspect = it })
-                }
+            ActiveSubTool.OBJECT_SIZE -> ObjectSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-                PrecisionSlider(
-                    label = "Width",
-                    value = layer.width,
-                    valueRange = 40f..2400f,
-                    defaultValue = 320f,
-                    fineStep = 4f,
-                    unitSuffix = "px",
-                    onValueChange = { newW, cont ->
-                        onUpdate(cont) { current ->
-                            if (lockAspect) {
-                                val ratio = current.height.coerceAtLeast(1f) / current.width.coerceAtLeast(1f)
-                                current.copy(width = newW, height = (newW * ratio).coerceIn(40f, 2400f))
-                            } else {
-                                current.copy(width = newW)
-                            }
-                        }
-                    },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
+            ActiveSubTool.OBJECT_ROTATE -> ObjectRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-                if (!lockAspect) {
-                    PrecisionSlider(
-                        label = "Height",
-                        value = layer.height,
-                        valueRange = 40f..2400f,
-                        defaultValue = 320f,
-                        fineStep = 4f,
-                        unitSuffix = "px",
-                        onValueChange = { newH, cont -> onUpdate(cont) { it.copy(height = newH) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
+            ActiveSubTool.SHAPE_TYPE -> ShapeTypeInspector(layer = layer, onUpdate = onUpdate)
 
-                if (
-                    layer.type == LayerType.SHAPE &&
-                    (layer.shapeType == ShapeType.ROUNDED_RECTANGLE || layer.shapeType == ShapeType.SPEECH_BUBBLE)
-                ) {
-                    PrecisionSlider(
-                        label = "Corner Radius",
-                        value = layer.shapeCornerRadius,
-                        valueRange = 0f..180f,
-                        defaultValue = 24f,
-                        fineStep = 2f,
-                        unitSuffix = "px",
-                        onValueChange = { r, cont -> onUpdate(cont) { it.copy(shapeCornerRadius = r) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
+            ActiveSubTool.SHAPE_COLOR -> ShapeColorInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-            ActiveSubTool.OBJECT_ROTATE -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(-90f, -45f, 0f, 45f, 90f).forEach { deg ->
-                        FilterChip(
-                            selected = layer.rotation.roundToInt() == deg.roundToInt(),
-                            onClick = { onUpdate(false) { it.copy(rotation = deg) } },
-                            label = { Text("${deg.toInt()}°", fontSize = 11.sp) }
-                        )
-                    }
-                }
-                PrecisionSlider(
-                    label = "Rotation Angle",
-                    value = layer.rotation,
-                    valueRange = -180f..180f,
-                    defaultValue = 0f,
-                    fineStep = 1f,
-                    unitSuffix = "°",
-                    onValueChange = { r, cont -> onUpdate(cont) { it.copy(rotation = r) } },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
+            ActiveSubTool.SHAPE_STROKE -> ShapeStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-            ActiveSubTool.SHAPE_TYPE -> {
-                if (layer.type == LayerType.SHAPE) {
-                    var activeCat by remember(layer.shapeType) { mutableStateOf(layer.shapeType.category) }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        for (cat in ShapeCategory.entries) {
-                            FilterChip(
-                                selected = activeCat == cat,
-                                onClick = { activeCat = cat },
-                                label = { Text(cat.label, fontSize = 12.sp) }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        for (shape in ShapeType.entries.filter { it.category == activeCat }) {
-                            FilterChip(
-                                selected = layer.shapeType == shape,
-                                onClick = { onUpdate(false) { it.copy(shapeType = shape) } },
-                                label = { Text(shape.label, fontSize = 12.sp) }
-                            )
-                        }
-                    }
-                }
-            }
+            ActiveSubTool.SHAPE_SHADOW -> ShapeShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
-            ActiveSubTool.SHAPE_COLOR -> {
-                if (layer.type == LayerType.SHAPE) {
-                    val isTransparent = !layer.shapeGradientEnabled && (layer.shapeFillColor ushr 24) == 0L
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = !layer.shapeGradientEnabled && !isTransparent,
-                            onClick = {
-                                onUpdate(false) {
-                                    val fallback = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
-                                    it.copy(shapeGradientEnabled = false, shapeFillColor = fallback)
-                                }
-                            },
-                            label = { Text("Solid", fontSize = 12.sp) }
-                        )
-                        FilterChip(
-                            selected = layer.shapeGradientEnabled,
-                            onClick = {
-                                onUpdate(false) {
-                                    val start = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
-                                    it.copy(shapeGradientEnabled = true, shapeFillColor = start)
-                                }
-                            },
-                            label = { Text("Gradient", fontSize = 12.sp) }
-                        )
-                        FilterChip(
-                            selected = isTransparent,
-                            onClick = {
-                                onUpdate(false) {
-                                    it.copy(shapeGradientEnabled = false, shapeFillColor = 0x00000000L)
-                                }
-                            },
-                            label = { Text("None (Hollow)", fontSize = 12.sp) }
-                        )
-                    }
+            ActiveSubTool.SHAPE_OPACITY -> ObjectOpacityInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-                    if (!isTransparent) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = if (layer.shapeGradientEnabled) "Start Color" else "Fill Color",
-                            color = Color(0xFFCCCCCC),
-                            fontSize = 12.sp
-                        )
-                        ColorPaletteRow(
-                            colors = ObjectPalette,
-                            recentColors = recentColors,
-                            selectedColor = layer.shapeFillColor,
-                            onSelectColor = { c -> onUpdate(false) { it.copy(shapeFillColor = c) } },
-                            onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHAPE_FILL) },
-                            allowAlpha = true,
-                            pickerTitle = if (layer.shapeGradientEnabled) "Gradient Start Color" else "Shape Fill Color"
-                        )
+            ActiveSubTool.LAYER_BLEND -> ObjectBlendInspector(layer = layer, onUpdate = onUpdate)
 
-                        if (layer.shapeGradientEnabled) {
-                            Text("End Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                            ColorPaletteRow(
-                                colors = ObjectPalette,
-                                recentColors = recentColors,
-                                selectedColor = layer.shapeGradientEndColor,
-                                onSelectColor = { c -> onUpdate(false) { it.copy(shapeGradientEndColor = c) } },
-                                onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHAPE_GRADIENT_END) },
-                                allowAlpha = true,
-                                pickerTitle = "Gradient End Color"
-                            )
-                            PrecisionSlider(
-                                label = "Gradient Angle",
-                                value = layer.shapeGradientAngle,
-                                valueRange = 0f..360f,
-                                defaultValue = 90f,
-                                fineStep = 5f,
-                                unitSuffix = "°",
-                                onValueChange = { ang, cont -> onUpdate(cont) { it.copy(shapeGradientAngle = ang) } },
-                                onValueChangeFinished = onFinishContinuousEdit
-                            )
-                        }
-                    }
-                }
-            }
+            ActiveSubTool.IMAGE_CROP -> PhotoCropInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.SHAPE_STROKE -> {
-                if (layer.type == LayerType.SHAPE) {
-                    VectorStrokeInspector(
-                        strokeWidth = layer.shapeStrokeWidth,
-                        maxStrokeWidth = 48f,
-                        defaultEnableWidth = 5f,
-                        strokeColor = layer.shapeStrokeColor,
-                        strokePosition = layer.strokePosition,
-                        strokePattern = layer.strokePattern,
-                        dashLength = layer.strokeDashLength,
-                        dashGap = layer.strokeDashGap,
-                        dashPhase = layer.strokePhase,
-                        strokeJoin = layer.strokeJoin,
-                        miterLimit = layer.strokeMiterLimit,
-                        strokeCap = layer.strokeCap,
-                        palette = ObjectPalette,
-                        recentColors = recentColors,
-                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHAPE_STROKE) },
-                        onToggleEnable = { _, width ->
-                            onUpdate(false) { it.copy(shapeStrokeWidth = width) }
-                        },
-                        onWidthChange = { w, cont -> onUpdate(cont) { it.copy(shapeStrokeWidth = w) } },
-                        onColorChange = { c -> onUpdate(false) { it.copy(shapeStrokeColor = c) } },
-                        onPositionChange = { pos -> onUpdate(false) { it.copy(strokePosition = pos) } },
-                        onPatternChange = { pat -> onUpdate(false) { it.copy(strokePattern = pat) } },
-                        onDashLengthChange = { d, cont -> onUpdate(cont) { it.copy(strokeDashLength = d) } },
-                        onDashGapChange = { g, cont -> onUpdate(cont) { it.copy(strokeDashGap = g) } },
-                        onDashPhaseChange = { p, cont -> onUpdate(cont) { it.copy(strokePhase = p) } },
-                        onJoinChange = { j -> onUpdate(false) { it.copy(strokeJoin = j) } },
-                        onMiterLimitChange = { m, cont -> onUpdate(cont) { it.copy(strokeMiterLimit = m) } },
-                        onCapChange = { c -> onUpdate(false) { it.copy(strokeCap = c) } },
-                        onFinishContinuousEdit = onFinishContinuousEdit
-                    )
-                }
-            }
+            ActiveSubTool.IMAGE_ADJUST -> PhotoAdjustInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
-            ActiveSubTool.SHAPE_SHADOW -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Enable Drop Shadow", color = Color.White, fontSize = 12.sp)
-                    Switch(
-                        checked = layer.shadowEnabled,
-                        onCheckedChange = { en -> onUpdate(false) { it.copy(shadowEnabled = en) } }
-                    )
-                }
-                if (layer.shadowEnabled) {
-                    ColorPaletteRow(
-                        colors = listOf(
-                            0xAA000000L, 0xFF000000L, 0xCCFFFFFFL, 0xFFFF007FL,
-                            0xFF00E5FFL, 0xFFFFEB3BL, 0xFF651FFFL
-                        ),
-                        recentColors = recentColors,
-                        selectedColor = layer.shadowColor,
-                        onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
-                        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHADOW_COLOR) },
-                        allowAlpha = true,
-                        pickerTitle = "Drop Shadow Color"
-                    )
-                    PrecisionSlider(
-                        label = "Blur Radius",
-                        value = layer.shadowRadius,
-                        valueRange = 0f..48f,
-                        defaultValue = 10f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { r, cont -> onUpdate(cont) { it.copy(shadowRadius = r) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Offset X",
-                        value = layer.shadowDx,
-                        valueRange = -40f..40f,
-                        defaultValue = 4f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { dx, cont -> onUpdate(cont) { it.copy(shadowDx = dx) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Offset Y",
-                        value = layer.shadowDy,
-                        valueRange = -40f..40f,
-                        defaultValue = 6f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { dy, cont -> onUpdate(cont) { it.copy(shadowDy = dy) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.SHAPE_OPACITY -> {
-                PrecisionSlider(
-                    label = "Opacity",
-                    value = layer.opacity * 100f,
-                    valueRange = 0f..100f,
-                    defaultValue = 100f,
-                    fineStep = 2f,
-                    unitSuffix = "%",
-                    onValueChange = { op, cont ->
-                        onUpdate(cont) { it.copy(opacity = (op / 100f).coerceIn(0f, 1f)) }
-                    },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-            }
-
-            ActiveSubTool.LAYER_BLEND -> {
-                Text("Composite Blend Mode", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    for (mode in LayerBlendMode.entries) {
-                        FilterChip(
-                            selected = layer.blendMode == mode,
-                            onClick = { onUpdate(false) { it.copy(blendMode = mode) } },
-                            label = { Text(mode.label, fontSize = 12.sp) }
-                        )
-                    }
-                }
-            }
-
-            ActiveSubTool.IMAGE_CROP -> {
-                if (layer.type == LayerType.IMAGE) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        OutlinedButton(onClick = {
-                            onUpdate(false) {
-                                it.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
-                            }
-                        }) {
-                            Text("Full Reset", color = Color(0xFF00E5FF), fontSize = 11.sp)
-                        }
-                        OutlinedButton(onClick = {
-                            onUpdate(false) {
-                                val minSide = minOf(it.width, it.height)
-                                it.copy(
-                                    cropLeft = 0.08f,
-                                    cropTop = 0.08f,
-                                    cropRight = 0.92f,
-                                    cropBottom = 0.92f,
-                                    width = minSide,
-                                    height = minSide
-                                )
-                            }
-                        }) {
-                            Text("1:1 Square", color = Color.White, fontSize = 11.sp)
-                        }
-                        OutlinedButton(onClick = {
-                            onUpdate(false) {
-                                val base = minOf(it.width, it.height)
-                                it.copy(width = base, height = base * 1.25f)
-                            }
-                        }) {
-                            Text("4:5 Portrait", color = Color.White, fontSize = 11.sp)
-                        }
-                        OutlinedButton(onClick = {
-                            onUpdate(false) {
-                                val base = maxOf(it.width, it.height)
-                                it.copy(width = base, height = base * (9f / 16f))
-                            }
-                        }) {
-                            Text("16:9 Wide", color = Color.White, fontSize = 11.sp)
-                        }
-                    }
-
-                    PrecisionSlider(
-                        label = "Crop Left",
-                        value = layer.cropLeft * 100f,
-                        valueRange = 0f..80f,
-                        defaultValue = 0f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { pct, cont ->
-                            onUpdate(cont) {
-                                val cl = (pct / 100f).coerceAtMost(it.cropRight - 0.08f).coerceAtLeast(0f)
-                                it.copy(cropLeft = cl)
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Crop Right",
-                        value = layer.cropRight * 100f,
-                        valueRange = 20f..100f,
-                        defaultValue = 100f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { pct, cont ->
-                            onUpdate(cont) {
-                                val cr = (pct / 100f).coerceAtLeast(it.cropLeft + 0.08f).coerceAtMost(1f)
-                                it.copy(cropRight = cr)
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Crop Top",
-                        value = layer.cropTop * 100f,
-                        valueRange = 0f..80f,
-                        defaultValue = 0f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { pct, cont ->
-                            onUpdate(cont) {
-                                val ct = (pct / 100f).coerceAtMost(it.cropBottom - 0.08f).coerceAtLeast(0f)
-                                it.copy(cropTop = ct)
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Crop Bottom",
-                        value = layer.cropBottom * 100f,
-                        valueRange = 20f..100f,
-                        defaultValue = 100f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { pct, cont ->
-                            onUpdate(cont) {
-                                val cb = (pct / 100f).coerceAtLeast(it.cropTop + 0.08f).coerceAtMost(1f)
-                                it.copy(cropBottom = cb)
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.IMAGE_ADJUST -> {
-                if (layer.type == LayerType.IMAGE) {
-                    val adj = layer.imageAdjustments
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Filter Presets", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                        if (!adj.isDefault) {
-                            OutlinedButton(onClick = {
-                                onUpdate(false) { it.copy(imageAdjustments = ImageAdjustments()) }
-                            }) {
-                                Text("Reset All", color = Color(0xFF00E5FF), fontSize = 11.sp)
-                            }
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        for (preset in PhotoFilterPreset.entries) {
-                            FilterChip(
-                                selected = adj.filterPreset == preset,
-                                onClick = {
-                                    onUpdate(false) {
-                                        it.copy(imageAdjustments = it.imageAdjustments.copy(filterPreset = preset))
-                                    }
-                                },
-                                label = { Text(preset.label, fontSize = 12.sp) }
-                            )
-                        }
-                    }
-
-                    PrecisionSlider(
-                        label = "Brightness",
-                        value = adj.brightness * 100f,
-                        valueRange = -50f..50f,
-                        defaultValue = 0f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { b, cont ->
-                            onUpdate(cont) {
-                                it.copy(imageAdjustments = it.imageAdjustments.copy(brightness = b / 100f))
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Contrast",
-                        value = adj.contrast * 100f,
-                        valueRange = 50f..180f,
-                        defaultValue = 100f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { c, cont ->
-                            onUpdate(cont) {
-                                it.copy(imageAdjustments = it.imageAdjustments.copy(contrast = c / 100f))
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Saturation",
-                        value = adj.saturation * 100f,
-                        valueRange = 0f..200f,
-                        defaultValue = 100f,
-                        fineStep = 4f,
-                        unitSuffix = "%",
-                        onValueChange = { s, cont ->
-                            onUpdate(cont) {
-                                it.copy(imageAdjustments = it.imageAdjustments.copy(saturation = s / 100f))
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    PrecisionSlider(
-                        label = "Warmth",
-                        value = adj.warmth * 100f,
-                        valueRange = -40f..40f,
-                        defaultValue = 0f,
-                        fineStep = 2f,
-                        unitSuffix = "%",
-                        onValueChange = { w, cont ->
-                            onUpdate(cont) {
-                                it.copy(imageAdjustments = it.imageAdjustments.copy(warmth = w / 100f))
-                            }
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-            }
-
-            ActiveSubTool.IMAGE_MASK -> {
-                if (layer.type == LayerType.IMAGE) {
-                    Text("Clip Photo into Shape", color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = layer.imageMaskShape == null,
-                            onClick = { onUpdate(false) { it.copy(imageMaskShape = null) } },
-                            label = { Text("None", fontSize = 12.sp) }
-                        )
-                        val featuredMasks = listOf(
-                            ShapeType.CIRCLE,
-                            ShapeType.ROUNDED_RECTANGLE,
-                            ShapeType.HEART,
-                            ShapeType.STAR,
-                            ShapeType.HEXAGON,
-                            ShapeType.DIAMOND,
-                            ShapeType.OCTAGON,
-                            ShapeType.SHIELD,
-                            ShapeType.STARBURST
-                        )
-                        for (mask in featuredMasks) {
-                            FilterChip(
-                                selected = layer.imageMaskShape == mask,
-                                onClick = { onUpdate(false) { it.copy(imageMaskShape = mask) } },
-                                label = { Text(mask.label, fontSize = 12.sp) }
-                            )
-                        }
-                    }
-
-                    if (layer.imageMaskShape == null) {
-                        PrecisionSlider(
-                            label = "Photo Corner Radius",
-                            value = layer.imageCornerRadius,
-                            valueRange = 0f..220f,
-                            defaultValue = 0f,
-                            fineStep = 4f,
-                            unitSuffix = "px",
-                            onValueChange = { r, cont -> onUpdate(cont) { it.copy(imageCornerRadius = r) } },
-                            onValueChangeFinished = onFinishContinuousEdit
-                        )
-                    }
-
-                    PrecisionSlider(
-                        label = "Photo Border Width",
-                        value = layer.imageBorderWidth,
-                        valueRange = 0f..40f,
-                        defaultValue = 0f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { bw, cont -> onUpdate(cont) { it.copy(imageBorderWidth = bw) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    if (layer.imageBorderWidth > 0f) {
-                        ColorPaletteRow(
-                            colors = ObjectPalette,
-                            recentColors = recentColors,
-                            selectedColor = layer.imageBorderColor,
-                            onSelectColor = { c -> onUpdate(false) { it.copy(imageBorderColor = c) } },
-                            onPickFromCanvas = { onStartEyedropper(EyedropperTarget.IMAGE_BORDER) },
-                            allowAlpha = true,
-                            pickerTitle = "Photo Border Color"
-                        )
-                    }
-                }
-            }
+            ActiveSubTool.IMAGE_MASK -> PhotoMaskInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
             else -> {}
         }
