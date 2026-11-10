@@ -149,9 +149,11 @@ class ExportRenderingTest {
             ExportOptions(format = ExportFormat.PNG, selectedLayerOnly = true, trimTransparent = true),
             selected = setOf("keep")
         )
-        // Trimmed to the 100×60 box (allowing a pixel or two of anti-aliasing).
-        assertTrue("width was ${bmp.width}", bmp.width in 98..104)
-        assertTrue("height was ${bmp.height}", bmp.height in 58..64)
+        // Trimmed to the 100×60 box plus the exporter's intentional 4px anti-aliasing margin per side.
+        assertTrue("width was ${bmp.width}", bmp.width in 106..112)
+        assertTrue("height was ${bmp.height}", bmp.height in 66..72)
+        // The margin itself must be transparent, and the other layer must not leak in.
+        assertEquals(0, android.graphics.Color.alpha(bmp.getPixel(0, 0)))
         assertColorNear(Color.RED, bmp.getPixel(bmp.width / 2, bmp.height / 2))
     }
 
