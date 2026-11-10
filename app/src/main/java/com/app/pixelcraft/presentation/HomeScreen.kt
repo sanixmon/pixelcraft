@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation
 
+import com.app.pixelcraft.ui.theme.PixelCraftColors
+
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.asString
 import androidx.compose.ui.platform.LocalContext
@@ -177,7 +179,7 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFF10131A),
+        containerColor = PixelCraftColors.Background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             HomeTopBar(onAbout = { showAboutDialog = true })
@@ -212,8 +214,8 @@ fun HomeScreen(
                 Column {
                     Text(
                         text = stringResource(R.string.ui_start_creating),
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        color = PixelCraftColors.TextPrimary,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(10.dp))
@@ -225,7 +227,7 @@ fun HomeScreen(
                             icon = Icons.Default.Add,
                             title = stringResource(R.string.home_new_canvas),
                             subtitle = stringResource(R.string.ui_pick_ratio_size),
-                            accentColor = Color(0xFF00E5FF),
+                            accentColor = PixelCraftColors.Accent,
                             onClick = { showNewCanvasSizeDialog = true },
                             modifier = Modifier.weight(1f)
                         )
@@ -233,7 +235,7 @@ fun HomeScreen(
                             icon = Icons.Default.AddPhotoAlternate,
                             title = stringResource(R.string.home_from_photo),
                             subtitle = stringResource(R.string.ui_gallery_picture),
-                            accentColor = Color(0xFF00E676),
+                            accentColor = PixelCraftColors.Success,
                             onClick = {
                                 pickPhotoLauncher.launch(
                                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -245,7 +247,7 @@ fun HomeScreen(
                             icon = Icons.Default.FileOpen,
                             title = stringResource(R.string.ui_import),
                             subtitle = ".pixelcraft file",
-                            accentColor = Color(0xFFFFAB40),
+                            accentColor = PixelCraftColors.AccentHover,
                             onClick = {
                                 importArchiveLauncher.launch(
                                     arrayOf("application/octet-stream", "application/zip", "*/*")
@@ -263,8 +265,8 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = stringResource(R.string.ui_starter_templates_count, DefaultPresets.presets.size),
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        color = PixelCraftColors.TextPrimary,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -313,8 +315,8 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.ui_my_projects_count, state.projectSummaries.size),
-                            color = Color.White,
-                            fontSize = 15.sp,
+                            color = PixelCraftColors.TextPrimary,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -336,34 +338,34 @@ fun HomeScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFF171B26))
-                            .border(1.dp, Color(0xFF252B3B), RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(PixelCraftColors.Surface)
+                            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = Color(0xFF00E5FF),
-                            modifier = Modifier.size(32.dp)
+                            tint = PixelCraftColors.Accent,
+                            modifier = Modifier.size(36.dp)
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = if (state.projectSummaries.isEmpty()) {
                                 stringResource(R.string.ui_no_saved_projects_yet)
                             } else {
                                 stringResource(R.string.ui_no_matching_projects)
                             },
-                            color = Color.White,
+                            color = PixelCraftColors.TextPrimary,
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
+                            fontSize = 15.sp
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = stringResource(R.string.ui_pick_a_template_above_or_start_a_new_can),
-                            color = Color(0xFF8E97AA),
-                            fontSize = 12.sp
+                            color = PixelCraftColors.TextSecondary,
+                            fontSize = 13.sp
                         )
                     }
                 }
