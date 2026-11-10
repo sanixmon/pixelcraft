@@ -450,4 +450,9 @@
     <string name="ui_vignette_intensity">Intensitas Vignet</string>
     <string name="ui_warmth">Kehangatan</string>
     <string name="ui_width">Lebar</string>
+    <string name="enum_quality_low">Draf (0.5x)</string>
+    <string name="enum_quality_medium">Standar (1x)</string>
+    <string name="enum_quality_high">Tinggi (1.5x)</string>
+    <string name="enum_quality_very_high">HD (2x)</string>
+    <string name="enum_quality_ultra">Ultra (3x)</string>
 </resources>

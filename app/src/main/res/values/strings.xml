@@ -451,4 +451,9 @@
     <string name="ui_vignette_intensity">Vignette Intensity</string>
     <string name="ui_warmth">Warmth</string>
     <string name="ui_width">Width</string>
+    <string name="enum_quality_low">Draft (0.5x)</string>
+    <string name="enum_quality_medium">Standard (1x)</string>
+    <string name="enum_quality_high">High (1.5x)</string>
+    <string name="enum_quality_very_high">HD (2x)</string>
+    <string name="enum_quality_ultra">Ultra (3x)</string>
 </resources>

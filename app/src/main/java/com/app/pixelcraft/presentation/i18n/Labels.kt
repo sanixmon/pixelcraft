@@ -166,6 +166,11 @@ fun AspectRatioPreset.localizedLabel(): String = stringResource(
 @Composable
 fun ExportQuality.localizedLabel(): String = stringResource(
     when (this) {
+        ExportQuality.LOW -> R.string.enum_quality_low
+        ExportQuality.MEDIUM -> R.string.enum_quality_medium
+        ExportQuality.HIGH -> R.string.enum_quality_high
+        ExportQuality.VERY_HIGH -> R.string.enum_quality_very_high
+        ExportQuality.ULTRA -> R.string.enum_quality_ultra
     }
 )
 
