@@ -1,5 +1,9 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.presentation.i18n.labelRes
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -96,11 +100,11 @@ private val TextColorPalette = listOf(
     0xFF00E676, 0xFF00E5FF, 0xFF2979FF, 0xFF651FFF, 0xFFFF80AB
 )
 
-private enum class TextToolGroup(val label: String) {
-    ALL("All"),
-    TYPE("Type"),
-    FX("Color & FX"),
-    LAYOUT("Layout")
+private enum class TextToolGroup(@androidx.annotation.StringRes val labelRes: Int) {
+    ALL(R.string.ui_tab_all),
+    TYPE(R.string.ui_tab_type),
+    FX(R.string.ui_tab_fx),
+    LAYOUT(R.string.ui_tab_layout)
 }
 
 @Composable
@@ -152,7 +156,7 @@ fun TextToolPanel(
             OutlinedButton(onClick = onOpenSavedStyles) {
                 Icon(Icons.Default.Bookmarks, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Saved Styles", color = Color.White, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_saved_styles), color = Color.White, fontSize = 12.sp)
             }
         }
         return
@@ -209,7 +213,7 @@ fun TextToolPanel(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = group.label,
+                        text = stringResource(group.labelRes),
                         color = if (active) Color(0xFF00E5FF) else Color(0xFFB5BDCE),
                         fontSize = 11.sp,
                         fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
@@ -221,20 +225,20 @@ fun TextToolPanel(
 
             MiniActionPill(
                 icon = Icons.Default.ContentCopy,
-                label = "Copy Style",
+                label = stringResource(R.string.ui_copy_style),
                 onClick = onCopyStyle
             )
             if (hasCopiedStyle) {
                 MiniActionPill(
                     icon = Icons.Default.ContentPaste,
-                    label = "Paste Style",
+                    label = stringResource(R.string.ui_paste_style),
                     accent = true,
                     onClick = onPasteStyle
                 )
             }
             MiniActionPill(
                 icon = Icons.Default.Bookmarks,
-                label = "Styles",
+                label = stringResource(R.string.ui_styles),
                 onClick = onOpenSavedStyles
             )
         }
@@ -255,37 +259,37 @@ fun TextToolPanel(
             if (showType) {
                 ToolButton(
                     icon = Icons.Default.Edit,
-                    label = "Edit",
+                    label = stringResource(R.string.ui_edit),
                     isActive = false,
                     onClick = onOpenEditDialog
                 )
                 ToolButton(
                     icon = Icons.Default.FontDownload,
-                    label = "Font",
+                    label = stringResource(R.string.ui_font),
                     isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatSize,
-                    label = "Size",
+                    label = stringResource(R.string.ui_size),
                     isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatBold,
-                    label = "Style",
+                    label = stringResource(R.string.ui_style),
                     isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatLineSpacing,
-                    label = "Spacing",
+                    label = stringResource(R.string.ui_spacing),
                     isActive = activeSubTool == ActiveSubTool.TEXT_SPACING,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_SPACING) }
                 )
                 ToolButton(
                     icon = Icons.Default.Looks,
-                    label = "Curve",
+                    label = stringResource(R.string.ui_curve),
                     isActive = activeSubTool == ActiveSubTool.TEXT_CURVE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_CURVE) }
                 )
@@ -294,31 +298,31 @@ fun TextToolPanel(
             if (showFx) {
                 ToolButton(
                     icon = Icons.Default.ColorLens,
-                    label = "Color",
+                    label = stringResource(R.string.ui_color),
                     isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
                 )
                 ToolButton(
                     icon = Icons.Default.BorderStyle,
-                    label = "Stroke",
+                    label = stringResource(R.string.ui_stroke),
                     isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
                 )
                 ToolButton(
                     icon = Icons.Default.AutoAwesome,
-                    label = "Glow",
+                    label = stringResource(R.string.ui_glow),
                     isActive = activeSubTool == ActiveSubTool.TEXT_GLOW,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_GLOW) }
                 )
                 ToolButton(
                     icon = Icons.Default.Lightbulb,
-                    label = "Shadow",
+                    label = stringResource(R.string.ui_shadow),
                     isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
                 )
                 ToolButton(
                     icon = Icons.Default.FormatColorFill,
-                    label = "Bg Pill",
+                    label = stringResource(R.string.ui_bg_pill),
                     isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
                 )
@@ -330,19 +334,19 @@ fun TextToolPanel(
                 )
                 ToolButton(
                     icon = Icons.Default.SettingsBackupRestore,
-                    label = "Reflect",
+                    label = stringResource(R.string.ui_reflect),
                     isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
                 )
                 ToolButton(
                     icon = Icons.Default.BlurOn,
-                    label = "Blend",
+                    label = stringResource(R.string.ui_blend),
                     isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
                     onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
                 )
                 ToolButton(
                     icon = Icons.Default.Opacity,
-                    label = "Opacity",
+                    label = stringResource(R.string.ui_opacity),
                     isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
                 )
@@ -351,43 +355,43 @@ fun TextToolPanel(
             if (showLayout) {
                 ToolButton(
                     icon = Icons.Default.Rotate90DegreesCcw,
-                    label = "Rotate",
+                    label = stringResource(R.string.ui_rotate),
                     isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
                 )
                 ToolButton(
                     icon = Icons.Default.ArrowUpward,
-                    label = "Nudge",
+                    label = stringResource(R.string.ui_nudge),
                     isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
                 )
                 ToolButton(
                     icon = Icons.Default.AlignHorizontalCenter,
-                    label = "Align",
+                    label = stringResource(R.string.ui_align),
                     isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
                     onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
                 )
                 ToolButton(
                     icon = Icons.Default.Layers,
-                    label = "To Front",
+                    label = stringResource(R.string.ui_to_front),
                     isActive = false,
                     onClick = onBringToFront
                 )
                 ToolButton(
                     icon = Icons.Default.Layers,
-                    label = "To Back",
+                    label = stringResource(R.string.ui_to_back),
                     isActive = false,
                     onClick = onSendToBack
                 )
                 ToolButton(
                     icon = Icons.Default.ContentCopy,
-                    label = "Duplicate",
+                    label = stringResource(R.string.action_duplicate),
                     isActive = false,
                     onClick = onDuplicateLayer
                 )
                 ToolButton(
                     icon = Icons.Default.Delete,
-                    label = "Delete",
+                    label = stringResource(R.string.action_delete),
                     isActive = false,
                     onClick = onDeleteLayer
                 )
@@ -492,7 +496,7 @@ private fun SubToolInspector(
                 fontSize = 13.sp
             )
             IconButton(onClick = onClose, modifier = Modifier.size(26.dp)) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close), tint = Color.White)
             }
         }
 
@@ -536,7 +540,7 @@ private fun SubToolInspector(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search ${allFonts.size} fonts...", fontSize = 12.sp) },
+                        placeholder = { Text(stringResource(R.string.ui_search_fonts, allFonts.size), fontSize = 12.sp) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -559,7 +563,17 @@ private fun SubToolInspector(
                         FilterChip(
                             selected = selectedCategory == cat,
                             onClick = { selectedCategory = cat },
-                            label = { Text(cat, fontSize = 11.sp) }
+                            label = {
+                                Text(
+                                    text = when (cat) {
+                                        "All" -> stringResource(R.string.ui_tab_all)
+                                        "Favorites" -> stringResource(R.string.ui_font_cat_favorites)
+                                        "Imported" -> stringResource(R.string.ui_font_cat_imported)
+                                        else -> cat
+                                    },
+                                    fontSize = 11.sp
+                                )
+                            }
                         )
                     }
                 }
@@ -604,7 +618,7 @@ private fun SubToolInspector(
                                 )
                                 Icon(
                                     imageVector = if (isFav) Icons.Default.Star else Icons.Default.StarBorder,
-                                    contentDescription = "Favorite ${font.displayName}",
+                                    contentDescription = stringResource(R.string.ui_favorite_named, font.displayName),
                                     tint = if (isFav) Color(0xFFFFD54F) else Color(0xFF687082),
                                     modifier = Modifier
                                         .size(15.dp)
@@ -633,7 +647,7 @@ private fun SubToolInspector(
             ActiveSubTool.TEXT_POSITION -> {
                 var stepPx by remember { mutableFloatStateOf(10f) }
                 PrecisionSlider(
-                    label = "Nudge Step",
+                    label = stringResource(R.string.ui_nudge_step),
                     value = stepPx,
                     valueRange = 1f..50f,
                     defaultValue = 10f,
@@ -648,18 +662,18 @@ private fun SubToolInspector(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { onNudge(-stepPx, 0f) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nudge Left", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_nudge_left), tint = Color.White)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(onClick = { onNudge(0f, -stepPx) }) {
-                            Icon(Icons.Default.ArrowUpward, contentDescription = "Nudge Up", tint = Color.White)
+                            Icon(Icons.Default.ArrowUpward, contentDescription = stringResource(R.string.ui_nudge_up), tint = Color.White)
                         }
                         IconButton(onClick = { onNudge(0f, stepPx) }) {
-                            Icon(Icons.Default.ArrowDownward, contentDescription = "Nudge Down", tint = Color.White)
+                            Icon(Icons.Default.ArrowDownward, contentDescription = stringResource(R.string.ui_nudge_down), tint = Color.White)
                         }
                     }
                     IconButton(onClick = { onNudge(stepPx, 0f) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Nudge Right", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.ui_nudge_right), tint = Color.White)
                     }
                 }
             }
@@ -670,29 +684,29 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_LEFT) }) {
-                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = "Align Left", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = stringResource(R.string.ui_align_left), tint = Color.White)
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.CENTER_HORIZONTAL) }) {
-                        Icon(Icons.Default.AlignHorizontalCenter, contentDescription = "Center Horizontally", tint = Color(0xFF00E5FF))
+                        Icon(Icons.Default.AlignHorizontalCenter, contentDescription = stringResource(R.string.ui_center_horizontally), tint = Color(0xFF00E5FF))
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_RIGHT) }) {
-                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = "Align Right", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = stringResource(R.string.ui_align_right), tint = Color.White)
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_TOP) }) {
-                        Icon(Icons.Default.AlignVerticalTop, contentDescription = "Align Top", tint = Color.White)
+                        Icon(Icons.Default.AlignVerticalTop, contentDescription = stringResource(R.string.ui_align_top), tint = Color.White)
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.CENTER_VERTICAL) }) {
-                        Icon(Icons.Default.AlignVerticalCenter, contentDescription = "Center Vertically", tint = Color(0xFF00E5FF))
+                        Icon(Icons.Default.AlignVerticalCenter, contentDescription = stringResource(R.string.ui_center_vertically), tint = Color(0xFF00E5FF))
                     }
                     IconButton(onClick = { onAlign(AlignmentAction.ALIGN_BOTTOM) }) {
-                        Icon(Icons.Default.AlignVerticalBottom, contentDescription = "Align Bottom", tint = Color.White)
+                        Icon(Icons.Default.AlignVerticalBottom, contentDescription = stringResource(R.string.ui_align_bottom), tint = Color.White)
                     }
                 }
             }
 
             ActiveSubTool.TEXT_SIZE -> {
                 PrecisionSlider(
-                    label = "Font Size",
+                    label = stringResource(R.string.ui_font_size),
                     value = layer.fontSize,
                     valueRange = 10f..260f,
                     defaultValue = 44f,
@@ -705,7 +719,7 @@ private fun SubToolInspector(
 
             ActiveSubTool.TEXT_SPACING -> {
                 PrecisionSlider(
-                    label = "Letter Spacing",
+                    label = stringResource(R.string.ui_letter_spacing),
                     value = layer.letterSpacing,
                     valueRange = -0.15f..1.0f,
                     defaultValue = 0f,
@@ -716,7 +730,7 @@ private fun SubToolInspector(
                     onValueChangeFinished = onFinishContinuousEdit
                 )
                 PrecisionSlider(
-                    label = "Line Spacing",
+                    label = stringResource(R.string.ui_line_spacing),
                     value = layer.lineHeightMultiplier,
                     valueRange = 0.8f..2.2f,
                     defaultValue = 1.15f,
@@ -736,11 +750,11 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     listOf(
-                        "Arch +90°" to 90f,
-                        "Arch +45°" to 45f,
-                        "Straight 0°" to 0f,
-                        "Smile -45°" to -45f,
-                        "Smile -90°" to -90f
+                        stringResource(R.string.ui_curve_arch, "+90°") to 90f,
+                        stringResource(R.string.ui_curve_arch, "+45°") to 45f,
+                        stringResource(R.string.ui_curve_straight, "0°") to 0f,
+                        stringResource(R.string.ui_curve_smile, "-45°") to -45f,
+                        stringResource(R.string.ui_curve_smile, "-90°") to -90f
                     ).forEach { (label, deg) ->
                         FilterChip(
                             selected = layer.curveAngle.roundToInt() == deg.roundToInt(),
@@ -750,7 +764,7 @@ private fun SubToolInspector(
                     }
                 }
                 PrecisionSlider(
-                    label = "Arc Curve Angle",
+                    label = stringResource(R.string.ui_arc_curve_angle),
                     value = layer.curveAngle,
                     valueRange = -180f..180f,
                     defaultValue = 0f,
@@ -771,26 +785,26 @@ private fun SubToolInspector(
                     FilterChip(
                         selected = !layer.textGradientEnabled,
                         onClick = { onUpdate(false) { it.copy(textGradientEnabled = false) } },
-                        label = { Text("Solid Fill", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_solid_fill), fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.textGradientEnabled && !layer.textGradientRadial,
                         onClick = {
                             onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = false) }
                         },
-                        label = { Text("Linear Gradient", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_linear_gradient), fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.textGradientEnabled && layer.textGradientRadial,
                         onClick = {
                             onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = true) }
                         },
-                        label = { Text("Radial Gradient", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_radial_gradient), fontSize = 12.sp) }
                     )
                 }
 
                 Text(
-                    text = if (layer.textGradientEnabled) "Start Color" else "Text Color",
+                    text = if (layer.textGradientEnabled) stringResource(R.string.ui_start_color) else stringResource(R.string.ui_text_color),
                     color = Color(0xFFCCCCCC),
                     fontSize = 12.sp
                 )
@@ -801,11 +815,11 @@ private fun SubToolInspector(
                     onSelectColor = { colorValue -> onUpdate(false) { it.copy(textColor = colorValue) } },
                     onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_COLOR) },
                     allowAlpha = true,
-                    pickerTitle = "Text Color"
+                    pickerTitle = stringResource(R.string.ui_text_color)
                 )
 
                 if (layer.textGradientEnabled) {
-                    Text("End Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_end_color), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                     ColorPaletteRow(
                         colors = TextColorPalette,
                         recentColors = recentColors,
@@ -813,11 +827,11 @@ private fun SubToolInspector(
                         onSelectColor = { endCol -> onUpdate(false) { it.copy(textGradientEndColor = endCol) } },
                         onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_GRADIENT_END) },
                         allowAlpha = true,
-                        pickerTitle = "Gradient End Color"
+                        pickerTitle = stringResource(R.string.ui_gradient_end_color)
                     )
                     if (!layer.textGradientRadial) {
                         PrecisionSlider(
-                            label = "Gradient Angle",
+                            label = stringResource(R.string.ui_gradient_angle),
                             value = layer.textGradientAngle,
                             valueRange = 0f..360f,
                             defaultValue = 0f,
@@ -832,7 +846,7 @@ private fun SubToolInspector(
 
             ActiveSubTool.TEXT_OPACITY -> {
                 PrecisionSlider(
-                    label = "Opacity",
+                    label = stringResource(R.string.ui_opacity),
                     value = layer.opacity * 100f,
                     valueRange = 0f..100f,
                     defaultValue = 100f,
@@ -861,7 +875,7 @@ private fun SubToolInspector(
                     }
                 }
                 PrecisionSlider(
-                    label = "Rotation Angle",
+                    label = stringResource(R.string.ui_rotation_angle),
                     value = layer.rotation,
                     valueRange = -180f..180f,
                     defaultValue = 0f,
@@ -882,28 +896,28 @@ private fun SubToolInspector(
                     FilterChip(
                         selected = layer.isBold,
                         onClick = { onUpdate(false) { it.copy(isBold = !it.isBold) } },
-                        label = { Text("Bold", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_bold), fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.isItalic,
                         onClick = { onUpdate(false) { it.copy(isItalic = !it.isItalic) } },
-                        label = { Text("Italic", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_italic), fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.isUnderline,
                         onClick = { onUpdate(false) { it.copy(isUnderline = !it.isUnderline) } },
-                        label = { Text("Underline", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_underline), fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.flipHorizontal,
                         onClick = { onUpdate(false) { it.copy(flipHorizontal = !it.flipHorizontal) } },
                         leadingIcon = { Icon(Icons.Default.Flip, contentDescription = null, modifier = Modifier.size(14.dp)) },
-                        label = { Text("Flip H", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_flip_h), fontSize = 12.sp) }
                     )
                     FilterChip(
                         selected = layer.flipVertical,
                         onClick = { onUpdate(false) { it.copy(flipVertical = !it.flipVertical) } },
-                        label = { Text("Flip V", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_flip_v), fontSize = 12.sp) }
                     )
                 }
 
@@ -920,7 +934,7 @@ private fun SubToolInspector(
                             onClick = { onUpdate(false) { it.copy(textAlign = align) } },
                             label = {
                                 Text(
-                                    text = "Align ${align.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                                    text = stringResource(align.labelRes()),
                                     fontSize = 12.sp
                                 )
                             }
@@ -929,7 +943,7 @@ private fun SubToolInspector(
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("Transform Case", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                Text(stringResource(R.string.ui_transform_case), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -937,13 +951,13 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.UPPERCASE) }) {
-                        Text("UPPERCASE", color = Color.White, fontSize = 11.sp)
+                        Text(stringResource(R.string.ui_uppercase), color = Color.White, fontSize = 11.sp)
                     }
                     OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.LOWERCASE) }) {
                         Text("lowercase", color = Color.White, fontSize = 11.sp)
                     }
                     OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.TITLE_CASE) }) {
-                        Text("Title Case", color = Color.White, fontSize = 11.sp)
+                        Text(stringResource(R.string.ui_title_case), color = Color.White, fontSize = 11.sp)
                     }
                 }
             }
@@ -954,7 +968,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Text Background Pill", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_enable_text_background_pill), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.textBackgroundColor != null,
                         onCheckedChange = { enable ->
@@ -976,10 +990,10 @@ private fun SubToolInspector(
                         onSelectColor = { c -> onUpdate(false) { it.copy(textBackgroundColor = c) } },
                         onPickFromCanvas = { onStartEyedropper(EyedropperTarget.TEXT_BACKGROUND) },
                         allowAlpha = true,
-                        pickerTitle = "Text Background Color"
+                        pickerTitle = stringResource(R.string.ui_text_background_color)
                     )
                     PrecisionSlider(
-                        label = "Pill Padding",
+                        label = stringResource(R.string.ui_pill_padding),
                         value = layer.textBackgroundPadding,
                         valueRange = 0f..60f,
                         defaultValue = 16f,
@@ -989,7 +1003,7 @@ private fun SubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Corner Radius",
+                        label = stringResource(R.string.ui_corner_radius),
                         value = layer.textBackgroundRadius,
                         valueRange = 0f..48f,
                         defaultValue = 8f,
@@ -1041,7 +1055,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Outer Neon Glow", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_enable_outer_neon_glow), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.glowEnabled,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(glowEnabled = enable) } }
@@ -1058,10 +1072,10 @@ private fun SubToolInspector(
                         onSelectColor = { c -> onUpdate(false) { it.copy(glowColor = c) } },
                         onPickFromCanvas = { onStartEyedropper(EyedropperTarget.GLOW_COLOR) },
                         allowAlpha = true,
-                        pickerTitle = "Outer Glow Color"
+                        pickerTitle = stringResource(R.string.ui_outer_glow_color)
                     )
                     PrecisionSlider(
-                        label = "Glow Blur Radius",
+                        label = stringResource(R.string.ui_glow_blur_radius),
                         value = layer.glowRadius,
                         valueRange = 2f..60f,
                         defaultValue = 18f,
@@ -1079,7 +1093,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Drop Shadow", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_enable_drop_shadow), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.shadowEnabled,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(shadowEnabled = enable) } }
@@ -1096,10 +1110,10 @@ private fun SubToolInspector(
                         onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
                         onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHADOW_COLOR) },
                         allowAlpha = true,
-                        pickerTitle = "Text Shadow Color"
+                        pickerTitle = stringResource(R.string.ui_text_shadow_color)
                     )
                     PrecisionSlider(
-                        label = "Blur Radius",
+                        label = stringResource(R.string.ui_blur_radius),
                         value = layer.shadowRadius,
                         valueRange = 0f..48f,
                         defaultValue = 10f,
@@ -1109,7 +1123,7 @@ private fun SubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Offset X",
+                        label = stringResource(R.string.ui_offset_x),
                         value = layer.shadowDx,
                         valueRange = -40f..40f,
                         defaultValue = 4f,
@@ -1119,7 +1133,7 @@ private fun SubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Offset Y",
+                        label = stringResource(R.string.ui_offset_y),
                         value = layer.shadowDy,
                         valueRange = -40f..40f,
                         defaultValue = 6f,
@@ -1137,7 +1151,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable 3D Extrusion", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_enable_3d_extrusion), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.is3D,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(is3D = enable) } }
@@ -1155,7 +1169,7 @@ private fun SubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Side Darken",
+                        label = stringResource(R.string.ui_side_darken),
                         value = layer.darken3D * 100f,
                         valueRange = 0f..85f,
                         defaultValue = 40f,
@@ -1165,7 +1179,7 @@ private fun SubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Extrusion Angle",
+                        label = stringResource(R.string.ui_extrusion_angle),
                         value = layer.angle3D,
                         valueRange = 0f..360f,
                         defaultValue = 30f,
@@ -1180,7 +1194,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Floor Shadow", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_floor_shadow), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.shadow3DEnabled,
                         onCheckedChange = { en -> onUpdate(false) { it.copy(shadow3DEnabled = en) } }
@@ -1204,7 +1218,7 @@ private fun SubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Mirror Reflection", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_enable_mirror_reflection), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.reflectionEnabled,
                         onCheckedChange = { enable -> onUpdate(false) { it.copy(reflectionEnabled = enable) } }
@@ -1212,7 +1226,7 @@ private fun SubToolInspector(
                 }
                 if (layer.reflectionEnabled) {
                     PrecisionSlider(
-                        label = "Gap Distance",
+                        label = stringResource(R.string.ui_gap_distance),
                         value = layer.reflectionDistance,
                         valueRange = 0f..48f,
                         defaultValue = 4f,
@@ -1222,7 +1236,7 @@ private fun SubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Reflection Opacity",
+                        label = stringResource(R.string.ui_reflection_opacity),
                         value = layer.reflectionOpacity * 100f,
                         valueRange = 5f..85f,
                         defaultValue = 35f,
@@ -1235,7 +1249,7 @@ private fun SubToolInspector(
             }
 
             ActiveSubTool.LAYER_BLEND -> {
-                Text("Composite Blend Mode", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                Text(stringResource(R.string.ui_composite_blend_mode), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -1247,7 +1261,7 @@ private fun SubToolInspector(
                         FilterChip(
                             selected = layer.blendMode == mode,
                             onClick = { onUpdate(false) { it.copy(blendMode = mode) } },
-                            label = { Text(mode.label, fontSize = 12.sp) }
+                            label = { Text(mode.localizedLabel(), fontSize = 12.sp) }
                         )
                     }
                 }

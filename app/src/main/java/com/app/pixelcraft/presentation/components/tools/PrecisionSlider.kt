@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -90,7 +92,7 @@ fun PrecisionSlider(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reset $label",
+                            contentDescription = stringResource(R.string.ui_reset_named, label),
                             tint = Color(0xFF00E5FF),
                             modifier = Modifier.size(15.dp)
                         )
@@ -130,7 +132,7 @@ fun PrecisionSlider(
             ) {
                 Icon(
                     imageVector = Icons.Default.Remove,
-                    contentDescription = "Decrease $label",
+                    contentDescription = stringResource(R.string.ui_decrease_named, label),
                     tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
@@ -159,7 +161,7 @@ fun PrecisionSlider(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Increase $label",
+                    contentDescription = stringResource(R.string.ui_increase_named, label),
                     tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
@@ -187,7 +189,7 @@ fun PrecisionSlider(
             text = {
                 Column {
                     Text(
-                        text = "Range: ${valueFormatter(valueRange.start)} – ${valueFormatter(valueRange.endInclusive)} $unitSuffix",
+                        text = stringResource(R.string.ui_range, valueFormatter(valueRange.start), valueFormatter(valueRange.endInclusive), unitSuffix),
                         color = Color(0xFFA0A8B8),
                         fontSize = 12.sp
                     )
@@ -211,12 +213,12 @@ fun PrecisionSlider(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
                 ) {
-                    Text("Apply", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_apply), color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showNumberDialog = false }) {
-                    Text("Cancel", color = Color.White)
+                    Text(stringResource(R.string.action_cancel), color = Color.White)
                 }
             }
         )

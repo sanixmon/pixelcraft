@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -120,7 +123,7 @@ fun ObjectToolPanel(
             ) {
                 Icon(Icons.Default.FormatShapes, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Shapes & Balloons", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_shapes_balloons), color = Color.Black, fontWeight = FontWeight.Bold)
             }
 
             Button(
@@ -129,7 +132,7 @@ fun ObjectToolPanel(
             ) {
                 Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Photo Layer", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_photo_layer), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         }
         return
@@ -174,20 +177,20 @@ fun ObjectToolPanel(
             )
             MiniActionPill(
                 icon = Icons.Default.ContentCopy,
-                label = "Copy Style",
+                label = stringResource(R.string.ui_copy_style),
                 onClick = onCopyStyle
             )
             if (hasCopiedStyle) {
                 MiniActionPill(
                     icon = Icons.Default.ContentPaste,
-                    label = "Paste Style",
+                    label = stringResource(R.string.ui_paste_style),
                     accent = true,
                     onClick = onPasteStyle
                 )
             }
             MiniActionPill(
                 icon = Icons.Default.Bookmarks,
-                label = "Styles",
+                label = stringResource(R.string.ui_styles),
                 onClick = onOpenSavedStyles
             )
         }
@@ -204,19 +207,19 @@ fun ObjectToolPanel(
             if (selectedLayer.type == LayerType.SHAPE) {
                 ObjectToolItem(
                     icon = Icons.Default.Category,
-                    label = "Shape",
+                    label = stringResource(R.string.ui_shape),
                     isActive = activeSubTool == ActiveSubTool.SHAPE_TYPE,
                     onClick = { onSubToolSelected(ActiveSubTool.SHAPE_TYPE) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.FormatColorFill,
-                    label = "Fill",
+                    label = stringResource(R.string.ui_fill),
                     isActive = activeSubTool == ActiveSubTool.SHAPE_COLOR,
                     onClick = { onSubToolSelected(ActiveSubTool.SHAPE_COLOR) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.BorderStyle,
-                    label = "Stroke",
+                    label = stringResource(R.string.ui_stroke),
                     isActive = activeSubTool == ActiveSubTool.SHAPE_STROKE,
                     onClick = { onSubToolSelected(ActiveSubTool.SHAPE_STROKE) }
                 )
@@ -225,19 +228,19 @@ fun ObjectToolPanel(
             if (selectedLayer.type == LayerType.IMAGE) {
                 ObjectToolItem(
                     icon = Icons.Default.Crop,
-                    label = "Crop",
+                    label = stringResource(R.string.ui_crop),
                     isActive = activeSubTool == ActiveSubTool.IMAGE_CROP,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_CROP) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.Tune,
-                    label = "Adjust",
+                    label = stringResource(R.string.ui_adjust),
                     isActive = activeSubTool == ActiveSubTool.IMAGE_ADJUST,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_ADJUST) }
                 )
                 ObjectToolItem(
                     icon = Icons.Default.FilterVintage,
-                    label = "Mask",
+                    label = stringResource(R.string.ui_mask),
                     isActive = activeSubTool == ActiveSubTool.IMAGE_MASK,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_MASK) }
                 )
@@ -246,19 +249,19 @@ fun ObjectToolPanel(
             // Shared across BOTH Shape AND Image layers (Fixes Bug 2.17!)
             ObjectToolItem(
                 icon = Icons.Default.Lightbulb,
-                label = "Shadow",
+                label = stringResource(R.string.ui_shadow),
                 isActive = activeSubTool == ActiveSubTool.SHAPE_SHADOW,
                 onClick = { onSubToolSelected(ActiveSubTool.SHAPE_SHADOW) }
             )
             ObjectToolItem(
                 icon = Icons.Default.BlurOn,
-                label = "Blend",
+                label = stringResource(R.string.ui_blend),
                 isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
                 onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Flip,
-                label = "Flip H",
+                label = stringResource(R.string.ui_flip_h),
                 isActive = selectedLayer.flipHorizontal,
                 onClick = {
                     onUpdateLayer(false) { it.copy(flipHorizontal = !it.flipHorizontal) }
@@ -266,7 +269,7 @@ fun ObjectToolPanel(
             )
             ObjectToolItem(
                 icon = Icons.Default.Flip,
-                label = "Flip V",
+                label = stringResource(R.string.ui_flip_v),
                 isActive = selectedLayer.flipVertical,
                 iconRotation = 90f,
                 onClick = {
@@ -275,43 +278,43 @@ fun ObjectToolPanel(
             )
             ObjectToolItem(
                 icon = Icons.Default.AspectRatio,
-                label = "Size",
+                label = stringResource(R.string.ui_size),
                 isActive = activeSubTool == ActiveSubTool.OBJECT_SIZE,
                 onClick = { onSubToolSelected(ActiveSubTool.OBJECT_SIZE) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Rotate90DegreesCcw,
-                label = "Rotate",
+                label = stringResource(R.string.ui_rotate),
                 isActive = activeSubTool == ActiveSubTool.OBJECT_ROTATE,
                 onClick = { onSubToolSelected(ActiveSubTool.OBJECT_ROTATE) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Opacity,
-                label = "Opacity",
+                label = stringResource(R.string.ui_opacity),
                 isActive = activeSubTool == ActiveSubTool.SHAPE_OPACITY,
                 onClick = { onSubToolSelected(ActiveSubTool.SHAPE_OPACITY) }
             )
             ObjectToolItem(
                 icon = Icons.Default.Layers,
-                label = "To Front",
+                label = stringResource(R.string.ui_to_front),
                 isActive = false,
                 onClick = onBringToFront
             )
             ObjectToolItem(
                 icon = Icons.Default.Layers,
-                label = "To Back",
+                label = stringResource(R.string.ui_to_back),
                 isActive = false,
                 onClick = onSendToBack
             )
             ObjectToolItem(
                 icon = Icons.Default.ContentCopy,
-                label = "Duplicate",
+                label = stringResource(R.string.action_duplicate),
                 isActive = false,
                 onClick = onDuplicateLayer
             )
             ObjectToolItem(
                 icon = Icons.Default.Delete,
-                label = "Delete",
+                label = stringResource(R.string.action_delete),
                 isActive = false,
                 onClick = onDeleteLayer
             )
@@ -389,7 +392,7 @@ private fun ObjectSubToolInspector(
                 fontSize = 13.sp
             )
             IconButton(onClick = onClose, modifier = Modifier.size(26.dp)) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close), tint = Color.White)
             }
         }
 
@@ -403,12 +406,12 @@ private fun ObjectSubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Lock Aspect Ratio", color = Color(0xFFD5DAE5), fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_lock_aspect_ratio), color = Color(0xFFD5DAE5), fontSize = 12.sp)
                     Switch(checked = lockAspect, onCheckedChange = { lockAspect = it })
                 }
 
                 PrecisionSlider(
-                    label = "Width",
+                    label = stringResource(R.string.ui_width),
                     value = layer.width,
                     valueRange = 40f..2400f,
                     defaultValue = 320f,
@@ -429,7 +432,7 @@ private fun ObjectSubToolInspector(
 
                 if (!lockAspect) {
                     PrecisionSlider(
-                        label = "Height",
+                        label = stringResource(R.string.ui_height),
                         value = layer.height,
                         valueRange = 40f..2400f,
                         defaultValue = 320f,
@@ -445,7 +448,7 @@ private fun ObjectSubToolInspector(
                     (layer.shapeType == ShapeType.ROUNDED_RECTANGLE || layer.shapeType == ShapeType.SPEECH_BUBBLE)
                 ) {
                     PrecisionSlider(
-                        label = "Corner Radius",
+                        label = stringResource(R.string.ui_corner_radius),
                         value = layer.shapeCornerRadius,
                         valueRange = 0f..180f,
                         defaultValue = 24f,
@@ -473,7 +476,7 @@ private fun ObjectSubToolInspector(
                     }
                 }
                 PrecisionSlider(
-                    label = "Rotation Angle",
+                    label = stringResource(R.string.ui_rotation_angle),
                     value = layer.rotation,
                     valueRange = -180f..180f,
                     defaultValue = 0f,
@@ -497,7 +500,7 @@ private fun ObjectSubToolInspector(
                             FilterChip(
                                 selected = activeCat == cat,
                                 onClick = { activeCat = cat },
-                                label = { Text(cat.label, fontSize = 12.sp) }
+                                label = { Text(cat.localizedLabel(), fontSize = 12.sp) }
                             )
                         }
                     }
@@ -512,7 +515,7 @@ private fun ObjectSubToolInspector(
                             FilterChip(
                                 selected = layer.shapeType == shape,
                                 onClick = { onUpdate(false) { it.copy(shapeType = shape) } },
-                                label = { Text(shape.label, fontSize = 12.sp) }
+                                label = { Text(shape.localizedLabel(), fontSize = 12.sp) }
                             )
                         }
                     }
@@ -536,7 +539,7 @@ private fun ObjectSubToolInspector(
                                     it.copy(shapeGradientEnabled = false, shapeFillColor = fallback)
                                 }
                             },
-                            label = { Text("Solid", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.ui_solid), fontSize = 12.sp) }
                         )
                         FilterChip(
                             selected = layer.shapeGradientEnabled,
@@ -546,7 +549,7 @@ private fun ObjectSubToolInspector(
                                     it.copy(shapeGradientEnabled = true, shapeFillColor = start)
                                 }
                             },
-                            label = { Text("Gradient", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.ui_gradient), fontSize = 12.sp) }
                         )
                         FilterChip(
                             selected = isTransparent,
@@ -555,14 +558,14 @@ private fun ObjectSubToolInspector(
                                     it.copy(shapeGradientEnabled = false, shapeFillColor = 0x00000000L)
                                 }
                             },
-                            label = { Text("None (Hollow)", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.ui_none_hollow), fontSize = 12.sp) }
                         )
                     }
 
                     if (!isTransparent) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (layer.shapeGradientEnabled) "Start Color" else "Fill Color",
+                            text = if (layer.shapeGradientEnabled) stringResource(R.string.ui_start_color) else stringResource(R.string.ui_fill_color),
                             color = Color(0xFFCCCCCC),
                             fontSize = 12.sp
                         )
@@ -573,11 +576,11 @@ private fun ObjectSubToolInspector(
                             onSelectColor = { c -> onUpdate(false) { it.copy(shapeFillColor = c) } },
                             onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHAPE_FILL) },
                             allowAlpha = true,
-                            pickerTitle = if (layer.shapeGradientEnabled) "Gradient Start Color" else "Shape Fill Color"
+                            pickerTitle = if (layer.shapeGradientEnabled) stringResource(R.string.ui_gradient_start_color) else stringResource(R.string.ui_shape_fill_color)
                         )
 
                         if (layer.shapeGradientEnabled) {
-                            Text("End Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                            Text(stringResource(R.string.ui_end_color), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                             ColorPaletteRow(
                                 colors = ObjectPalette,
                                 recentColors = recentColors,
@@ -585,10 +588,10 @@ private fun ObjectSubToolInspector(
                                 onSelectColor = { c -> onUpdate(false) { it.copy(shapeGradientEndColor = c) } },
                                 onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHAPE_GRADIENT_END) },
                                 allowAlpha = true,
-                                pickerTitle = "Gradient End Color"
+                                pickerTitle = stringResource(R.string.ui_gradient_end_color)
                             )
                             PrecisionSlider(
-                                label = "Gradient Angle",
+                                label = stringResource(R.string.ui_gradient_angle),
                                 value = layer.shapeGradientAngle,
                                 valueRange = 0f..360f,
                                 defaultValue = 90f,
@@ -644,7 +647,7 @@ private fun ObjectSubToolInspector(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Enable Drop Shadow", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_enable_drop_shadow), color = Color.White, fontSize = 12.sp)
                     Switch(
                         checked = layer.shadowEnabled,
                         onCheckedChange = { en -> onUpdate(false) { it.copy(shadowEnabled = en) } }
@@ -661,10 +664,10 @@ private fun ObjectSubToolInspector(
                         onSelectColor = { c -> onUpdate(false) { it.copy(shadowColor = c) } },
                         onPickFromCanvas = { onStartEyedropper(EyedropperTarget.SHADOW_COLOR) },
                         allowAlpha = true,
-                        pickerTitle = "Drop Shadow Color"
+                        pickerTitle = stringResource(R.string.ui_drop_shadow_color)
                     )
                     PrecisionSlider(
-                        label = "Blur Radius",
+                        label = stringResource(R.string.ui_blur_radius),
                         value = layer.shadowRadius,
                         valueRange = 0f..48f,
                         defaultValue = 10f,
@@ -674,7 +677,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Offset X",
+                        label = stringResource(R.string.ui_offset_x),
                         value = layer.shadowDx,
                         valueRange = -40f..40f,
                         defaultValue = 4f,
@@ -684,7 +687,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Offset Y",
+                        label = stringResource(R.string.ui_offset_y),
                         value = layer.shadowDy,
                         valueRange = -40f..40f,
                         defaultValue = 6f,
@@ -698,7 +701,7 @@ private fun ObjectSubToolInspector(
 
             ActiveSubTool.SHAPE_OPACITY -> {
                 PrecisionSlider(
-                    label = "Opacity",
+                    label = stringResource(R.string.ui_opacity),
                     value = layer.opacity * 100f,
                     valueRange = 0f..100f,
                     defaultValue = 100f,
@@ -712,7 +715,7 @@ private fun ObjectSubToolInspector(
             }
 
             ActiveSubTool.LAYER_BLEND -> {
-                Text("Composite Blend Mode", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                Text(stringResource(R.string.ui_composite_blend_mode), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -724,7 +727,7 @@ private fun ObjectSubToolInspector(
                         FilterChip(
                             selected = layer.blendMode == mode,
                             onClick = { onUpdate(false) { it.copy(blendMode = mode) } },
-                            label = { Text(mode.label, fontSize = 12.sp) }
+                            label = { Text(mode.localizedLabel(), fontSize = 12.sp) }
                         )
                     }
                 }
@@ -743,7 +746,7 @@ private fun ObjectSubToolInspector(
                                 it.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
                             }
                         }) {
-                            Text("Full Reset", color = Color(0xFF00E5FF), fontSize = 11.sp)
+                            Text(stringResource(R.string.ui_full_reset), color = Color(0xFF00E5FF), fontSize = 11.sp)
                         }
                         OutlinedButton(onClick = {
                             onUpdate(false) {
@@ -779,7 +782,7 @@ private fun ObjectSubToolInspector(
                     }
 
                     PrecisionSlider(
-                        label = "Crop Left",
+                        label = stringResource(R.string.ui_crop_left),
                         value = layer.cropLeft * 100f,
                         valueRange = 0f..80f,
                         defaultValue = 0f,
@@ -794,7 +797,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Crop Right",
+                        label = stringResource(R.string.ui_crop_right),
                         value = layer.cropRight * 100f,
                         valueRange = 20f..100f,
                         defaultValue = 100f,
@@ -809,7 +812,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Crop Top",
+                        label = stringResource(R.string.ui_crop_top),
                         value = layer.cropTop * 100f,
                         valueRange = 0f..80f,
                         defaultValue = 0f,
@@ -824,7 +827,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Crop Bottom",
+                        label = stringResource(R.string.ui_crop_bottom),
                         value = layer.cropBottom * 100f,
                         valueRange = 20f..100f,
                         defaultValue = 100f,
@@ -849,12 +852,12 @@ private fun ObjectSubToolInspector(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Filter Presets", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                        Text(stringResource(R.string.ui_filter_presets), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                         if (!adj.isDefault) {
                             OutlinedButton(onClick = {
                                 onUpdate(false) { it.copy(imageAdjustments = ImageAdjustments()) }
                             }) {
-                                Text("Reset All", color = Color(0xFF00E5FF), fontSize = 11.sp)
+                                Text(stringResource(R.string.ui_reset_all), color = Color(0xFF00E5FF), fontSize = 11.sp)
                             }
                         }
                     }
@@ -873,13 +876,13 @@ private fun ObjectSubToolInspector(
                                         it.copy(imageAdjustments = it.imageAdjustments.copy(filterPreset = preset))
                                     }
                                 },
-                                label = { Text(preset.label, fontSize = 12.sp) }
+                                label = { Text(preset.localizedLabel(), fontSize = 12.sp) }
                             )
                         }
                     }
 
                     PrecisionSlider(
-                        label = "Brightness",
+                        label = stringResource(R.string.ui_brightness),
                         value = adj.brightness * 100f,
                         valueRange = -50f..50f,
                         defaultValue = 0f,
@@ -893,7 +896,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Contrast",
+                        label = stringResource(R.string.ui_contrast),
                         value = adj.contrast * 100f,
                         valueRange = 50f..180f,
                         defaultValue = 100f,
@@ -907,7 +910,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Saturation",
+                        label = stringResource(R.string.ui_saturation),
                         value = adj.saturation * 100f,
                         valueRange = 0f..200f,
                         defaultValue = 100f,
@@ -921,7 +924,7 @@ private fun ObjectSubToolInspector(
                         onValueChangeFinished = onFinishContinuousEdit
                     )
                     PrecisionSlider(
-                        label = "Warmth",
+                        label = stringResource(R.string.ui_warmth),
                         value = adj.warmth * 100f,
                         valueRange = -40f..40f,
                         defaultValue = 0f,
@@ -939,7 +942,7 @@ private fun ObjectSubToolInspector(
 
             ActiveSubTool.IMAGE_MASK -> {
                 if (layer.type == LayerType.IMAGE) {
-                    Text("Clip Photo into Shape", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_clip_photo_into_shape), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -949,7 +952,7 @@ private fun ObjectSubToolInspector(
                         FilterChip(
                             selected = layer.imageMaskShape == null,
                             onClick = { onUpdate(false) { it.copy(imageMaskShape = null) } },
-                            label = { Text("None", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.ui_none), fontSize = 12.sp) }
                         )
                         val featuredMasks = listOf(
                             ShapeType.CIRCLE,
@@ -966,14 +969,14 @@ private fun ObjectSubToolInspector(
                             FilterChip(
                                 selected = layer.imageMaskShape == mask,
                                 onClick = { onUpdate(false) { it.copy(imageMaskShape = mask) } },
-                                label = { Text(mask.label, fontSize = 12.sp) }
+                                label = { Text(mask.localizedLabel(), fontSize = 12.sp) }
                             )
                         }
                     }
 
                     if (layer.imageMaskShape == null) {
                         PrecisionSlider(
-                            label = "Photo Corner Radius",
+                            label = stringResource(R.string.ui_photo_corner_radius),
                             value = layer.imageCornerRadius,
                             valueRange = 0f..220f,
                             defaultValue = 0f,
@@ -985,7 +988,7 @@ private fun ObjectSubToolInspector(
                     }
 
                     PrecisionSlider(
-                        label = "Photo Border Width",
+                        label = stringResource(R.string.ui_photo_border_width),
                         value = layer.imageBorderWidth,
                         valueRange = 0f..40f,
                         defaultValue = 0f,
@@ -1002,7 +1005,7 @@ private fun ObjectSubToolInspector(
                             onSelectColor = { c -> onUpdate(false) { it.copy(imageBorderColor = c) } },
                             onPickFromCanvas = { onStartEyedropper(EyedropperTarget.IMAGE_BORDER) },
                             allowAlpha = true,
-                            pickerTitle = "Photo Border Color"
+                            pickerTitle = stringResource(R.string.ui_photo_border_color)
                         )
                     }
                 }

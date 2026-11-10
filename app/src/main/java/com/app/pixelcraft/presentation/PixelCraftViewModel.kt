@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation
 
+import com.app.pixelcraft.R
+import com.app.pixelcraft.presentation.i18n.UiText
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -474,7 +476,7 @@ class PixelCraftViewModel internal constructor(
                 _uiState.update {
                     it.copy(
                         availableFontsCount = FontCatalog.allFonts().size,
-                        userMessage = "Imported font \"${imported.displayName}\""
+                        userMessage = UiText.Res(R.string.msg_font_imported, imported.displayName)
                     )
                 }
                 if (_uiState.value.selectedLayer?.type == LayerType.TEXT) {
@@ -483,7 +485,7 @@ class PixelCraftViewModel internal constructor(
                     }
                 }
             }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = "Font import failed: ${err.message}") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_font_import_failed, err.message.orEmpty())) }
             }
         }
     }
@@ -565,7 +567,7 @@ class PixelCraftViewModel internal constructor(
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.groupLayers(ids),
-                userMessage = "Grouped ${ids.size} layers"
+                userMessage = UiText.Res(R.string.msg_grouped_layers, ids.size)
             )
         }
     }
@@ -579,7 +581,7 @@ class PixelCraftViewModel internal constructor(
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.ungroupLayers(ids),
-                userMessage = "Ungrouped layers"
+                userMessage = UiText.Res(R.string.msg_ungrouped_layers)
             )
         }
     }
@@ -591,7 +593,7 @@ class PixelCraftViewModel internal constructor(
         _uiState.update {
             it.copy(
                 copiedStyleLayer = layer,
-                userMessage = "Style copied from \"${layer.name}\""
+                userMessage = UiText.Res(R.string.msg_style_copied, layer.name)
             )
         }
     }
@@ -615,7 +617,7 @@ class PixelCraftViewModel internal constructor(
         )
         viewModelScope.launch {
             preferencesStore.saveLayerStyle(entry)
-            _uiState.update { it.copy(userMessage = "Saved style \"$clean\"") }
+            _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_style_saved, clean)) }
         }
     }
 
@@ -721,7 +723,7 @@ class PixelCraftViewModel internal constructor(
                 syncHistoryFlags(markDirty = true)
                 scheduleAutosave()
             }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = "Couldn't open picture: ${err.message}") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_open_picture_failed, err.message.orEmpty())) }
             }
         }
     }
@@ -850,7 +852,7 @@ class PixelCraftViewModel internal constructor(
                     )
                 }
             }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = "Couldn't open that picture: ${err.message}") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_open_picture_failed, err.message.orEmpty())) }
             }
         }
     }
@@ -1232,7 +1234,7 @@ class PixelCraftViewModel internal constructor(
                     )
                 }
             }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = "Couldn't open that picture: ${err.message}") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_open_picture_failed, err.message.orEmpty())) }
             }
         }
     }
@@ -1371,14 +1373,14 @@ class PixelCraftViewModel internal constructor(
                         draftTimestamp = null,
                         draftProjectName = null,
                         activeDialog = null,
-                        userMessage = "Saved project \"$cleanName\""
+                        userMessage = UiText.Res(R.string.msg_project_saved, cleanName)
                     )
                 }
                 onSaved?.invoke()
             }.onFailure { err ->
                 thumbBitmap?.recycle()
                 _uiState.update {
-                    it.copy(userMessage = "Couldn't save project: ${err.message}")
+                    it.copy(userMessage = UiText.Res(R.string.msg_project_save_failed, err.message.orEmpty()))
                 }
             }
         }
@@ -1418,7 +1420,7 @@ class PixelCraftViewModel internal constructor(
                 syncHistoryFlags(markDirty = false)
             }.onFailure { err ->
                 _uiState.update {
-                    it.copy(userMessage = "Couldn't open project: ${err.message}")
+                    it.copy(userMessage = UiText.Res(R.string.msg_project_open_failed, err.message.orEmpty()))
                 }
             }
         }
@@ -1433,7 +1435,7 @@ class PixelCraftViewModel internal constructor(
                         currentProjectName = if (state.currentProjectId == id) updated.name else state.currentProjectName,
                         savedProjects = projects,
                         projectSummaries = summaries,
-                        userMessage = "Renamed to \"${updated.name}\""
+                        userMessage = UiText.Res(R.string.msg_project_renamed, updated.name)
                     )
                 }
             }
@@ -1448,7 +1450,7 @@ class PixelCraftViewModel internal constructor(
                     it.copy(
                         savedProjects = projects,
                         projectSummaries = summaries,
-                        userMessage = "Duplicated \"${copy.name}\""
+                        userMessage = UiText.Res(R.string.msg_project_duplicated, copy.name)
                     )
                 }
             }
@@ -1470,7 +1472,7 @@ class PixelCraftViewModel internal constructor(
                 }
             }.onFailure { err ->
                 _uiState.update {
-                    it.copy(userMessage = "Couldn't delete project: ${err.message}")
+                    it.copy(userMessage = UiText.Res(R.string.msg_project_delete_failed, err.message.orEmpty()))
                 }
             }
         }
@@ -1486,7 +1488,7 @@ class PixelCraftViewModel internal constructor(
                     it.copy(
                         savedProjects = projects,
                         projectSummaries = summaries,
-                        userMessage = "Restored \"${backup.name}\""
+                        userMessage = UiText.Res(R.string.msg_project_restored, backup.name)
                     )
                 }
             }
@@ -1501,9 +1503,9 @@ class PixelCraftViewModel internal constructor(
                     projectStorage.exportProjectArchive(projectId, imageStore.imagesDir, out).getOrThrow()
                 } ?: error("Cannot write destination file")
             }.onSuccess {
-                _uiState.update { it.copy(userMessage = "Exported .pixelcraft project archive") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_archive_exported)) }
             }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = "Archive export failed: ${err.message}") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_archive_export_failed, err.message.orEmpty())) }
             }
         }
     }
@@ -1521,12 +1523,12 @@ class PixelCraftViewModel internal constructor(
                     it.copy(
                         savedProjects = projects,
                         projectSummaries = summaries,
-                        userMessage = "Imported \"${imported.name}\""
+                        userMessage = UiText.Res(R.string.msg_archive_imported, imported.name)
                     )
                 }
                 onImported?.invoke(imported.id)
             }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = "Archive import failed: ${err.message}") }
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_archive_import_failed, err.message.orEmpty())) }
             }
         }
     }
@@ -1543,7 +1545,7 @@ class PixelCraftViewModel internal constructor(
     fun cancelExport() {
         exportJob?.cancel()
         exportJob = null
-        _uiState.update { it.copy(isExporting = false, userMessage = "Export cancelled") }
+        _uiState.update { it.copy(isExporting = false, userMessage = UiText.Res(R.string.msg_export_cancelled)) }
     }
 
     fun exportCanvas() {
@@ -1574,7 +1576,7 @@ class PixelCraftViewModel internal constructor(
                     it.copy(
                         isExporting = false,
                         lastExportedUri = uri,
-                        userMessage = "Saved to Pictures/${GallerySaver.ALBUM}",
+                        userMessage = UiText.Res(R.string.msg_saved_to_gallery, GallerySaver.ALBUM),
                         activeDialog = null
                     )
                 }
@@ -1585,7 +1587,7 @@ class PixelCraftViewModel internal constructor(
                     it.copy(
                         isExporting = false,
                         lastExportedUri = null,
-                        userMessage = "Export failed: ${err.message}"
+                        userMessage = UiText.Res(R.string.msg_export_failed, err.message.orEmpty())
                     )
                 }
             }
@@ -1633,7 +1635,7 @@ class PixelCraftViewModel internal constructor(
                 _uiState.update {
                     it.copy(
                         isExporting = false,
-                        userMessage = "Share failed: ${err.message}"
+                        userMessage = UiText.Res(R.string.msg_share_failed, err.message.orEmpty())
                     )
                 }
             }
@@ -1644,7 +1646,7 @@ class PixelCraftViewModel internal constructor(
         _uiState.update { it.copy(pendingShareUri = null) }
     }
 
-    fun reportMessage(message: String) {
+    fun reportMessage(message: UiText) {
         _uiState.update { it.copy(userMessage = message) }
     }
 

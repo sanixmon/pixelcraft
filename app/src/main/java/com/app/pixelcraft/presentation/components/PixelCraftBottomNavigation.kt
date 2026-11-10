@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation.components
 
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,31 +51,31 @@ fun PixelCraftBottomNavigation(
         verticalAlignment = Alignment.CenterVertically
     ) {
         BottomNavTabItem(
-            label = "Templates",
+            label = stringResource(R.string.nav_templates),
             icon = Icons.Default.DashboardCustomize,
             isSelected = activeTab == BottomNavTab.PRESETS,
             onClick = { onTabSelected(BottomNavTab.PRESETS) }
         )
         BottomNavTabItem(
-            label = "Text",
+            label = stringResource(R.string.nav_text),
             icon = Icons.Default.TextFields,
             isSelected = activeTab == BottomNavTab.TEXT,
             onClick = { onTabSelected(BottomNavTab.TEXT) }
         )
         BottomNavTabItem(
-            label = "Objects",
+            label = stringResource(R.string.nav_objects),
             icon = Icons.Default.Category,
             isSelected = activeTab == BottomNavTab.OBJECTS,
             onClick = { onTabSelected(BottomNavTab.OBJECTS) }
         )
         BottomNavTabItem(
-            label = "Canvas",
+            label = stringResource(R.string.nav_canvas),
             icon = Icons.Default.ColorLens,
             isSelected = activeTab == BottomNavTab.BACKGROUND,
             onClick = { onTabSelected(BottomNavTab.BACKGROUND) }
         )
         BottomNavTabItem(
-            label = "Effects",
+            label = stringResource(R.string.nav_effects),
             icon = Icons.Default.AutoAwesome,
             isSelected = activeTab == BottomNavTab.FILTERS,
             onClick = { onTabSelected(BottomNavTab.FILTERS) }

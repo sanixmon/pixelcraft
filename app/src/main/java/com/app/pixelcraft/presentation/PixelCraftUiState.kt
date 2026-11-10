@@ -1,5 +1,6 @@
 package com.app.pixelcraft.presentation
 
+import com.app.pixelcraft.presentation.i18n.UiText
 import android.net.Uri
 import androidx.compose.runtime.Immutable
 import com.app.pixelcraft.data.model.ActiveDialog
@@ -126,7 +127,7 @@ data class PixelCraftUiState(
     val lastExportedUri: Uri? = null,
     val pendingShareUri: Uri? = null,
     val pendingShareMimeType: String = "image/png",
-    val userMessage: String? = null
+    val userMessage: UiText? = null
 ) {
     /** Cached once per state instance so 20+ accesses per Compose frame are O(1) (§ 4.4). */
     val selectedLayer: Layer? = layers.find { it.id == selectedLayerId }

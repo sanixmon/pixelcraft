@@ -1,5 +1,9 @@
 package com.app.pixelcraft.presentation
 
+import com.app.pixelcraft.presentation.i18n.asString
+import com.app.pixelcraft.presentation.i18n.UiText
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -129,7 +133,7 @@ fun PixelCraftScreen(
     // Android 9 (API 28) needs WRITE_EXTERNAL_STORAGE to insert into shared Pictures
     val requestStoragePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) viewModel.exportCanvas()
-        else viewModel.reportMessage("Storage permission is needed to save to the gallery")
+        else viewModel.reportMessage(UiText.Res(R.string.msg_storage_permission_needed))
     }
     val exportWithPermission = {
         val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
@@ -148,19 +152,20 @@ fun PixelCraftScreen(
                 putExtra(Intent.EXTRA_STREAM, shareUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            context.startActivity(Intent.createChooser(send, "Share design"))
+            context.startActivity(Intent.createChooser(send, context.getString(R.string.ui_share_design)))
         } finally {
             viewModel.consumePendingShareUri()
         }
     }
 
+    val shareActionLabel = stringResource(R.string.action_share)
     LaunchedEffect(state.userMessage) {
-        val msg = state.userMessage ?: return@LaunchedEffect
+        val msg = state.userMessage?.asString(context) ?: return@LaunchedEffect
         val exportedUri = state.lastExportedUri
         try {
             val result = snackbarHostState.showSnackbar(
                 message = msg,
-                actionLabel = if (exportedUri != null) "Share" else null,
+                actionLabel = if (exportedUri != null) shareActionLabel else null,
                 withDismissAction = exportedUri != null
             )
             if (result == SnackbarResult.ActionPerformed && exportedUri != null) {
@@ -169,7 +174,7 @@ fun PixelCraftScreen(
                     putExtra(Intent.EXTRA_STREAM, exportedUri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                context.startActivity(Intent.createChooser(send, "Share image"))
+                context.startActivity(Intent.createChooser(send, context.getString(R.string.ui_share_image)))
             }
         } finally {
             viewModel.clearUserMessage()
@@ -591,7 +596,7 @@ fun PixelCraftScreen(
             val target = layerPendingRename ?: state.selectedLayer
             if (target != null) {
                 PixelCraftRenameDialog(
-                    title = "Rename Layer",
+                    title = stringResource(R.string.ui_rename_layer),
                     initialName = target.name,
                     onConfirm = { newName ->
                         viewModel.renameLayer(target.id, newName)
@@ -669,19 +674,19 @@ private fun CoachMarksOverlay(
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Quick Gestures",
+                text = stringResource(R.string.ui_quick_gestures),
                 color = Color(0xFF00E5FF),
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp
             )
             Text(
-                text = "Double-tap text to edit • Pinch & twist with 2 fingers to resize/rotate • Tap numeric values for exact input",
+                text = stringResource(R.string.ui_double_tap_text_to_edit_pinch_twist_with),
                 color = Color(0xFFD5DAE5),
                 fontSize = 11.sp
             )
         }
         IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.Close, contentDescription = "Dismiss Tips", tint = Color.White, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_dismiss_tips), tint = Color.White, modifier = Modifier.size(16.dp))
         }
     }
 }

@@ -1,5 +1,10 @@
 package com.app.pixelcraft.presentation
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.presentation.i18n.asString
+import androidx.compose.ui.platform.LocalContext
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -107,6 +112,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var showNewCanvasSizeDialog by remember { mutableStateOf(false) }
@@ -144,7 +150,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(state.userMessage) {
-        val msg = state.userMessage ?: return@LaunchedEffect
+        val msg = state.userMessage?.asString(context) ?: return@LaunchedEffect
         try {
             snackbarHostState.showSnackbar(msg)
         } finally {
@@ -200,13 +206,13 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "PixelCraft",
+                            text = stringResource(R.string.app_name),
                             color = Color.White,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Typography & Graphic Studio",
+                            text = stringResource(R.string.ui_typography_graphic_studio),
                             color = Color(0xFF8E97AA),
                             fontSize = 11.sp
                         )
@@ -216,7 +222,7 @@ fun HomeScreen(
                 IconButton(onClick = { showAboutDialog = true }) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "About PixelCraft",
+                        contentDescription = stringResource(R.string.ui_about_pixelcraft),
                         tint = Color(0xFFB8C0D0)
                     )
                 }
@@ -236,7 +242,7 @@ fun HomeScreen(
             if (state.hasRecoverableDraft) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     DraftRecoveryCard(
-                        projectName = state.draftProjectName ?: "Untitled",
+                        projectName = state.draftProjectName ?: stringResource(R.string.ui_untitled),
                         timestamp = state.draftTimestamp,
                         onResume = {
                             viewModel.resumeSavedDraft()
@@ -251,7 +257,7 @@ fun HomeScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Text(
-                        text = "Start Creating",
+                        text = stringResource(R.string.ui_start_creating),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -263,16 +269,16 @@ fun HomeScreen(
                     ) {
                         QuickStartActionCard(
                             icon = Icons.Default.Add,
-                            title = "New Canvas",
-                            subtitle = "Pick ratio & size",
+                            title = stringResource(R.string.home_new_canvas),
+                            subtitle = stringResource(R.string.ui_pick_ratio_size),
                             accentColor = Color(0xFF00E5FF),
                             onClick = { showNewCanvasSizeDialog = true },
                             modifier = Modifier.weight(1f)
                         )
                         QuickStartActionCard(
                             icon = Icons.Default.AddPhotoAlternate,
-                            title = "From Photo",
-                            subtitle = "Gallery picture",
+                            title = stringResource(R.string.home_from_photo),
+                            subtitle = stringResource(R.string.ui_gallery_picture),
                             accentColor = Color(0xFF00E676),
                             onClick = {
                                 pickPhotoLauncher.launch(
@@ -283,7 +289,7 @@ fun HomeScreen(
                         )
                         QuickStartActionCard(
                             icon = Icons.Default.FileOpen,
-                            title = "Import",
+                            title = stringResource(R.string.ui_import),
                             subtitle = ".pixelcraft file",
                             accentColor = Color(0xFFFFAB40),
                             onClick = {
@@ -302,7 +308,7 @@ fun HomeScreen(
                 Column {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Starter Templates (${DefaultPresets.presets.size})",
+                        text = stringResource(R.string.ui_starter_templates_count, DefaultPresets.presets.size),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -317,13 +323,13 @@ fun HomeScreen(
                         FilterChip(
                             selected = selectedTemplateCategory == null,
                             onClick = { selectedTemplateCategory = null },
-                            label = { Text("All", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.ui_all), fontSize = 12.sp) }
                         )
                         for (cat in PresetCategory.entries) {
                             FilterChip(
                                 selected = selectedTemplateCategory == cat,
                                 onClick = { selectedTemplateCategory = cat },
-                                label = { Text(cat.label, fontSize = 12.sp) }
+                                label = { Text(cat.localizedLabel(), fontSize = 12.sp) }
                             )
                         }
                     }
@@ -352,7 +358,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "My Projects (${state.projectSummaries.size})",
+                            text = stringResource(R.string.ui_my_projects_count, state.projectSummaries.size),
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
@@ -363,7 +369,7 @@ fun HomeScreen(
                         OutlinedTextField(
                             value = projectSearchQuery,
                             onValueChange = { projectSearchQuery = it },
-                            placeholder = { Text("Search saved projects...", fontSize = 12.sp) },
+                            placeholder = { Text(stringResource(R.string.ui_search_saved_projects), fontSize = 12.sp) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -391,9 +397,9 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = if (state.projectSummaries.isEmpty()) {
-                                "No saved projects yet"
+                                stringResource(R.string.ui_no_saved_projects_yet)
                             } else {
-                                "No matching projects found"
+                                stringResource(R.string.ui_no_matching_projects)
                             },
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
@@ -401,7 +407,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Pick a template above or start a New Canvas — saved designs appear here with instant previews.",
+                            text = stringResource(R.string.ui_pick_a_template_above_or_start_a_new_can),
                             color = Color(0xFF8E97AA),
                             fontSize = 12.sp
                         )
@@ -453,7 +459,7 @@ fun HomeScreen(
 
     renamingProject?.let { target ->
         PixelCraftRenameDialog(
-            title = "Rename Project",
+            title = stringResource(R.string.ui_rename_project),
             initialName = target.name,
             onConfirm = { nextName ->
                 viewModel.renameSavedProject(target.id, nextName)
@@ -468,25 +474,26 @@ fun HomeScreen(
             onDismissRequest = { deletingProject = null },
             containerColor = Color(0xFF1E222B),
             title = {
-                Text("Delete Project?", color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text(stringResource(R.string.ui_delete_project), color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 17.sp)
             },
             text = {
                 Text(
-                    text = "Remove \"${target.name}\" from saved projects?",
+                    text = stringResource(R.string.ui_remove_project_confirm, target.name),
                     color = Color.White,
                     fontSize = 14.sp
                 )
             },
             confirmButton = {
+                val deletedMessage = stringResource(R.string.msg_project_deleted, target.name)
+                val undoLabel = stringResource(R.string.ui_undo)
                 Button(
                     onClick = {
-                        val deletedName = target.name
                         deletingProject = null
                         viewModel.deleteProject(target.id)
                         scope.launch {
                             val res = snackbarHostState.showSnackbar(
-                                message = "Deleted \"$deletedName\"",
-                                actionLabel = "Undo"
+                                message = deletedMessage,
+                                actionLabel = undoLabel
                             )
                             if (res == SnackbarResult.ActionPerformed) {
                                 viewModel.undoDeleteProject()
@@ -495,12 +502,12 @@ fun HomeScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
                 ) {
-                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_delete), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deletingProject = null }) {
-                    Text("Cancel", color = Color.White)
+                    Text(stringResource(R.string.action_cancel), color = Color.White)
                 }
             }
         )
@@ -514,8 +521,9 @@ private fun DraftRecoveryCard(
     onResume: () -> Unit,
     onDiscard: () -> Unit
 ) {
-    val formattedTime = remember(timestamp) {
-        if (timestamp == null) "Recently"
+    val recentlyLabel = stringResource(R.string.ui_recently)
+    val formattedTime = remember(timestamp, recentlyLabel) {
+        if (timestamp == null) recentlyLabel
         else SimpleDateFormat("d MMM, HH:mm", Locale.getDefault()).format(Date(timestamp))
     }
 
@@ -541,13 +549,13 @@ private fun DraftRecoveryCard(
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Unsaved Draft Ready: $projectName",
+                    text = stringResource(R.string.ui_unsaved_draft_ready, projectName),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
                 Text(
-                    text = "Autosaved $formattedTime",
+                    text = stringResource(R.string.ui_autosaved_at, formattedTime),
                     color = Color(0xFFA5B1C6),
                     fontSize = 11.sp
                 )
@@ -560,10 +568,10 @@ private fun DraftRecoveryCard(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Resume Draft", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_resume_draft), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             OutlinedButton(onClick = onDiscard) {
-                Text("Discard", color = Color(0xFFFF8A80), fontSize = 12.sp)
+                Text(stringResource(R.string.action_discard), color = Color(0xFFFF8A80), fontSize = 12.sp)
             }
         }
     }
@@ -658,7 +666,7 @@ private fun HomeTemplateCard(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "${preset.category.label} • ${preset.canvasConfig.width}×${preset.canvasConfig.height}",
+                text = "${preset.category.localizedLabel()} • ${preset.canvasConfig.width}×${preset.canvasConfig.height}",
                 color = Color(0xFF8E97AA),
                 fontSize = 10.sp,
                 maxLines = 1
@@ -768,7 +776,7 @@ private fun ProjectThumbnailCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Project Actions",
+                        contentDescription = stringResource(R.string.ui_project_actions),
                         tint = Color(0xFFB8C0D0),
                         modifier = Modifier.size(18.dp)
                     )
@@ -780,7 +788,7 @@ private fun ProjectThumbnailCard(
                     modifier = Modifier.background(Color(0xFF1E2330))
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Rename", color = Color.White) },
+                        text = { Text(stringResource(R.string.action_rename), color = Color.White) },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF00E5FF)) },
                         onClick = {
                             menuExpanded = false
@@ -788,7 +796,7 @@ private fun ProjectThumbnailCard(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Duplicate", color = Color.White) },
+                        text = { Text(stringResource(R.string.action_duplicate), color = Color.White) },
                         leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White) },
                         onClick = {
                             menuExpanded = false
@@ -796,7 +804,7 @@ private fun ProjectThumbnailCard(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Share .pixelcraft", color = Color.White) },
+                        text = { Text(stringResource(R.string.ui_share_pixelcraft), color = Color.White) },
                         leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFF00E676)) },
                         onClick = {
                             menuExpanded = false
@@ -804,7 +812,7 @@ private fun ProjectThumbnailCard(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete", color = Color(0xFFFF5252)) },
+                        text = { Text(stringResource(R.string.action_delete), color = Color(0xFFFF5252)) },
                         leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252)) },
                         onClick = {
                             menuExpanded = false

@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -91,7 +94,7 @@ fun PixelCraftExportDialog(
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "Export & Share Image",
+                text = stringResource(R.string.ui_export_share_image),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 18.sp
@@ -103,7 +106,7 @@ fun PixelCraftExportDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text("Format", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_format), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier
@@ -126,7 +129,7 @@ fun PixelCraftExportDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Compression Quality", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                        Text(stringResource(R.string.ui_compression_quality), color = Color(0xFFCCCCCC), fontSize = 12.sp)
                         Text("${compressionQuality.roundToInt()}%", color = Color(0xFF00E5FF), fontSize = 12.sp)
                     }
                     Slider(
@@ -137,7 +140,7 @@ fun PixelCraftExportDialog(
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
-                Text("Resolution Scale", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_resolution_scale), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     for (q in ExportQuality.entries) {
@@ -160,14 +163,14 @@ fun PixelCraftExportDialog(
                         ) {
                             Column {
                                 Text(
-                                    text = q.label,
+                                    text = q.localizedLabel(),
                                     color = if (isSelected) Color(0xFF00E5FF) else Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                                 if (est.cappedByMemory) {
                                     Text(
-                                        text = "Optimized for device RAM",
+                                        text = stringResource(R.string.ui_optimized_for_device_ram),
                                         color = Color(0xFFFBBF24),
                                         fontSize = 11.sp
                                     )
@@ -196,7 +199,7 @@ fun PixelCraftExportDialog(
                                 onCheckedChange = { selectedLayerOnly = it }
                             )
                             Text(
-                                text = "Export selected layer only (Sticker)",
+                                text = stringResource(R.string.ui_export_selected_layer_only_sticker),
                                 color = Color.White,
                                 fontSize = 12.sp
                             )
@@ -214,7 +217,7 @@ fun PixelCraftExportDialog(
                                 onCheckedChange = { trimTransparent = it }
                             )
                             Text(
-                                text = "Trim empty transparent margins",
+                                text = stringResource(R.string.ui_trim_empty_transparent_margins),
                                 color = Color.White,
                                 fontSize = 12.sp
                             )
@@ -224,7 +227,7 @@ fun PixelCraftExportDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Output: ${activeEstimate.safeWidth} × ${activeEstimate.safeHeight} px • ${format.label}",
+                    text = stringResource(R.string.ui_export_output, activeEstimate.safeWidth, activeEstimate.safeHeight, format.label),
                     color = Color(0xFF00E5FF),
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
@@ -244,7 +247,7 @@ fun PixelCraftExportDialog(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Share Without Saving to Gallery", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_share_without_saving_to_gallery), color = Color.White, fontSize = 12.sp)
                 }
             }
         },
@@ -262,22 +265,22 @@ fun PixelCraftExportDialog(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Rendering...", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_rendering), color = Color.Black, fontWeight = FontWeight.Bold)
                 } else {
                     Icon(Icons.Default.Download, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Save to Gallery", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_save_to_gallery), color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         },
         dismissButton = {
             if (isExporting) {
                 TextButton(onClick = onCancelExport) {
-                    Text("Stop", color = Color(0xFFFF5252), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_stop), color = Color(0xFFFF5252), fontWeight = FontWeight.Bold)
                 }
             } else {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel", color = Color.White)
+                    Text(stringResource(R.string.action_cancel), color = Color.White)
                 }
             }
         }

@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -63,7 +66,7 @@ fun VectorStrokeInspector(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Enable Vector Stroke", color = Color.White, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_enable_vector_stroke), color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = strokeWidth > 0f,
                 onCheckedChange = { enable ->
@@ -74,7 +77,7 @@ fun VectorStrokeInspector(
 
         if (strokeWidth > 0f) {
             PrecisionSlider(
-                label = "Stroke Width",
+                label = stringResource(R.string.ui_stroke_width),
                 value = strokeWidth,
                 valueRange = 1f..maxStrokeWidth,
                 defaultValue = defaultEnableWidth,
@@ -85,7 +88,7 @@ fun VectorStrokeInspector(
                 onValueChangeFinished = onFinishContinuousEdit
             )
 
-            Text("Stroke Color", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_stroke_color), color = Color(0xFFCCCCCC), fontSize = 12.sp)
             ColorPaletteRow(
                 colors = palette,
                 recentColors = recentColors,
@@ -93,11 +96,11 @@ fun VectorStrokeInspector(
                 onSelectColor = onColorChange,
                 onPickFromCanvas = onPickFromCanvas,
                 allowAlpha = true,
-                pickerTitle = "Stroke Color"
+                pickerTitle = stringResource(R.string.ui_stroke_color)
             )
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Stroke Alignment", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_stroke_alignment), color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -108,13 +111,13 @@ fun VectorStrokeInspector(
                     FilterChip(
                         selected = strokePosition == pos,
                         onClick = { onPositionChange(pos) },
-                        label = { Text(pos.label, fontSize = 12.sp) }
+                        label = { Text(pos.localizedLabel(), fontSize = 12.sp) }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Dash Pattern", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_dash_pattern), color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -125,7 +128,7 @@ fun VectorStrokeInspector(
                     FilterChip(
                         selected = strokePattern == pat,
                         onClick = { onPatternChange(pat) },
-                        label = { Text(pat.label, fontSize = 12.sp) }
+                        label = { Text(pat.localizedLabel(), fontSize = 12.sp) }
                     )
                 }
             }
@@ -133,7 +136,7 @@ fun VectorStrokeInspector(
             if (strokePattern != StrokePattern.SOLID) {
                 if (strokePattern == StrokePattern.DASHED || strokePattern == StrokePattern.DASH_DOT) {
                     PrecisionSlider(
-                        label = "Dash Length",
+                        label = stringResource(R.string.ui_dash_length),
                         value = dashLength,
                         valueRange = 4f..60f,
                         defaultValue = 16f,
@@ -144,7 +147,7 @@ fun VectorStrokeInspector(
                     )
                 }
                 PrecisionSlider(
-                    label = "Dash Gap",
+                    label = stringResource(R.string.ui_dash_gap),
                     value = dashGap,
                     valueRange = 2f..50f,
                     defaultValue = 10f,
@@ -154,7 +157,7 @@ fun VectorStrokeInspector(
                     onValueChangeFinished = onFinishContinuousEdit
                 )
                 PrecisionSlider(
-                    label = "Phase Offset",
+                    label = stringResource(R.string.ui_phase_offset),
                     value = dashPhase,
                     valueRange = 0f..60f,
                     defaultValue = 0f,
@@ -166,7 +169,7 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Corner Join", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_corner_join), color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -177,13 +180,13 @@ fun VectorStrokeInspector(
                     FilterChip(
                         selected = strokeJoin == join,
                         onClick = { onJoinChange(join) },
-                        label = { Text(join.label, fontSize = 12.sp) }
+                        label = { Text(join.localizedLabel(), fontSize = 12.sp) }
                     )
                 }
             }
             if (strokeJoin == StrokeJoinStyle.MITER) {
                 PrecisionSlider(
-                    label = "Miter Limit",
+                    label = stringResource(R.string.ui_miter_limit),
                     value = miterLimit,
                     valueRange = 1f..16f,
                     defaultValue = 4f,
@@ -195,7 +198,7 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Line Cap", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_line_cap), color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -206,7 +209,7 @@ fun VectorStrokeInspector(
                     FilterChip(
                         selected = strokeCap == cap,
                         onClick = { onCapChange(cap) },
-                        label = { Text(cap.label, fontSize = 12.sp) }
+                        label = { Text(cap.localizedLabel(), fontSize = 12.sp) }
                     )
                 }
             }

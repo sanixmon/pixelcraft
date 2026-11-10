@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components
 
+import com.app.pixelcraft.presentation.i18n.historyLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -99,7 +102,7 @@ fun PixelCraftTopBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back to Home",
+                    contentDescription = stringResource(R.string.ui_back_to_home),
                     tint = Color.White
                 )
             }
@@ -133,9 +136,9 @@ fun PixelCraftTopBar(
                 }
                 Text(
                     text = when {
-                        state.isDirty && state.lastAutosavedAt != null -> "Draft autosaved"
-                        state.isDirty -> "Unsaved edits"
-                        state.currentProjectId != null -> "Saved"
+                        state.isDirty && state.lastAutosavedAt != null -> stringResource(R.string.ui_draft_autosaved)
+                        state.isDirty -> stringResource(R.string.ui_unsaved_edits)
+                        state.currentProjectId != null -> stringResource(R.string.ui_saved)
                         else -> "${state.canvasConfig.width}×${state.canvasConfig.height}"
                     },
                     color = Color(0xFF8E96A8),
@@ -155,7 +158,7 @@ fun PixelCraftTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add Layer",
+                        contentDescription = stringResource(R.string.ui_add_layer),
                         tint = Color(0xFF00E5FF)
                     )
                 }
@@ -165,7 +168,7 @@ fun PixelCraftTopBar(
                 ) {
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.TextFields, contentDescription = null) },
-                        text = { Text("Text Layer") },
+                        text = { Text(stringResource(R.string.ui_text_layer)) },
                         onClick = {
                             addMenuExpanded = false
                             onAddText()
@@ -173,7 +176,7 @@ fun PixelCraftTopBar(
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                        text = { Text("Date / Time Stamp...") },
+                        text = { Text(stringResource(R.string.ui_date_time_stamp)) },
                         onClick = {
                             addMenuExpanded = false
                             onAddDate()
@@ -181,7 +184,7 @@ fun PixelCraftTopBar(
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.FormatShapes, contentDescription = null) },
-                        text = { Text("Shapes & Word Balloons") },
+                        text = { Text(stringResource(R.string.ui_shapes_word_balloons)) },
                         onClick = {
                             addMenuExpanded = false
                             onAddShape()
@@ -189,7 +192,7 @@ fun PixelCraftTopBar(
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) },
-                        text = { Text("Photo Layer") },
+                        text = { Text(stringResource(R.string.ui_photo_layer)) },
                         onClick = {
                             addMenuExpanded = false
                             onAddImage()
@@ -206,7 +209,7 @@ fun PixelCraftTopBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Undo,
-                    contentDescription = state.lastUndoLabel?.let { "Undo $it" } ?: "Undo",
+                    contentDescription = state.lastUndoLabel?.let { stringResource(R.string.ui_undo_named, historyLabel(it)) } ?: stringResource(R.string.ui_undo),
                     tint = if (state.canUndo) Color.White else Color(0xFF525866)
                 )
             }
@@ -218,7 +221,7 @@ fun PixelCraftTopBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Redo,
-                    contentDescription = state.lastRedoLabel?.let { "Redo $it" } ?: "Redo",
+                    contentDescription = state.lastRedoLabel?.let { stringResource(R.string.ui_redo_named, historyLabel(it)) } ?: stringResource(R.string.ui_redo),
                     tint = if (state.canRedo) Color.White else Color(0xFF525866)
                 )
             }
@@ -230,7 +233,7 @@ fun PixelCraftTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Layers,
-                    contentDescription = "Layers (${state.layers.size})",
+                    contentDescription = stringResource(R.string.ui_layers_count, state.layers.size),
                     tint = if (state.isLayersDrawerOpen) Color(0xFF00E5FF) else Color.White
                 )
             }
@@ -243,7 +246,7 @@ fun PixelCraftTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = "Quick Share",
+                    contentDescription = stringResource(R.string.ui_quick_share),
                     tint = Color.White
                 )
             }
@@ -255,7 +258,7 @@ fun PixelCraftTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Download,
-                    contentDescription = "Export Image",
+                    contentDescription = stringResource(R.string.ui_export_image),
                     tint = Color(0xFF00E5FF)
                 )
             }
@@ -268,7 +271,7 @@ fun PixelCraftTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More Options",
+                        contentDescription = stringResource(R.string.ui_more_options),
                         tint = Color.White
                     )
                 }
@@ -278,7 +281,7 @@ fun PixelCraftTopBar(
                 ) {
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.Save, contentDescription = null) },
-                        text = { Text("Save Project") },
+                        text = { Text(stringResource(R.string.ui_save_project)) },
                         onClick = {
                             moreMenuExpanded = false
                             onOpenDialog(ActiveDialog.SAVE_PROJECT)
@@ -293,7 +296,7 @@ fun PixelCraftTopBar(
                             )
                         },
                         text = {
-                            Text(if (state.isGridEnabled) "Grid & Snap: ON" else "Grid & Snap: OFF")
+                            Text(if (state.isGridEnabled) stringResource(R.string.ui_grid_snap_on) else stringResource(R.string.ui_grid_snap_off))
                         },
                         onClick = {
                             moreMenuExpanded = false
@@ -309,7 +312,7 @@ fun PixelCraftTopBar(
                             )
                         },
                         text = {
-                            Text(if (state.showSafeZone) "Safe Zone Guide: ON" else "Safe Zone Guide: OFF")
+                            Text(if (state.showSafeZone) stringResource(R.string.ui_safe_zone_guide_on) else stringResource(R.string.ui_safe_zone_guide_off))
                         },
                         onClick = {
                             moreMenuExpanded = false
@@ -318,7 +321,7 @@ fun PixelCraftTopBar(
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.History, contentDescription = null) },
-                        text = { Text("Edit History (${state.undoHistoryLabels.size})") },
+                        text = { Text(stringResource(R.string.ui_edit_history_count, state.undoHistoryLabels.size)) },
                         onClick = {
                             moreMenuExpanded = false
                             onOpenDialog(ActiveDialog.HISTORY_SHEET)
@@ -326,7 +329,7 @@ fun PixelCraftTopBar(
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.Bookmarks, contentDescription = null) },
-                        text = { Text("My Saved Styles") },
+                        text = { Text(stringResource(R.string.ui_my_saved_styles)) },
                         onClick = {
                             moreMenuExpanded = false
                             onOpenDialog(ActiveDialog.SAVED_STYLES)
@@ -334,7 +337,7 @@ fun PixelCraftTopBar(
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.AspectRatio, contentDescription = null) },
-                        text = { Text("Canvas Size (${state.canvasConfig.width}×${state.canvasConfig.height})") },
+                        text = { Text(stringResource(R.string.ui_canvas_size_dims, state.canvasConfig.width, state.canvasConfig.height)) },
                         onClick = {
                             moreMenuExpanded = false
                             onOpenDialog(ActiveDialog.IMAGE_SIZE)
@@ -343,7 +346,7 @@ fun PixelCraftTopBar(
                     HorizontalDivider()
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
-                        text = { Text("About PixelCraft") },
+                        text = { Text(stringResource(R.string.ui_about_pixelcraft)) },
                         onClick = {
                             moreMenuExpanded = false
                             onOpenDialog(ActiveDialog.HELP)

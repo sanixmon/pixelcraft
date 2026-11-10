@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -82,7 +85,7 @@ fun PresetsToolPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Templates (${filteredPresets.size})",
+                text = stringResource(R.string.ui_templates_count, filteredPresets.size),
                 color = Color(0xFF00E5FF),
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
@@ -93,7 +96,7 @@ fun PresetsToolPanel(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2B3242)),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Save Project", fontSize = 12.sp)
+                Text(stringResource(R.string.ui_save_project), fontSize = 12.sp)
             }
         }
 
@@ -106,13 +109,13 @@ fun PresetsToolPanel(
             FilterChip(
                 selected = selectedCategory == null,
                 onClick = { selectedCategory = null },
-                label = { Text("All", fontSize = 11.sp) }
+                label = { Text(stringResource(R.string.ui_all), fontSize = 11.sp) }
             )
             for (cat in PresetCategory.entries) {
                 FilterChip(
                     selected = selectedCategory == cat,
                     onClick = { selectedCategory = cat },
-                    label = { Text(cat.label, fontSize = 11.sp) }
+                    label = { Text(cat.localizedLabel(), fontSize = 11.sp) }
                 )
             }
         }
@@ -174,7 +177,7 @@ fun PresetsToolPanel(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = preset.category.label,
+                        text = preset.category.localizedLabel(),
                         color = Color(0xFF8E96A8),
                         fontSize = 10.sp
                     )
@@ -184,7 +187,7 @@ fun PresetsToolPanel(
 
         if (savedProjects.isNotEmpty()) {
             Spacer(modifier = Modifier.height(10.dp))
-            Text("Recent Saved Projects (${savedProjects.size})", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_recent_projects_count, savedProjects.size), color = Color(0xFFCCCCCC), fontSize = 12.sp)
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier
@@ -217,7 +220,7 @@ fun PresetsToolPanel(
                             onClick = { onDeleteProject(p.id) },
                             modifier = Modifier.size(28.dp)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete ${p.name}", tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_named, p.name), tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
                         }
                     }
                 }

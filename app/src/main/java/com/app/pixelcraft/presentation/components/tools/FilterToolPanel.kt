@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +46,7 @@ fun FilterToolPanel(
             .padding(12.dp)
     ) {
         Text(
-            text = "Canvas Post-Processing Effects",
+            text = stringResource(R.string.ui_canvas_post_processing_effects),
             color = Color(0xFF00E5FF),
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
@@ -58,7 +60,7 @@ fun FilterToolPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Vignette Frame", color = Color.White, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_vignette_frame), color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.vignetteEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(vignetteEnabled = en) } }
@@ -71,10 +73,10 @@ fun FilterToolPanel(
                 selectedColor = filters.vignetteColor,
                 onSelectColor = { c -> onUpdateFilters(false) { it.copy(vignetteColor = c) } },
                 allowAlpha = true,
-                pickerTitle = "Vignette Color"
+                pickerTitle = stringResource(R.string.ui_vignette_color)
             )
             PrecisionSlider(
-                label = "Vignette Intensity",
+                label = stringResource(R.string.ui_vignette_intensity),
                 value = filters.vignetteIntensity,
                 valueRange = 0.1f..0.9f,
                 defaultValue = 0.5f,
@@ -92,7 +94,7 @@ fun FilterToolPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Film Grain Texture", color = Color.White, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_film_grain_texture), color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.grainEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(grainEnabled = en) } }
@@ -100,7 +102,7 @@ fun FilterToolPanel(
         }
         if (filters.grainEnabled) {
             PrecisionSlider(
-                label = "Grain Amount",
+                label = stringResource(R.string.ui_grain_amount),
                 value = filters.grainIntensity,
                 valueRange = 0.03f..0.60f,
                 defaultValue = 0.15f,
@@ -118,7 +120,7 @@ fun FilterToolPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Retro Scanlines", color = Color.White, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_retro_scanlines), color = Color.White, fontSize = 12.sp)
             Switch(
                 checked = filters.stripesEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(stripesEnabled = en) } }
@@ -126,7 +128,7 @@ fun FilterToolPanel(
         }
         if (filters.stripesEnabled) {
             PrecisionSlider(
-                label = "Line Spacing",
+                label = stringResource(R.string.ui_line_spacing),
                 value = filters.stripesSpacing,
                 valueRange = 4f..30f,
                 defaultValue = 12f,

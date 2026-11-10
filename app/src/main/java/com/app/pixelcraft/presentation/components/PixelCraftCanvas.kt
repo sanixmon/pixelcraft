@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation.components
 
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -942,7 +944,7 @@ fun PixelCraftCanvas(
                 ) {
                     Icon(
                         imageVector = if (forceViewportPanMode) Icons.Default.PanTool else Icons.Default.ZoomIn,
-                        contentDescription = "Toggle Canvas Pan Mode",
+                        contentDescription = stringResource(R.string.ui_toggle_canvas_pan_mode),
                         tint = if (forceViewportPanMode) Color(0xFF00E5FF) else Color(0xFFB8C0D0),
                         modifier = Modifier.size(14.dp)
                     )
@@ -957,7 +959,7 @@ fun PixelCraftCanvas(
 
                 if (viewportZoom != 1f || viewportPan != Offset.Zero) {
                     Text(
-                        text = "Fit",
+                        text = stringResource(R.string.ui_fit),
                         color = Color(0xFF00E5FF),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -1012,7 +1014,7 @@ fun PixelCraftCanvas(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Tap canvas to pick color",
+                        text = stringResource(R.string.ui_tap_canvas_to_pick_color),
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
@@ -1020,7 +1022,7 @@ fun PixelCraftCanvas(
                     Spacer(modifier = Modifier.width(12.dp))
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel Eyedropper",
+                        contentDescription = stringResource(R.string.ui_cancel_eyedropper),
                         tint = Color(0xFFFF5252),
                         modifier = Modifier
                             .size(18.dp)
@@ -1040,7 +1042,7 @@ fun PixelCraftCanvas(
                 if (menuTarget != null) {
                     if (menuTarget.type == LayerType.TEXT && !menuTarget.isLocked) {
                         DropdownMenuItem(
-                            text = { Text("Edit Text", color = Color.White) },
+                            text = { Text(stringResource(R.string.ui_edit_text), color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF00E5FF)) },
                             onClick = {
                                 contextMenuExpanded = false
@@ -1050,7 +1052,7 @@ fun PixelCraftCanvas(
                     }
                     if (!menuTarget.isLocked) {
                         DropdownMenuItem(
-                            text = { Text("Duplicate", color = Color.White) },
+                            text = { Text(stringResource(R.string.action_duplicate), color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White) },
                             onClick = {
                                 contextMenuExpanded = false
@@ -1059,7 +1061,7 @@ fun PixelCraftCanvas(
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text("Copy Style", color = Color.White) },
+                        text = { Text(stringResource(R.string.ui_copy_style), color = Color.White) },
                         leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color(0xFF00E5FF)) },
                         onClick = {
                             contextMenuExpanded = false
@@ -1068,7 +1070,7 @@ fun PixelCraftCanvas(
                     )
                     if (state.copiedStyleLayer != null && !menuTarget.isLocked) {
                         DropdownMenuItem(
-                            text = { Text("Paste Style", color = Color.White) },
+                            text = { Text(stringResource(R.string.ui_paste_style), color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null, tint = Color(0xFF00E5FF)) },
                             onClick = {
                                 contextMenuExpanded = false
@@ -1079,7 +1081,7 @@ fun PixelCraftCanvas(
                     HorizontalDivider(color = Color(0xFF2E3546))
                     if (!menuTarget.isLocked) {
                         DropdownMenuItem(
-                            text = { Text("Bring to Front", color = Color.White) },
+                            text = { Text(stringResource(R.string.ui_bring_to_front), color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.VerticalAlignTop, contentDescription = null, tint = Color.White) },
                             onClick = {
                                 contextMenuExpanded = false
@@ -1087,7 +1089,7 @@ fun PixelCraftCanvas(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Send to Back", color = Color.White) },
+                            text = { Text(stringResource(R.string.ui_send_to_back), color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.VerticalAlignBottom, contentDescription = null, tint = Color.White) },
                             onClick = {
                                 contextMenuExpanded = false
@@ -1096,7 +1098,7 @@ fun PixelCraftCanvas(
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text(if (menuTarget.isLocked) "Unlock Layer" else "Lock Layer", color = Color.White) },
+                        text = { Text(if (menuTarget.isLocked) stringResource(R.string.ui_unlock_layer) else stringResource(R.string.ui_lock_layer), color = Color.White) },
                         leadingIcon = {
                             Icon(
                                 imageVector = if (menuTarget.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
@@ -1111,7 +1113,7 @@ fun PixelCraftCanvas(
                     )
                     if (!menuTarget.isLocked) {
                         DropdownMenuItem(
-                            text = { Text("Delete", color = Color(0xFFFF5252)) },
+                            text = { Text(stringResource(R.string.action_delete), color = Color(0xFFFF5252)) },
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252)) },
                             onClick = {
                                 contextMenuExpanded = false

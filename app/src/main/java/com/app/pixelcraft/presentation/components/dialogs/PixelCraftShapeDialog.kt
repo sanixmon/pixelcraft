@@ -1,5 +1,8 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -55,7 +58,7 @@ fun PixelCraftShapeDialog(
         containerColor = Color(0xFF1E222B),
         title = {
             Text(
-                text = "Shapes & Word Balloons",
+                text = stringResource(R.string.ui_shapes_word_balloons),
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E5FF),
                 fontSize = 17.sp
@@ -73,7 +76,7 @@ fun PixelCraftShapeDialog(
                         FilterChip(
                             selected = selectedCategory == cat,
                             onClick = { selectedCategory = cat },
-                            label = { Text(cat.label, fontSize = 11.sp) }
+                            label = { Text(cat.localizedLabel(), fontSize = 11.sp) }
                         )
                     }
                 }
@@ -104,7 +107,7 @@ fun PixelCraftShapeDialog(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = shape.label,
+                                text = shape.localizedLabel(),
                                 color = Color.White,
                                 fontSize = 10.sp,
                                 maxLines = 1,
@@ -118,7 +121,7 @@ fun PixelCraftShapeDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = Color.White)
             }
         }
     )
