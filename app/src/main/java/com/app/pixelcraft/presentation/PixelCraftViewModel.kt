@@ -117,6 +117,13 @@ class PixelCraftViewModel internal constructor(
     }
 
     private val _uiState = MutableStateFlow(PixelCraftUiState())
+
+    /**
+     * Resolves a string for content the editor creates (default layer names, placeholder text).
+     * Falls back to English when resources are unavailable (plain JVM unit tests).
+     */
+    private fun text(@androidx.annotation.StringRes id: Int, fallback: String, vararg args: Any): String =
+        runCatching { getApplication<Application>().getString(id, *args) as String? }.getOrNull() ?: fallback
     val uiState: StateFlow<PixelCraftUiState> = _uiState.asStateFlow()
 
     private val history = EditorHistory<EditorSnapshot>(limit = 50)
@@ -609,7 +616,7 @@ class PixelCraftViewModel internal constructor(
 
     fun saveCurrentStyle(styleName: String) {
         val layer = _uiState.value.selectedLayer ?: return
-        val clean = styleName.trim().ifBlank { "${layer.name} Style" }
+        val clean = styleName.trim().ifBlank { text(R.string.default_style_name, "${layer.name} Style", layer.name) }
         val entry = SavedLayerStyle(
             id = UUID.randomUUID().toString(),
             name = clean,
@@ -651,9 +658,9 @@ class PixelCraftViewModel internal constructor(
         val starterText = TextSizing.withEstimatedBounds(
             Layer(
                 id = UUID.randomUUID().toString(),
-                name = "Headline",
+                name = text(R.string.default_headline_name, "Headline"),
                 type = LayerType.TEXT,
-                text = "Tap to Edit",
+                text = text(R.string.default_tap_to_edit, "Tap to Edit"),
                 fontKey = "poppins",
                 fontSize = (minOf(w, h) * 0.055f).coerceIn(28f, 96f),
                 textColor = 0xFFFFFFFF,
@@ -673,7 +680,7 @@ class PixelCraftViewModel internal constructor(
                 selectedLayerId = starterText.id,
                 selectedLayerIds = setOf(starterText.id),
                 currentProjectId = null,
-                currentProjectName = "Untitled",
+                currentProjectName = text(R.string.ui_untitled, "Untitled"),
                 isDirty = false,
                 activeTab = BottomNavTab.TEXT,
                 activeSubTool = ActiveSubTool.NONE,
@@ -713,7 +720,7 @@ class PixelCraftViewModel internal constructor(
                         selectedLayerId = null,
                         selectedLayerIds = emptySet(),
                         currentProjectId = null,
-                        currentProjectName = "Photo Design",
+                        currentProjectName = text(R.string.default_photo_design, "Photo Design"),
                         isDirty = true,
                         activeTab = BottomNavTab.TEXT,
                         activeSubTool = ActiveSubTool.NONE,
@@ -730,7 +737,7 @@ class PixelCraftViewModel internal constructor(
 
     // --- Layer Operations ---
 
-    fun addTextLayer(initialText: String = "New Text") {
+    fun addTextLayer(initialText: String = text(R.string.default_new_text, "New Text")) {
         beginHistoryStep(continuous = false, label = "Add Text")
         resetDragTracking()
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
@@ -738,7 +745,7 @@ class PixelCraftViewModel internal constructor(
         val newLayer = TextSizing.withEstimatedBounds(
             Layer(
                 id = UUID.randomUUID().toString(),
-                name = "Text $labelIndex",
+                name = text(R.string.default_text_layer_name, "Text $labelIndex", labelIndex),
                 type = LayerType.TEXT,
                 text = initialText,
                 fontKey = "poppins",
@@ -835,7 +842,7 @@ class PixelCraftViewModel internal constructor(
                 val labelIndex = _uiState.value.layers.count { it.type == LayerType.IMAGE } + 1
                 val newLayer = Layer(
                     id = UUID.randomUUID().toString(),
-                    name = "Photo $labelIndex",
+                    name = text(R.string.default_photo_layer_name, "Photo $labelIndex", labelIndex),
                     type = LayerType.IMAGE,
                     imageLocalPath = image.path,
                     width = fit.width,
@@ -1330,7 +1337,7 @@ class PixelCraftViewModel internal constructor(
 
     fun saveProject(name: String, onSaved: (() -> Unit)? = null) {
         val state = _uiState.value
-        val cleanName = name.trim().ifBlank { "Untitled Project" }
+        val cleanName = name.trim().ifBlank { text(R.string.ui_untitled_project, "Untitled Project") }
         val reuseExistingId = state.currentProjectId != null && cleanName == state.currentProjectName
         val id = if (reuseExistingId) state.currentProjectId!! else UUID.randomUUID().toString()
         val snapshot = takeSnapshot()

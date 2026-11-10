@@ -456,4 +456,11 @@
     <string name="enum_quality_high">High (1.5x)</string>
     <string name="enum_quality_very_high">HD (2x)</string>
     <string name="enum_quality_ultra">Ultra (3x)</string>
+    <string name="default_style_name">%1$s Style</string>
+    <string name="default_headline_name">Headline</string>
+    <string name="default_tap_to_edit">Tap to Edit</string>
+    <string name="default_photo_design">Photo Design</string>
+    <string name="default_new_text">New Text</string>
+    <string name="default_text_layer_name">Text %1$d</string>
+    <string name="default_photo_layer_name">Photo %1$d</string>
 </resources>

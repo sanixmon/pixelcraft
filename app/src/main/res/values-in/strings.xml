@@ -455,4 +455,11 @@
     <string name="enum_quality_high">Tinggi (1.5x)</string>
     <string name="enum_quality_very_high">HD (2x)</string>
     <string name="enum_quality_ultra">Ultra (3x)</string>
+    <string name="default_style_name">Gaya %1$s</string>
+    <string name="default_headline_name">Judul</string>
+    <string name="default_tap_to_edit">Ketuk untuk Edit</string>
+    <string name="default_photo_design">Desain Foto</string>
+    <string name="default_new_text">Teks Baru</string>
+    <string name="default_text_layer_name">Teks %1$d</string>
+    <string name="default_photo_layer_name">Foto %1$d</string>
 </resources>
