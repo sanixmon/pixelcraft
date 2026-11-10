@@ -922,253 +922,39 @@ fun PixelCraftCanvas(
                 }
             }
 
-            // Top-Left Viewport Zoom & Pan Controls Pill (§ 5.1)
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(10.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xCC181C26))
-                    .border(1.dp, Color(0xFF2D3446), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (forceViewportPanMode) Color(0x3300E5FF) else Color.Transparent)
-                        .clickable { forceViewportPanMode = !forceViewportPanMode }
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = if (forceViewportPanMode) Icons.Default.PanTool else Icons.Default.ZoomIn,
-                        contentDescription = stringResource(R.string.ui_toggle_canvas_pan_mode),
-                        tint = if (forceViewportPanMode) Color(0xFF00E5FF) else Color(0xFFB8C0D0),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${(viewportZoom * 100).roundToInt()}%",
-                        color = if (forceViewportPanMode) Color(0xFF00E5FF) else Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+            ViewportControlsPill(
+                zoom = viewportZoom,
+                isPanMode = forceViewportPanMode,
+                canFit = viewportZoom != 1f || viewportPan != Offset.Zero,
+                onTogglePanMode = { forceViewportPanMode = !forceViewportPanMode },
+                onFit = {
+                    viewportZoom = 1f
+                    viewportPan = Offset.Zero
+                    forceViewportPanMode = false
                 }
+            )
 
-                if (viewportZoom != 1f || viewportPan != Offset.Zero) {
-                    Text(
-                        text = stringResource(R.string.ui_fit),
-                        color = Color(0xFF00E5FF),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .clickable {
-                                viewportZoom = 1f
-                                viewportPan = Offset.Zero
-                                forceViewportPanMode = false
-                            }
-                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                }
-            }
+            liveGestureRotation?.let { deg -> RotationSnapPill(degrees = deg) }
 
-            // Live Rotation Snap Pill
-            liveGestureRotation?.let { deg ->
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 10.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xDD10131A))
-                        .border(1.dp, Color(0xFF00E5FF), RoundedCornerShape(14.dp))
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "${deg.roundToInt()}°",
-                        color = Color(0xFF00E5FF),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // Canvas Eyedropper Banner (§ 7.4)
             if (state.isEyedropperActive) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 10.dp, start = 16.dp, end = 16.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xEE111827))
-                        .border(1.5.dp, Color(0xFF00E5FF), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Colorize,
-                        contentDescription = null,
-                        tint = Color(0xFF00E5FF),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.ui_tap_canvas_to_pick_color),
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.ui_cancel_eyedropper),
-                        tint = Color(0xFFFF5252),
-                        modifier = Modifier
-                            .size(18.dp)
-                            .clickable { onCancelEyedropper() }
-                    )
-                }
+                EyedropperBanner(onCancel = onCancelEyedropper)
             }
 
-            // Long-Press Quick Context Menu (§ 5.1)
-            val menuTarget = state.selectedLayer
-            DropdownMenu(
-                expanded = contextMenuExpanded && menuTarget != null,
-                onDismissRequest = { contextMenuExpanded = false },
+            LayerContextMenu(
+                expanded = contextMenuExpanded,
+                target = state.selectedLayer,
                 offset = contextMenuOffset,
-                modifier = Modifier.background(Color(0xFF1D222E))
-            ) {
-                if (menuTarget != null) {
-                    if (menuTarget.type == LayerType.TEXT && !menuTarget.isLocked) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.ui_edit_text), color = Color.White) },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF00E5FF)) },
-                            onClick = {
-                                contextMenuExpanded = false
-                                onOpenTextEdit()
-                            }
-                        )
-                    }
-                    if (!menuTarget.isLocked) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_duplicate), color = Color.White) },
-                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White) },
-                            onClick = {
-                                contextMenuExpanded = false
-                                onDuplicateSelected()
-                            }
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.ui_copy_style), color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color(0xFF00E5FF)) },
-                        onClick = {
-                            contextMenuExpanded = false
-                            onCopyStyle()
-                        }
-                    )
-                    if (state.copiedStyleLayer != null && !menuTarget.isLocked) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.ui_paste_style), color = Color.White) },
-                            leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null, tint = Color(0xFF00E5FF)) },
-                            onClick = {
-                                contextMenuExpanded = false
-                                onPasteStyle()
-                            }
-                        )
-                    }
-                    HorizontalDivider(color = Color(0xFF2E3546))
-                    if (!menuTarget.isLocked) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.ui_bring_to_front), color = Color.White) },
-                            leadingIcon = { Icon(Icons.Default.VerticalAlignTop, contentDescription = null, tint = Color.White) },
-                            onClick = {
-                                contextMenuExpanded = false
-                                onBringToFront()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.ui_send_to_back), color = Color.White) },
-                            leadingIcon = { Icon(Icons.Default.VerticalAlignBottom, contentDescription = null, tint = Color.White) },
-                            onClick = {
-                                contextMenuExpanded = false
-                                onSendToBack()
-                            }
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(if (menuTarget.isLocked) stringResource(R.string.ui_unlock_layer) else stringResource(R.string.ui_lock_layer), color = Color.White) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = if (menuTarget.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = Color(0xFFFFB300)
-                            )
-                        },
-                        onClick = {
-                            contextMenuExpanded = false
-                            onToggleLock(menuTarget.id)
-                        }
-                    )
-                    if (!menuTarget.isLocked) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_delete), color = Color(0xFFFF5252)) },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252)) },
-                            onClick = {
-                                contextMenuExpanded = false
-                                onDeleteSelected()
-                            }
-                        )
-                    }
-                }
-            }
+                canPasteStyle = state.copiedStyleLayer != null,
+                onDismiss = { contextMenuExpanded = false },
+                onEditText = onOpenTextEdit,
+                onDuplicate = onDuplicateSelected,
+                onCopyStyle = onCopyStyle,
+                onPasteStyle = onPasteStyle,
+                onBringToFront = onBringToFront,
+                onSendToBack = onSendToBack,
+                onToggleLock = onToggleLock,
+                onDelete = onDeleteSelected
+            )
         }
     }
-}
-
-private fun DrawScope.drawVirtualGrid(
-    state: PixelCraftUiState,
-    canvasW: Float,
-    canvasH: Float,
-    effectiveScale: Float
-) {
-    val cols = state.gridColumns + 1
-    val rows = state.gridRows + 1
-    val colStep = canvasW / cols
-    val rowStep = canvasH / rows
-    val gridColor = Color(0x5500E5FF)
-    val strokeW = 1.2f / effectiveScale
-
-    for (c in 1 until cols) {
-        val x = c * colStep
-        drawLine(gridColor, Offset(x, 0f), Offset(x, canvasH), strokeWidth = strokeW)
-    }
-    for (r in 1 until rows) {
-        val y = r * rowStep
-        drawLine(gridColor, Offset(0f, y), Offset(canvasW, y), strokeWidth = strokeW)
-    }
-}
-
-private fun DrawScope.drawSafeZoneOverlay(
-    canvasW: Float,
-    canvasH: Float,
-    effectiveScale: Float
-) {
-    val isVerticalSocial = canvasH > canvasW * 1.35f
-    val leftInset = canvasW * 0.07f
-    val rightInset = if (isVerticalSocial) canvasW * 0.14f else canvasW * 0.07f
-    val topInset = if (isVerticalSocial) canvasH * 0.13f else canvasH * 0.08f
-    val bottomInset = if (isVerticalSocial) canvasH * 0.20f else canvasH * 0.10f
-
-    val safeW = (canvasW - leftInset - rightInset).coerceAtLeast(1f)
-    val safeH = (canvasH - topInset - bottomInset).coerceAtLeast(1f)
-    val dash = PathEffect.dashPathEffect(floatArrayOf(14f / effectiveScale, 10f / effectiveScale))
-
-    drawRect(
-        color = Color(0xAAFF4081),
-        topLeft = Offset(leftInset, topInset),
-        size = Size(safeW, safeH),
-        style = Stroke(width = 2f / effectiveScale, pathEffect = dash)
-    )
 }
