@@ -43,6 +43,11 @@ import com.app.pixelcraft.domain.TextCaseMode
 import com.app.pixelcraft.domain.TextSizing
 import com.app.pixelcraft.domain.UserPreferencesStore
 import com.app.pixelcraft.domain.editor.EditorHistory
+import com.app.pixelcraft.domain.editor.LayerGestureTracker
+import com.app.pixelcraft.presentation.editor.DraftController
+import com.app.pixelcraft.presentation.editor.EditorHost
+import com.app.pixelcraft.presentation.editor.ExportController
+import com.app.pixelcraft.presentation.editor.ProjectsController
 import com.app.pixelcraft.domain.editor.LayerOperations
 import com.app.pixelcraft.domain.editor.LayerOperations.bringToFront
 import com.app.pixelcraft.domain.editor.LayerOperations.deleteUnlocked
@@ -111,9 +116,6 @@ class PixelCraftViewModel internal constructor(
     companion object {
         const val MIN_CANVAS_DIMENSION = 64
         const val MAX_CANVAS_DIMENSION = 4096
-        private const val AUTOSAVE_DEBOUNCE_MS = 1500L
-        private val SNAP_ROTATION_ANGLES = floatArrayOf(-180f, -135f, -90f, -45f, 0f, 45f, 90f, 135f, 180f)
-        private const val SNAP_ROTATION_THRESHOLD_DEG = 4f
     }
 
     private val _uiState = MutableStateFlow(PixelCraftUiState())
@@ -128,15 +130,33 @@ class PixelCraftViewModel internal constructor(
 
     private val history = EditorHistory<EditorSnapshot>(limit = 50)
 
-    // Tracks true un-snapped finger trajectory & rotation during active gesture so snapping never sticks
-    private var rawDragPosition: PointF? = null
-    private var rawDragLayerId: String? = null
-    private var rawGestureRotation: Float? = null
-    private var lastSnappedCardinalAngle: Float? = null
+    // Tracks the true un-snapped finger trajectory & rotation during a gesture so snapping never sticks
+    private val gestureTracker = LayerGestureTracker()
 
-    private var autosaveJob: Job? = null
-    private var exportJob: Job? = null
-    private var recentlyDeletedProject: ProjectData? = null
+    private val host = object : EditorHost {
+        override val state get() = _uiState
+        override val scope get() = viewModelScope
+        override fun takeSnapshot() = this@PixelCraftViewModel.takeSnapshot()
+        override fun recordHistoryStep(label: String) = history.beginStep(takeSnapshot(), label = label)
+        override fun endEditingSession() {
+            history.finishContinuousEdit()
+            resetDragTracking()
+        }
+        override fun clearHistory() = history.clear()
+        override fun syncHistoryFlags(markDirty: Boolean?) = this@PixelCraftViewModel.syncHistoryFlags(markDirty)
+        override fun string(id: Int, fallback: String, vararg args: Any) = text(id, fallback, *args)
+    }
+
+    private val drafts = DraftController(host, draftStore)
+    private val projects = ProjectsController(
+        host = host,
+        projectStorage = projectStorage,
+        imageStore = imageStore,
+        draftStore = draftStore,
+        drafts = drafts,
+        appContext = { runCatching { getApplication<Application>().applicationContext }.getOrNull() }
+    )
+    private val exporter = ExportController(host, imageExporter, gallerySaver, preferencesStore)
 
     val thumbnailsDirectory: File
         get() = projectStorage.thumbnailsDir
@@ -147,7 +167,7 @@ class PixelCraftViewModel internal constructor(
         _uiState.update { it.copy(isReady = true) }
         refreshSavedProjects()
         observeUserPreferences()
-        checkRecoverableDraft()
+        drafts.checkRecoverableDraft()
     }
 
     private fun observeUserPreferences() {
@@ -175,113 +195,15 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
-    private fun checkRecoverableDraft() {
-        val ds = draftStore ?: return
-        viewModelScope.launch {
-            val loaded = ds.load()
-            if (loaded != null && loaded.isDirty) {
-                _uiState.update {
-                    it.copy(
-                        hasRecoverableDraft = true,
-                        draftTimestamp = loaded.timestamp,
-                        draftProjectName = loaded.currentProjectName
-                    )
-                }
-            }
-        }
-    }
+    private fun scheduleAutosave() = drafts.scheduleAutosave()
 
-    private fun scheduleAutosave() {
-        val ds = draftStore ?: return
-        autosaveJob?.cancel()
-        autosaveJob = viewModelScope.launch {
-            delay(AUTOSAVE_DEBOUNCE_MS)
-            val state = _uiState.value
-            if (!state.isDirty) return@launch
-            val now = System.currentTimeMillis()
-            val payload = DraftPayload(
-                timestamp = now,
-                currentProjectId = state.currentProjectId,
-                currentProjectName = state.currentProjectName,
-                isDirty = true,
-                snapshot = takeSnapshot()
-            )
-            ds.save(payload).onSuccess {
-                _uiState.update {
-                    it.copy(
-                        lastAutosavedAt = now,
-                        hasRecoverableDraft = true,
-                        draftTimestamp = now,
-                        draftProjectName = state.currentProjectName
-                    )
-                }
-            }
-        }
-    }
+    fun resumeSavedDraft() = drafts.resumeSavedDraft()
 
-    fun resumeSavedDraft() {
-        val ds = draftStore ?: return
-        viewModelScope.launch {
-            val draft = ds.load() ?: return@launch
-            history.clear()
-            resetDragTracking()
-            val normalized = draft.snapshot.layers.map { TextSizing.withEstimatedBounds(it) }.normalizeZIndices()
-            val validSelected = draft.snapshot.selectedLayerId
-                ?.takeIf { sel -> normalized.any { it.id == sel } }
-                ?: normalized.maxByOrNull { it.zIndex }?.id
-            _uiState.update {
-                it.copy(
-                    canvasConfig = draft.snapshot.canvasConfig,
-                    layers = normalized,
-                    selectedLayerId = validSelected,
-                    selectedLayerIds = setOfNotNull(validSelected),
-                    currentProjectId = draft.currentProjectId,
-                    currentProjectName = draft.currentProjectName,
-                    isDirty = true,
-                    activeSubTool = ActiveSubTool.NONE,
-                    activeDialog = null
-                )
-            }
-            syncHistoryFlags(markDirty = null)
-        }
-    }
+    fun discardRecoverableDraft() = drafts.discardRecoverableDraft()
 
-    fun discardRecoverableDraft() {
-        autosaveJob?.cancel()
-        viewModelScope.launch {
-            draftStore?.clear()
-            _uiState.update {
-                it.copy(
-                    hasRecoverableDraft = false,
-                    draftTimestamp = null,
-                    draftProjectName = null,
-                    lastAutosavedAt = null
-                )
-            }
-        }
-    }
+    fun markCleanAndDiscardDraft() = drafts.markCleanAndDiscardDraft()
 
-    fun markCleanAndDiscardDraft() {
-        autosaveJob?.cancel()
-        _uiState.update { it.copy(isDirty = false, activeDialog = null) }
-        viewModelScope.launch {
-            draftStore?.clear()
-            _uiState.update {
-                it.copy(
-                    hasRecoverableDraft = false,
-                    draftTimestamp = null,
-                    draftProjectName = null
-                )
-            }
-        }
-    }
-
-    private fun resetDragTracking() {
-        rawDragPosition = null
-        rawDragLayerId = null
-        rawGestureRotation = null
-        lastSnappedCardinalAngle = null
-    }
+    private fun resetDragTracking() = gestureTracker.reset()
 
     private fun takeSnapshot(): EditorSnapshot {
         val state = _uiState.value
@@ -309,8 +231,7 @@ class PixelCraftViewModel internal constructor(
 
     fun finishContinuousEdit() {
         history.finishContinuousEdit()
-        rawGestureRotation = null
-        lastSnappedCardinalAngle = null
+        gestureTracker.endRotation()
     }
 
     private fun syncHistoryFlags(markDirty: Boolean? = null) {
@@ -650,7 +571,7 @@ class PixelCraftViewModel internal constructor(
         customH: Int? = null,
         backgroundColor: Long = 0xFF1F2430L
     ) {
-        autosaveJob?.cancel()
+        drafts.cancelAutosave()
         history.clear()
         resetDragTracking()
         val w = (customW ?: preset.defaultWidth).coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
@@ -696,7 +617,7 @@ class PixelCraftViewModel internal constructor(
     fun startCanvasFromPhoto(uri: Uri) {
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { imported ->
-                autosaveJob?.cancel()
+                drafts.cancelAutosave()
                 history.clear()
                 resetDragTracking()
                 val fit = ImageFit.fitWithin(
@@ -897,14 +818,8 @@ class PixelCraftViewModel internal constructor(
 
         beginHistoryStep(continuous = true, label = "Move Layer")
         val selectedId = currentLayer.id
-        val baseRaw = if (rawDragLayerId == selectedId && rawDragPosition != null) {
-            rawDragPosition!!
-        } else {
-            PointF(currentLayer.positionX, currentLayer.positionY)
-        }
-        val nextRaw = PointF(baseRaw.x + deltaX, baseRaw.y + deltaY)
-        rawDragLayerId = selectedId
-        rawDragPosition = nextRaw
+        val raw = gestureTracker.advanceDrag(selectedId, currentLayer.positionX, currentLayer.positionY, deltaX, deltaY)
+        val nextRaw = PointF(raw.x, raw.y)
 
         val stateSnapshot = _uiState.value
         val activeGroupId = currentLayer.groupId
@@ -980,31 +895,8 @@ class PixelCraftViewModel internal constructor(
         beginHistoryStep(continuous = true, label = "Transform Layer")
         val selectedId = currentLayer.id
 
-        val unSnappedRot = ((rawGestureRotation ?: currentLayer.rotation) + rotationDeltaDeg)
-            .let { raw ->
-                var a = raw % 360f
-                if (a > 180f) a -= 360f
-                if (a < -180f) a += 360f
-                a
-            }
-        rawGestureRotation = unSnappedRot
-
-        var triggeredSnapHaptic = false
-        val finalRotation = if (snapRotation) {
-            val snapped = SNAP_ROTATION_ANGLES.firstOrNull { abs(unSnappedRot - it) <= SNAP_ROTATION_THRESHOLD_DEG }
-            if (snapped != null) {
-                if (lastSnappedCardinalAngle != snapped) {
-                    lastSnappedCardinalAngle = snapped
-                    triggeredSnapHaptic = true
-                }
-                snapped
-            } else {
-                lastSnappedCardinalAngle = null
-                unSnappedRot
-            }
-        } else {
-            unSnappedRot
-        }
+        val rotation = gestureTracker.advanceRotation(currentLayer.rotation, rotationDeltaDeg, snapRotation)
+        val finalRotation = rotation.degrees
 
         val safeZoom = zoomFactor.coerceIn(0.5f, 2.0f)
         _uiState.update { state ->
@@ -1032,7 +924,7 @@ class PixelCraftViewModel internal constructor(
                 }
             )
         }
-        return triggeredSnapHaptic
+        return rotation.snappedJustNow
     }
 
     fun clearSnappingGuides() {
@@ -1315,339 +1207,35 @@ class PixelCraftViewModel internal constructor(
 
     // --- Projects Save / Load / Rename / Duplicate / Archive ---
 
-    private suspend fun reloadSavedProjects(): Pair<List<ProjectData>, List<ProjectSummary>> {
-        val projects = projectStorage.listProjects().getOrElse { _uiState.value.savedProjects }
-        val summaries = projectStorage.listProjectSummaries().getOrElse {
-            projects.map { it.toSummary() }
-        }
-        return projects to summaries
-    }
+    fun refreshSavedProjects() = projects.refreshSavedProjects()
 
-    fun refreshSavedProjects() {
-        viewModelScope.launch {
-            val (projects, summaries) = reloadSavedProjects()
-            _uiState.update {
-                it.copy(
-                    savedProjects = projects,
-                    projectSummaries = summaries
-                )
-            }
-        }
-    }
+    fun saveProject(name: String, onSaved: (() -> Unit)? = null) = projects.saveProject(name, onSaved)
 
-    fun saveProject(name: String, onSaved: (() -> Unit)? = null) {
-        val state = _uiState.value
-        val cleanName = name.trim().ifBlank { text(R.string.ui_untitled_project, "Untitled Project") }
-        val reuseExistingId = state.currentProjectId != null && cleanName == state.currentProjectName
-        val id = if (reuseExistingId) state.currentProjectId!! else UUID.randomUUID().toString()
-        val snapshot = takeSnapshot()
-        val project = ProjectData(
-            id = id,
-            name = cleanName,
-            timestamp = System.currentTimeMillis(),
-            snapshot = snapshot
-        )
-        autosaveJob?.cancel()
+    fun loadProject(id: String) = projects.loadProject(id)
 
-        viewModelScope.launch {
-            val thumbBitmap = runCatching {
-                val appCtx = getApplication<Application>().applicationContext
-                if (appCtx != null) {
-                    CanvasRenderer.renderThumbnail(
-                        config = snapshot.canvasConfig,
-                        layers = snapshot.layers,
-                        bitmapLookup = { imageStore.loadPreviewBitmap(it) },
-                        typefaceResolver = { k, b, i -> FontCatalog.resolveTypeface(appCtx, k, b, i) },
-                        maxSide = 256
-                    )
-                } else {
-                    null
-                }
-            }.getOrNull()
+    fun renameSavedProject(id: String, newName: String) = projects.renameSavedProject(id, newName)
 
-            projectStorage.saveProject(project, thumbBitmap).onSuccess {
-                thumbBitmap?.recycle()
-                draftStore?.clear()
-                val (projects, summaries) = reloadSavedProjects()
-                _uiState.update {
-                    it.copy(
-                        currentProjectId = id,
-                        currentProjectName = cleanName,
-                        savedProjects = projects,
-                        projectSummaries = summaries,
-                        isDirty = false,
-                        hasRecoverableDraft = false,
-                        draftTimestamp = null,
-                        draftProjectName = null,
-                        activeDialog = null,
-                        userMessage = UiText.Res(R.string.msg_project_saved, cleanName)
-                    )
-                }
-                onSaved?.invoke()
-            }.onFailure { err ->
-                thumbBitmap?.recycle()
-                _uiState.update {
-                    it.copy(userMessage = UiText.Res(R.string.msg_project_save_failed, err.message.orEmpty()))
-                }
-            }
-        }
-    }
+    fun duplicateSavedProject(id: String) = projects.duplicateSavedProject(id)
 
-    fun loadProject(id: String) {
-        history.finishContinuousEdit()
-        resetDragTracking()
-        autosaveJob?.cancel()
-        viewModelScope.launch {
-            projectStorage.loadProject(id).onSuccess { project ->
-                history.beginStep(takeSnapshot(), label = "Open Project")
-                val normalized = project.snapshot.layers
-                    .map { TextSizing.withEstimatedBounds(it) }
-                    .normalizeZIndices()
-                val validSelectedId = project.snapshot.selectedLayerId
-                    ?.takeIf { sel -> normalized.any { it.id == sel } }
-                    ?: normalized.maxByOrNull { it.zIndex }?.id
-                _uiState.update {
-                    it.copy(
-                        currentProjectId = project.id,
-                        currentProjectName = project.name,
-                        canvasConfig = project.snapshot.canvasConfig.copy(
-                            width = project.snapshot.canvasConfig.width.coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION),
-                            height = project.snapshot.canvasConfig.height.coerceIn(MIN_CANVAS_DIMENSION, MAX_CANVAS_DIMENSION)
-                        ),
-                        layers = normalized,
-                        selectedLayerId = validSelectedId,
-                        selectedLayerIds = setOfNotNull(validSelectedId),
-                        isDirty = false,
-                        activeDialog = null,
-                        activeSubTool = ActiveSubTool.NONE,
-                        activeVerticalGuideX = null,
-                        activeHorizontalGuideY = null
-                    )
-                }
-                syncHistoryFlags(markDirty = false)
-            }.onFailure { err ->
-                _uiState.update {
-                    it.copy(userMessage = UiText.Res(R.string.msg_project_open_failed, err.message.orEmpty()))
-                }
-            }
-        }
-    }
+    fun deleteProject(id: String) = projects.deleteProject(id)
 
-    fun renameSavedProject(id: String, newName: String) {
-        viewModelScope.launch {
-            projectStorage.renameProject(id, newName).onSuccess { updated ->
-                val (projects, summaries) = reloadSavedProjects()
-                _uiState.update { state ->
-                    state.copy(
-                        currentProjectName = if (state.currentProjectId == id) updated.name else state.currentProjectName,
-                        savedProjects = projects,
-                        projectSummaries = summaries,
-                        userMessage = UiText.Res(R.string.msg_project_renamed, updated.name)
-                    )
-                }
-            }
-        }
-    }
+    fun undoDeleteProject() = projects.undoDeleteProject()
 
-    fun duplicateSavedProject(id: String) {
-        viewModelScope.launch {
-            projectStorage.duplicateProject(id).onSuccess { copy ->
-                val (projects, summaries) = reloadSavedProjects()
-                _uiState.update {
-                    it.copy(
-                        savedProjects = projects,
-                        projectSummaries = summaries,
-                        userMessage = UiText.Res(R.string.msg_project_duplicated, copy.name)
-                    )
-                }
-            }
-        }
-    }
+    fun exportProjectArchive(projectId: String, destinationUri: Uri) =
+        projects.exportProjectArchive(projectId, destinationUri)
 
-    fun deleteProject(id: String) {
-        viewModelScope.launch {
-            val backup = projectStorage.loadProject(id).getOrNull()
-            projectStorage.deleteProject(id).onSuccess {
-                recentlyDeletedProject = backup
-                val (projects, summaries) = reloadSavedProjects()
-                _uiState.update { state ->
-                    state.copy(
-                        currentProjectId = if (state.currentProjectId == id) null else state.currentProjectId,
-                        savedProjects = projects,
-                        projectSummaries = summaries
-                    )
-                }
-            }.onFailure { err ->
-                _uiState.update {
-                    it.copy(userMessage = UiText.Res(R.string.msg_project_delete_failed, err.message.orEmpty()))
-                }
-            }
-        }
-    }
-
-    fun undoDeleteProject() {
-        val backup = recentlyDeletedProject ?: return
-        recentlyDeletedProject = null
-        viewModelScope.launch {
-            projectStorage.saveProject(backup).onSuccess {
-                val (projects, summaries) = reloadSavedProjects()
-                _uiState.update {
-                    it.copy(
-                        savedProjects = projects,
-                        projectSummaries = summaries,
-                        userMessage = UiText.Res(R.string.msg_project_restored, backup.name)
-                    )
-                }
-            }
-        }
-    }
-
-    fun exportProjectArchive(projectId: String, destinationUri: Uri) {
-        val ctx = getApplication<Application>()
-        viewModelScope.launch {
-            runCatching {
-                ctx.contentResolver.openOutputStream(destinationUri)?.use { out ->
-                    projectStorage.exportProjectArchive(projectId, imageStore.imagesDir, out).getOrThrow()
-                } ?: error("Cannot write destination file")
-            }.onSuccess {
-                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_archive_exported)) }
-            }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_archive_export_failed, err.message.orEmpty())) }
-            }
-        }
-    }
-
-    fun importProjectArchive(sourceUri: Uri, onImported: ((String) -> Unit)? = null) {
-        val ctx = getApplication<Application>()
-        viewModelScope.launch {
-            runCatching {
-                ctx.contentResolver.openInputStream(sourceUri)?.use { input ->
-                    projectStorage.importProjectArchive(input, imageStore.imagesDir).getOrThrow()
-                } ?: error("Cannot open .pixelcraft file")
-            }.onSuccess { imported ->
-                val (projects, summaries) = reloadSavedProjects()
-                _uiState.update {
-                    it.copy(
-                        savedProjects = projects,
-                        projectSummaries = summaries,
-                        userMessage = UiText.Res(R.string.msg_archive_imported, imported.name)
-                    )
-                }
-                onImported?.invoke(imported.id)
-            }.onFailure { err ->
-                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_archive_import_failed, err.message.orEmpty())) }
-            }
-        }
-    }
+    fun importProjectArchive(sourceUri: Uri, onImported: ((String) -> Unit)? = null) =
+        projects.importProjectArchive(sourceUri, onImported)
 
     // --- Export & Direct Share ---
 
-    fun setExportOptions(options: ExportOptions) {
-        _uiState.update { it.copy(exportOptions = options) }
-        viewModelScope.launch {
-            preferencesStore.saveExportPreferences(options.format.name, options.qualityPreset.name)
-        }
-    }
+    fun setExportOptions(options: ExportOptions) = exporter.setExportOptions(options)
 
-    fun cancelExport() {
-        exportJob?.cancel()
-        exportJob = null
-        _uiState.update { it.copy(isExporting = false, userMessage = UiText.Res(R.string.msg_export_cancelled)) }
-    }
+    fun cancelExport() = exporter.cancelExport()
 
-    fun exportCanvas() {
-        val saver = gallerySaver ?: return
-        val state = _uiState.value
-        exportJob?.cancel()
-        _uiState.update { it.copy(isExporting = true) }
+    fun exportCanvas() = exporter.exportCanvas()
 
-        exportJob = viewModelScope.launch {
-            try {
-                val bitmap = imageExporter.exportCanvasToBitmap(
-                    canvasConfig = state.canvasConfig,
-                    layers = state.layers,
-                    options = state.exportOptions,
-                    selectedLayerIds = state.selectedLayerIds.ifEmpty { setOfNotNull(state.selectedLayerId) }
-                )
-                val uri = try {
-                    val sanitized = state.currentProjectName
-                        .replace("[^A-Za-z0-9_-]+".toRegex(), "_")
-                        .trim('_')
-                        .ifBlank { "PixelCraft" }
-                    val baseName = "${sanitized}_${System.currentTimeMillis()}"
-                    saver.save(bitmap, state.exportOptions, baseName).getOrThrow()
-                } finally {
-                    bitmap.recycle()
-                }
-                _uiState.update {
-                    it.copy(
-                        isExporting = false,
-                        lastExportedUri = uri,
-                        userMessage = UiText.Res(R.string.msg_saved_to_gallery, GallerySaver.ALBUM),
-                        activeDialog = null
-                    )
-                }
-            } catch (ce: CancellationException) {
-                throw ce
-            } catch (err: Throwable) {
-                _uiState.update {
-                    it.copy(
-                        isExporting = false,
-                        lastExportedUri = null,
-                        userMessage = UiText.Res(R.string.msg_export_failed, err.message.orEmpty())
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * Fixes Bug 2.16: Renders to temporary `cacheDir/share/` via `FileProvider` and emits `pendingShareUri`
-     * so the user can share straight to WhatsApp/Instagram/Telegram without cluttering the Gallery!
-     */
-    fun shareCanvasDirectly() {
-        val saver = gallerySaver ?: return
-        val state = _uiState.value
-        exportJob?.cancel()
-        _uiState.update { it.copy(isExporting = true) }
-
-        exportJob = viewModelScope.launch {
-            try {
-                val quickOptions = state.exportOptions.copy(selectedLayerOnly = false)
-                val bitmap = imageExporter.exportCanvasToBitmap(
-                    canvasConfig = state.canvasConfig,
-                    layers = state.layers,
-                    options = quickOptions
-                )
-                val uri = try {
-                    val sanitized = state.currentProjectName
-                        .replace("[^A-Za-z0-9_-]+".toRegex(), "_")
-                        .trim('_')
-                        .ifBlank { "PixelCraft" }
-                    val baseName = "${sanitized}_share_${System.currentTimeMillis()}"
-                    saver.saveToShareCache(bitmap, quickOptions, baseName).getOrThrow()
-                } finally {
-                    bitmap.recycle()
-                }
-                _uiState.update {
-                    it.copy(
-                        isExporting = false,
-                        pendingShareUri = uri,
-                        pendingShareMimeType = quickOptions.format.mimeType
-                    )
-                }
-            } catch (ce: CancellationException) {
-                throw ce
-            } catch (err: Throwable) {
-                _uiState.update {
-                    it.copy(
-                        isExporting = false,
-                        userMessage = UiText.Res(R.string.msg_share_failed, err.message.orEmpty())
-                    )
-                }
-            }
-        }
-    }
+    fun shareCanvasDirectly() = exporter.shareCanvasDirectly()
 
     fun consumePendingShareUri() {
         _uiState.update { it.copy(pendingShareUri = null) }
