@@ -55,6 +55,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -106,53 +107,59 @@ import java.util.Locale
 
 @Composable
 internal fun HomeTopBar(onAbout: () -> Unit) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(PixelCraftColors.Surface)
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(PixelCraftColors.Accent),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "P",
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PixelCraftColors.Accent),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "P",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        color = PixelCraftColors.TextPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.ui_typography_graphic_studio),
+                        color = PixelCraftColors.TextSecondary,
+                        fontSize = 11.sp
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    color = PixelCraftColors.TextPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.ui_typography_graphic_studio),
-                    color = PixelCraftColors.TextSecondary,
-                    fontSize = 11.sp
-                )
-            }
-        }
 
-        IconButton(onClick = { onAbout() }) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = stringResource(R.string.ui_about_pixelcraft),
-                tint = PixelCraftColors.TextSecondary
-            )
+            IconButton(onClick = { onAbout() }) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = stringResource(R.string.ui_about_pixelcraft),
+                    tint = PixelCraftColors.TextSecondary
+                )
+            }
         }
+        HorizontalDivider(color = PixelCraftColors.Border, thickness = 1.dp)
     }
 }
 
@@ -168,14 +175,20 @@ internal fun DeleteProjectDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Text(stringResource(R.string.ui_delete_project), color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(
+                text = stringResource(R.string.ui_delete_project),
+                color = PixelCraftColors.Danger,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
         },
         text = {
             Text(
                 text = stringResource(R.string.ui_remove_project_confirm, projectName),
-                color = Color.White,
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 14.sp
             )
         },
@@ -184,14 +197,18 @@ internal fun DeleteProjectDialog(
             val undoLabel = stringResource(R.string.ui_undo)
             Button(
                 onClick = { onConfirm(deletedMessage, undoLabel) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Danger,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(stringResource(R.string.action_delete), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -331,7 +348,7 @@ internal fun HomeTemplateCard(
         when (preset.canvasConfig.backgroundType) {
             BackgroundType.GRADIENT -> {
                 val cols = preset.canvasConfig.gradientColors.map { Color(it.toInt()) }
-                Brush.linearGradient(if (cols.size >= 2) cols else listOf(Color(0xFF1F1C2C), Color(0xFF928DAB)))
+                Brush.linearGradient(if (cols.size >= 2) cols else listOf(PixelCraftColors.SurfaceElevated, PixelCraftColors.Border))
             }
             else -> {
                 val c = Color(preset.canvasConfig.backgroundColor.toInt())

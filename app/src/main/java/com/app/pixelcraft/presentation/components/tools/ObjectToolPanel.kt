@@ -1,6 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BlurOn
@@ -43,6 +45,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -111,7 +114,7 @@ fun ObjectToolPanel(
             modifier = modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(Color(0xFF1E222D))
+                .background(PixelCraftColors.Surface)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
@@ -119,30 +122,41 @@ fun ObjectToolPanel(
         ) {
             Button(
                 onClick = { onOpenDialog(ActiveDialog.ADD_SHAPE) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                )
             ) {
-                Icon(Icons.Default.FormatShapes, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Default.FormatShapes, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_shapes_balloons), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_shapes_balloons), color = Color.White, fontWeight = FontWeight.Bold)
             }
 
             Button(
                 onClick = onAddImage,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Success,
+                    contentColor = Color.White
+                )
             ) {
-                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_photo_layer), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_photo_layer), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
         return
     }
 
+    // Hoisted so the tool row keeps its scroll position while an inspector replaces it.
+    val toolRowScroll = rememberScrollState()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF1E222D))
+            .background(PixelCraftColors.Surface)
     ) {
+        // The inspector replaces the tool rows in place instead of stacking above them,
+        // so an open sub-tool does not cover more of the canvas.
         if (activeSubTool != ActiveSubTool.NONE) {
             ObjectSubToolInspector(
                 subTool = activeSubTool,
@@ -153,13 +167,12 @@ fun ObjectToolPanel(
                 onStartEyedropper = onStartEyedropper,
                 onClose = { onSubToolSelected(ActiveSubTool.NONE) }
             )
-        }
-
+        } else {
         // Quick Add + Style Clipboard bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF181B24))
+                .background(PixelCraftColors.PanelElevated)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -199,7 +212,7 @@ fun ObjectToolPanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(66.dp)
-                .horizontalScroll(rememberScrollState())
+                .horizontalScroll(toolRowScroll)
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -319,6 +332,7 @@ fun ObjectToolPanel(
                 onClick = onDeleteLayer
             )
         }
+        }
     }
 }
 
@@ -330,12 +344,12 @@ private fun ObjectToolItem(
     iconRotation: Float = 0f,
     onClick: () -> Unit
 ) {
-    val activeColor = Color(0xFF00E5FF)
+    val activeColor = PixelCraftColors.Accent
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .background(if (isActive) activeColor.copy(alpha = 0.18f) else Color.Transparent)
+            .background(if (isActive) activeColor.copy(alpha = 0.12f) else Color.Transparent)
             .padding(horizontal = 9.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -343,7 +357,7 @@ private fun ObjectToolItem(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (isActive) activeColor else Color.White,
+            tint = if (isActive) activeColor else PixelCraftColors.TextPrimary,
             modifier = Modifier
                 .size(22.dp)
                 .rotate(iconRotation)
@@ -352,7 +366,7 @@ private fun ObjectToolItem(
         Text(
             text = label,
             fontSize = 11.sp,
-            color = if (isActive) activeColor else Color(0xFFCCCCCC)
+            color = if (isActive) activeColor else PixelCraftColors.TextSecondary
         )
     }
 }
@@ -367,34 +381,45 @@ private fun ObjectSubToolInspector(
     onStartEyedropper: (EyedropperTarget) -> Unit,
     onClose: () -> Unit
 ) {
-    Column(
+    // CapCut-style: back button pinned at the far left, inspector content beside it.
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 240.dp)
-            .background(Color(0xFF161922))
-            .verticalScroll(rememberScrollState())
-            .padding(12.dp)
+            .background(PixelCraftColors.PanelElevated),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = subTool.name
-                    .removePrefix("SHAPE_")
-                    .removePrefix("OBJECT_")
-                    .removePrefix("IMAGE_")
-                    .removePrefix("LAYER_")
-                    .replace("_", " "),
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
-                fontSize = 13.sp
-            )
-            IconButton(onClick = onClose, modifier = Modifier.size(26.dp)) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close), tint = Color.White)
-            }
-        }
+    IconButton(
+        onClick = onClose,
+        modifier = Modifier
+            .padding(start = 6.dp)
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(PixelCraftColors.Surface)
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            contentDescription = stringResource(R.string.ui_back),
+            tint = PixelCraftColors.TextPrimary
+        )
+    }
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .verticalScroll(rememberScrollState())
+            .padding(start = 8.dp, top = 10.dp, end = 12.dp, bottom = 10.dp)
+    ) {
+        Text(
+            text = subTool.name
+                .removePrefix("SHAPE_")
+                .removePrefix("OBJECT_")
+                .removePrefix("IMAGE_")
+                .removePrefix("LAYER_")
+                .replace("_", " "),
+            fontWeight = FontWeight.Bold,
+            color = PixelCraftColors.Accent,
+            fontSize = 13.sp
+        )
 
         Spacer(modifier = Modifier.height(6.dp))
 
@@ -423,5 +448,6 @@ private fun ObjectSubToolInspector(
 
             else -> {}
         }
+    }
     }
 }

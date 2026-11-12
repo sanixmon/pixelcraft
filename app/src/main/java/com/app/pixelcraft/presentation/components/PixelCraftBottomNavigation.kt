@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.BottomNavTab
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 
 @Composable
 fun PixelCraftBottomNavigation(
@@ -40,46 +42,52 @@ fun PixelCraftBottomNavigation(
     onTabSelected: (BottomNavTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF151821))
-            .navigationBarsPadding()
-            .height(56.dp)
-            .padding(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+            .background(PixelCraftColors.Surface)
     ) {
-        BottomNavTabItem(
-            label = stringResource(R.string.nav_templates),
-            icon = Icons.Default.DashboardCustomize,
-            isSelected = activeTab == BottomNavTab.PRESETS,
-            onClick = { onTabSelected(BottomNavTab.PRESETS) }
-        )
-        BottomNavTabItem(
-            label = stringResource(R.string.nav_text),
-            icon = Icons.Default.TextFields,
-            isSelected = activeTab == BottomNavTab.TEXT,
-            onClick = { onTabSelected(BottomNavTab.TEXT) }
-        )
-        BottomNavTabItem(
-            label = stringResource(R.string.nav_objects),
-            icon = Icons.Default.Category,
-            isSelected = activeTab == BottomNavTab.OBJECTS,
-            onClick = { onTabSelected(BottomNavTab.OBJECTS) }
-        )
-        BottomNavTabItem(
-            label = stringResource(R.string.nav_canvas),
-            icon = Icons.Default.ColorLens,
-            isSelected = activeTab == BottomNavTab.BACKGROUND,
-            onClick = { onTabSelected(BottomNavTab.BACKGROUND) }
-        )
-        BottomNavTabItem(
-            label = stringResource(R.string.nav_effects),
-            icon = Icons.Default.AutoAwesome,
-            isSelected = activeTab == BottomNavTab.FILTERS,
-            onClick = { onTabSelected(BottomNavTab.FILTERS) }
-        )
+        HorizontalDivider(color = PixelCraftColors.Border, thickness = 1.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(56.dp)
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavTabItem(
+                label = stringResource(R.string.nav_templates),
+                icon = Icons.Default.DashboardCustomize,
+                isSelected = activeTab == BottomNavTab.PRESETS,
+                onClick = { onTabSelected(BottomNavTab.PRESETS) }
+            )
+            BottomNavTabItem(
+                label = stringResource(R.string.nav_text),
+                icon = Icons.Default.TextFields,
+                isSelected = activeTab == BottomNavTab.TEXT,
+                onClick = { onTabSelected(BottomNavTab.TEXT) }
+            )
+            BottomNavTabItem(
+                label = stringResource(R.string.nav_objects),
+                icon = Icons.Default.Category,
+                isSelected = activeTab == BottomNavTab.OBJECTS,
+                onClick = { onTabSelected(BottomNavTab.OBJECTS) }
+            )
+            BottomNavTabItem(
+                label = stringResource(R.string.nav_canvas),
+                icon = Icons.Default.ColorLens,
+                isSelected = activeTab == BottomNavTab.BACKGROUND,
+                onClick = { onTabSelected(BottomNavTab.BACKGROUND) }
+            )
+            BottomNavTabItem(
+                label = stringResource(R.string.nav_effects),
+                icon = Icons.Default.AutoAwesome,
+                isSelected = activeTab == BottomNavTab.FILTERS,
+                onClick = { onTabSelected(BottomNavTab.FILTERS) }
+            )
+        }
     }
 }
 
@@ -90,14 +98,14 @@ private fun BottomNavTabItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val activeColor = Color(0xFF00E5FF)
-    val inactiveColor = Color(0xFF949CB0)
+    val activeColor = PixelCraftColors.Accent
+    val inactiveColor = PixelCraftColors.TextSecondary
 
     Column(
         modifier = Modifier
             .defaultMinSize(minWidth = 56.dp, minHeight = 48.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) activeColor.copy(alpha = 0.14f) else Color.Transparent)
+            .background(if (isSelected) activeColor.copy(alpha = 0.12f) else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -211,6 +211,7 @@
     <string name="ui_center_horizontally">Center Horizontally</string>
     <string name="ui_center_vertically">Center Vertically</string>
     <string name="ui_clip_photo_into_shape">Clip Photo into Shape</string>
+    <string name="ui_back">Back</string>
     <string name="ui_close">Close</string>
     <string name="ui_close_layers">Close Layers</string>
     <string name="ui_color">Color</string>

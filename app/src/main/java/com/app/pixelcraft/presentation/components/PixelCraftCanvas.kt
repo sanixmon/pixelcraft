@@ -1,6 +1,7 @@
 package com.app.pixelcraft.presentation.components
 
 import com.app.pixelcraft.R
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import androidx.compose.ui.res.stringResource
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
@@ -189,7 +190,7 @@ fun PixelCraftCanvas(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF14171F))
+            .background(PixelCraftColors.CanvasStage)
             .clipToBounds(),
         contentAlignment = Alignment.Center
     ) {
@@ -715,7 +716,7 @@ fun PixelCraftCanvas(
 
                 // Subtle drop-shadow frame behind canvas
                 drawRect(
-                    color = Color(0x66000000),
+                    color = Color(0x221C1814),
                     topLeft = Offset(topLeftScreen.x + 4f, topLeftScreen.y + 8f),
                     size = Size(canvasScreenW, canvasScreenH)
                 )
@@ -801,7 +802,7 @@ fun PixelCraftCanvas(
                         state.activeVerticalGuideX?.let { gx ->
                             val canvasX = virtualCenter.x + gx
                             drawLine(
-                                color = Color(0xFFFFEB3B),
+                                color = PixelCraftColors.SmartGuide,
                                 start = Offset(canvasX, 0f),
                                 end = Offset(canvasX, safeHeight.toFloat()),
                                 strokeWidth = 2f / effectiveScale
@@ -810,7 +811,7 @@ fun PixelCraftCanvas(
                         state.activeHorizontalGuideY?.let { gy ->
                             val canvasY = virtualCenter.y + gy
                             drawLine(
-                                color = Color(0xFFFFEB3B),
+                                color = PixelCraftColors.SmartGuide,
                                 start = Offset(0f, canvasY),
                                 end = Offset(safeWidth.toFloat(), canvasY),
                                 strokeWidth = 2f / effectiveScale
@@ -821,7 +822,7 @@ fun PixelCraftCanvas(
 
                 // Canvas border
                 drawRect(
-                    color = Color(0xFF2B3142),
+                    color = PixelCraftColors.Border,
                     topLeft = topLeftScreen,
                     size = Size(canvasScreenW, canvasScreenH),
                     style = Stroke(width = 1.5f)
@@ -837,7 +838,7 @@ fun PixelCraftCanvas(
                             val hScr = mb.height * effectiveScale
                             rotate(degrees = mb.rotation, pivot = centerScr) {
                                 drawRect(
-                                    color = Color(0x9900E5FF),
+                                    color = PixelCraftColors.AccentHover.copy(alpha = 0.75f),
                                     topLeft = Offset(centerScr.x - wScr / 2f, centerScr.y - hScr / 2f),
                                     size = Size(wScr, hScr),
                                     style = Stroke(
@@ -857,7 +858,7 @@ fun PixelCraftCanvas(
                     val centerScr = virtualToScreen(b.centerX, b.centerY)
                     val halfWScr = (b.width * effectiveScale) / 2f
                     val halfHScr = (b.height * effectiveScale) / 2f
-                    val outlineColor = if (active.isLocked) Color(0xFFFFB300) else Color(0xFF00E5FF)
+                    val outlineColor = if (active.isLocked) PixelCraftColors.OutlineLocked else PixelCraftColors.OutlineSelected
 
                     rotate(degrees = b.rotation, pivot = centerScr) {
                         drawRect(
@@ -875,18 +876,32 @@ fun PixelCraftCanvas(
                             val pillShort = 6.dp.toPx()
                             // Right stretch pill
                             drawRoundRect(
-                                color = Color.White,
+                                color = PixelCraftColors.Surface,
                                 topLeft = Offset(centerScr.x + halfWScr - pillShort / 2f, centerScr.y - pillLong / 2f),
                                 size = Size(pillShort, pillLong),
                                 cornerRadius = CornerRadius(pillShort / 2f, pillShort / 2f)
                             )
+                            drawRoundRect(
+                                color = PixelCraftColors.Accent,
+                                topLeft = Offset(centerScr.x + halfWScr - pillShort / 2f, centerScr.y - pillLong / 2f),
+                                size = Size(pillShort, pillLong),
+                                cornerRadius = CornerRadius(pillShort / 2f, pillShort / 2f),
+                                style = Stroke(width = 1.5f)
+                            )
                             // Bottom stretch pill (for Shape & Photo)
                             if (active.type != LayerType.TEXT) {
                                 drawRoundRect(
-                                    color = Color.White,
+                                    color = PixelCraftColors.Surface,
                                     topLeft = Offset(centerScr.x - pillLong / 2f, centerScr.y + halfHScr - pillShort / 2f),
                                     size = Size(pillLong, pillShort),
                                     cornerRadius = CornerRadius(pillShort / 2f, pillShort / 2f)
+                                )
+                                drawRoundRect(
+                                    color = PixelCraftColors.Accent,
+                                    topLeft = Offset(centerScr.x - pillLong / 2f, centerScr.y + halfHScr - pillShort / 2f),
+                                    size = Size(pillLong, pillShort),
+                                    cornerRadius = CornerRadius(pillShort / 2f, pillShort / 2f),
+                                    style = Stroke(width = 1.5f)
                                 )
                             }
                         }
@@ -896,7 +911,7 @@ fun PixelCraftCanvas(
                         val knobRadius = 11.dp.toPx()
                         // Top-Left: Delete Handle (Red badge with ×)
                         val tlScr = virtualToScreen(b.topLeft.x, b.topLeft.y)
-                        drawCircle(color = Color(0xFFFF5252), radius = knobRadius, center = tlScr)
+                        drawCircle(color = PixelCraftColors.Danger, radius = knobRadius, center = tlScr)
                         drawCircle(color = Color.White, radius = knobRadius, center = tlScr, style = Stroke(width = 2f))
                         val cross = knobRadius * 0.38f
                         drawLine(Color.White, Offset(tlScr.x - cross, tlScr.y - cross), Offset(tlScr.x + cross, tlScr.y + cross), strokeWidth = 2.4f)
@@ -904,20 +919,20 @@ fun PixelCraftCanvas(
 
                         // Top-Right: Edit (Text) / Duplicate (Shape & Image) Handle
                         val trScr = virtualToScreen(b.topRight.x, b.topRight.y)
-                        drawCircle(color = Color(0xFF1E2433), radius = knobRadius, center = trScr)
-                        drawCircle(color = Color(0xFF00E5FF), radius = knobRadius, center = trScr, style = Stroke(width = 2f))
+                        drawCircle(color = PixelCraftColors.Surface, radius = knobRadius, center = trScr)
+                        drawCircle(color = PixelCraftColors.Accent, radius = knobRadius, center = trScr, style = Stroke(width = 2f))
                         val iconHalf = knobRadius * 0.36f
                         drawRect(
-                            color = Color(0xFF00E5FF),
+                            color = PixelCraftColors.Accent,
                             topLeft = Offset(trScr.x - iconHalf, trScr.y - iconHalf),
                             size = Size(iconHalf * 2f, iconHalf * 2f),
                             style = Stroke(width = 2f)
                         )
 
-                        // Bottom-Right: Scale + Rotate Handle (Cyan filled knob)
+                        // Bottom-Right: Scale + Rotate Handle (Accent filled knob with white center)
                         val brScr = virtualToScreen(b.bottomRight.x, b.bottomRight.y)
-                        drawCircle(color = Color(0xFF00E5FF), radius = knobRadius * 1.08f, center = brScr)
-                        drawCircle(color = Color(0xFF10131A), radius = knobRadius * 0.42f, center = brScr)
+                        drawCircle(color = PixelCraftColors.Accent, radius = knobRadius * 1.08f, center = brScr)
+                        drawCircle(color = Color.White, radius = knobRadius * 0.42f, center = brScr)
                     }
                 }
             }

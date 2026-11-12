@@ -3,6 +3,7 @@ package com.app.pixelcraft.presentation.components.tools
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.labelRes
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -117,18 +118,18 @@ internal fun ColumnScope.TextPositionInspector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { onNudge(-stepPx, 0f) }) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_nudge_left), tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_nudge_left), tint = PixelCraftColors.TextPrimary)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             IconButton(onClick = { onNudge(0f, -stepPx) }) {
-                Icon(Icons.Default.ArrowUpward, contentDescription = stringResource(R.string.ui_nudge_up), tint = Color.White)
+                Icon(Icons.Default.ArrowUpward, contentDescription = stringResource(R.string.ui_nudge_up), tint = PixelCraftColors.TextPrimary)
             }
             IconButton(onClick = { onNudge(0f, stepPx) }) {
-                Icon(Icons.Default.ArrowDownward, contentDescription = stringResource(R.string.ui_nudge_down), tint = Color.White)
+                Icon(Icons.Default.ArrowDownward, contentDescription = stringResource(R.string.ui_nudge_down), tint = PixelCraftColors.TextPrimary)
             }
         }
         IconButton(onClick = { onNudge(stepPx, 0f) }) {
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.ui_nudge_right), tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.ui_nudge_right), tint = PixelCraftColors.TextPrimary)
         }
     }
 }
@@ -142,22 +143,22 @@ internal fun ColumnScope.TextAlignInspector(
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         IconButton(onClick = { onAlign(AlignmentAction.ALIGN_LEFT) }) {
-            Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = stringResource(R.string.ui_align_left), tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.AlignHorizontalLeft, contentDescription = stringResource(R.string.ui_align_left), tint = PixelCraftColors.TextPrimary)
         }
         IconButton(onClick = { onAlign(AlignmentAction.CENTER_HORIZONTAL) }) {
-            Icon(Icons.Default.AlignHorizontalCenter, contentDescription = stringResource(R.string.ui_center_horizontally), tint = Color(0xFF00E5FF))
+            Icon(Icons.Default.AlignHorizontalCenter, contentDescription = stringResource(R.string.ui_center_horizontally), tint = PixelCraftColors.Accent)
         }
         IconButton(onClick = { onAlign(AlignmentAction.ALIGN_RIGHT) }) {
-            Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = stringResource(R.string.ui_align_right), tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.AlignHorizontalRight, contentDescription = stringResource(R.string.ui_align_right), tint = PixelCraftColors.TextPrimary)
         }
         IconButton(onClick = { onAlign(AlignmentAction.ALIGN_TOP) }) {
-            Icon(Icons.Default.AlignVerticalTop, contentDescription = stringResource(R.string.ui_align_top), tint = Color.White)
+            Icon(Icons.Default.AlignVerticalTop, contentDescription = stringResource(R.string.ui_align_top), tint = PixelCraftColors.TextPrimary)
         }
         IconButton(onClick = { onAlign(AlignmentAction.CENTER_VERTICAL) }) {
-            Icon(Icons.Default.AlignVerticalCenter, contentDescription = stringResource(R.string.ui_center_vertically), tint = Color(0xFF00E5FF))
+            Icon(Icons.Default.AlignVerticalCenter, contentDescription = stringResource(R.string.ui_center_vertically), tint = PixelCraftColors.Accent)
         }
         IconButton(onClick = { onAlign(AlignmentAction.ALIGN_BOTTOM) }) {
-            Icon(Icons.Default.AlignVerticalBottom, contentDescription = stringResource(R.string.ui_align_bottom), tint = Color.White)
+            Icon(Icons.Default.AlignVerticalBottom, contentDescription = stringResource(R.string.ui_align_bottom), tint = PixelCraftColors.TextPrimary)
         }
     }
 }
@@ -219,7 +220,7 @@ internal fun ColumnScope.TextBlendInspector(
     layer: Layer,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit
 ) {
-    Text(stringResource(R.string.ui_composite_blend_mode), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+    Text(stringResource(R.string.ui_composite_blend_mode), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
     Spacer(modifier = Modifier.height(4.dp))
     Row(
         modifier = Modifier

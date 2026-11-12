@@ -1,6 +1,7 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -59,12 +60,13 @@ fun PixelCraftImageSizeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_image_size),
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 18.sp
             )
         },
@@ -74,7 +76,7 @@ fun PixelCraftImageSizeDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text(stringResource(R.string.ui_preset_aspect_ratio), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_preset_aspect_ratio), color = PixelCraftColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
 
                 for (preset in AspectRatioPreset.entries) {
@@ -83,7 +85,7 @@ fun PixelCraftImageSizeDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(6.dp))
-                            .background(if (isSelected) Color(0xFF2C3240) else Color.Transparent)
+                            .background(if (isSelected) PixelCraftColors.Accent.copy(alpha = 0.12f) else Color.Transparent)
                             .clickable {
                                 selectedPreset = preset
                                 if (preset != AspectRatioPreset.CUSTOM) {
@@ -97,12 +99,13 @@ fun PixelCraftImageSizeDialog(
                     ) {
                         Text(
                             text = preset.localizedLabel(),
-                            color = if (isSelected) Color(0xFF00E5FF) else Color.White,
+                            color = if (isSelected) PixelCraftColors.Accent else PixelCraftColors.TextPrimary,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             fontSize = 12.sp
                         )
                         Text(
                             text = "${preset.defaultWidth}x${preset.defaultHeight}",
-                            color = Color.Gray,
+                            color = PixelCraftColors.TextMuted,
                             fontSize = 11.sp
                         )
                     }
@@ -111,7 +114,7 @@ fun PixelCraftImageSizeDialog(
                 Spacer(modifier = Modifier.height(14.dp))
                 Text(
                     text = stringResource(R.string.ui_dimensions_range, minDim, maxDim),
-                    color = Color.White,
+                    color = PixelCraftColors.TextPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -159,7 +162,7 @@ fun PixelCraftImageSizeDialog(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = stringResource(R.string.ui_dimensions_hint, minDim, maxDim),
-                        color = Color(0xFFFF5252),
+                        color = PixelCraftColors.Danger,
                         fontSize = 11.sp
                     )
                 }
@@ -173,15 +176,18 @@ fun PixelCraftImageSizeDialog(
                     onApply(selectedPreset, w, h)
                 },
                 enabled = isValid,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(6.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.ui_ok), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_ok), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )

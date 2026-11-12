@@ -1,6 +1,7 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
 import com.app.pixelcraft.R
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -121,15 +123,15 @@ fun ColorPaletteRow(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF282D3A))
-                    .border(1.5.dp, Color(0xFF00E5FF), CircleShape)
+                    .background(PixelCraftColors.SurfaceElevated)
+                    .border(1.5.dp, PixelCraftColors.Accent, CircleShape)
                     .clickable { onPickFromCanvas() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Colorize,
                     contentDescription = stringResource(R.string.ui_pick_color_from_canvas),
-                    tint = Color(0xFF00E5FF),
+                    tint = PixelCraftColors.Accent,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -143,7 +145,7 @@ fun ColorPaletteRow(
                 .background(Brush.sweepGradient(RainbowSweepColors))
                 .border(
                     width = if (isCustomSelected) 2.5.dp else 1.5.dp,
-                    color = if (isCustomSelected) Color(0xFF00E5FF) else Color.White.copy(alpha = 0.75f),
+                    color = if (isCustomSelected) PixelCraftColors.Accent else PixelCraftColors.Border,
                     shape = CircleShape
                 )
                 .clickable { showCustomDialog = true },
@@ -153,7 +155,7 @@ fun ColorPaletteRow(
                 modifier = Modifier
                     .size(20.dp)
                     .clip(CircleShape)
-                    .background(if (isCustomSelected) Color(normalizedSelected) else Color(0xCC181A20)),
+                    .background(if (isCustomSelected) Color(normalizedSelected) else PixelCraftColors.Surface),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -161,8 +163,10 @@ fun ColorPaletteRow(
                     contentDescription = stringResource(R.string.ui_custom_color_wheel_hex),
                     tint = if (isCustomSelected && ColorMath.argbToHsv(normalizedSelected)[2] > 0.65f) {
                         Color.Black
-                    } else {
+                    } else if (isCustomSelected) {
                         Color.White
+                    } else {
+                        PixelCraftColors.TextPrimary
                     },
                     modifier = Modifier.size(14.dp)
                 )
@@ -178,7 +182,7 @@ fun ColorPaletteRow(
                     .background(Color(normalizedSwatch))
                     .border(
                         width = if (isSelected) 2.5.dp else 1.dp,
-                        color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF555555),
+                        color = if (isSelected) PixelCraftColors.Accent else PixelCraftColors.Border,
                         shape = CircleShape
                     )
                     .clickable { onSelectColor(normalizedSwatch) }
@@ -242,12 +246,13 @@ fun PixelCraftColorPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = title,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 17.sp
             )
         },
@@ -275,8 +280,8 @@ fun PixelCraftColorPickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.ui_brightness), color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                    Text("${(value * 100).roundToInt()}%", color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_brightness), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+                    Text("${(value * 100).roundToInt()}%", color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
                 }
                 Slider(
                     value = value,
@@ -284,7 +289,12 @@ fun PixelCraftColorPickerDialog(
                         value = v
                         syncHexFromHsv(hue, saturation, v, alpha)
                     },
-                    valueRange = 0f..1f
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = PixelCraftColors.Accent,
+                        activeTrackColor = PixelCraftColors.Accent,
+                        inactiveTrackColor = PixelCraftColors.Border
+                    )
                 )
 
                 if (allowAlpha) {
@@ -292,8 +302,8 @@ fun PixelCraftColorPickerDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(stringResource(R.string.ui_alpha), color = Color(0xFFCCCCCC), fontSize = 12.sp)
-                        Text("${(alpha * 100).roundToInt()}%", color = Color.White, fontSize = 12.sp)
+                        Text(stringResource(R.string.ui_alpha), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+                        Text("${(alpha * 100).roundToInt()}%", color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
                     }
                     Slider(
                         value = alpha,
@@ -301,7 +311,12 @@ fun PixelCraftColorPickerDialog(
                             alpha = a
                             syncHexFromHsv(hue, saturation, value, a)
                         },
-                        valueRange = 0.02f..1f
+                        valueRange = 0.02f..1f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = PixelCraftColors.Accent,
+                            activeTrackColor = PixelCraftColors.Accent,
+                            inactiveTrackColor = PixelCraftColors.Border
+                        )
                     )
                 }
 
@@ -316,7 +331,7 @@ fun PixelCraftColorPickerDialog(
                             .size(46.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color(currentArgb))
-                            .border(1.5.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                            .border(1.5.dp, PixelCraftColors.Border, RoundedCornerShape(8.dp))
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     OutlinedTextField(
@@ -349,7 +364,7 @@ fun PixelCraftColorPickerDialog(
                         singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontFamily = FontFamily.Monospace,
-                            color = Color.White,
+                            color = PixelCraftColors.TextPrimary,
                             fontSize = 14.sp
                         ),
                         modifier = Modifier.weight(1f)
@@ -360,15 +375,18 @@ fun PixelCraftColorPickerDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(currentArgb) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(6.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.ui_apply), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_apply), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )

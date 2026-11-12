@@ -2,6 +2,7 @@ package com.app.pixelcraft.presentation.components.tools
 
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -88,7 +89,7 @@ internal fun ColumnScope.ObjectSizeInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_lock_aspect_ratio), color = Color(0xFFD5DAE5), fontSize = 12.sp)
+        Text(stringResource(R.string.ui_lock_aspect_ratio), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(checked = lockAspect, onCheckedChange = { lockAspect = it })
     }
 
@@ -199,7 +200,7 @@ internal fun ColumnScope.ObjectBlendInspector(
     layer: Layer,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit
 ) {
-    Text(stringResource(R.string.ui_composite_blend_mode), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+    Text(stringResource(R.string.ui_composite_blend_mode), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
     Spacer(modifier = Modifier.height(4.dp))
     Row(
         modifier = Modifier

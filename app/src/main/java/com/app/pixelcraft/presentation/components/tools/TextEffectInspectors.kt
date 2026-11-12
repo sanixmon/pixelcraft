@@ -3,6 +3,7 @@ package com.app.pixelcraft.presentation.components.tools
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.labelRes
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -133,7 +134,7 @@ internal fun ColumnScope.TextColorInspector(
 
     Text(
         text = if (layer.textGradientEnabled) stringResource(R.string.ui_start_color) else stringResource(R.string.ui_text_color),
-        color = Color(0xFFCCCCCC),
+        color = PixelCraftColors.TextSecondary,
         fontSize = 12.sp
     )
     ColorPaletteRow(
@@ -147,7 +148,7 @@ internal fun ColumnScope.TextColorInspector(
     )
 
     if (layer.textGradientEnabled) {
-        Text(stringResource(R.string.ui_end_color), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+        Text(stringResource(R.string.ui_end_color), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
         ColorPaletteRow(
             colors = TextColorPalette,
             recentColors = recentColors,
@@ -185,7 +186,7 @@ internal fun ColumnScope.TextBackgroundInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_enable_text_background_pill), color = Color.White, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_enable_text_background_pill), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.textBackgroundColor != null,
             onCheckedChange = { enable ->
@@ -286,7 +287,7 @@ internal fun ColumnScope.TextGlowInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_enable_outer_neon_glow), color = Color.White, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_enable_outer_neon_glow), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.glowEnabled,
             onCheckedChange = { enable -> onUpdate(false) { it.copy(glowEnabled = enable) } }
@@ -331,7 +332,7 @@ internal fun ColumnScope.TextShadowInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_enable_drop_shadow), color = Color.White, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_enable_drop_shadow), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.shadowEnabled,
             onCheckedChange = { enable -> onUpdate(false) { it.copy(shadowEnabled = enable) } }
@@ -395,7 +396,7 @@ internal fun ColumnScope.Text3dInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_enable_3d_extrusion), color = Color.White, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_enable_3d_extrusion), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.is3D,
             onCheckedChange = { enable -> onUpdate(false) { it.copy(is3D = enable) } }
@@ -438,7 +439,7 @@ internal fun ColumnScope.Text3dInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_floor_shadow), color = Color.White, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_floor_shadow), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.shadow3DEnabled,
             onCheckedChange = { en -> onUpdate(false) { it.copy(shadow3DEnabled = en) } }
@@ -467,7 +468,7 @@ internal fun ColumnScope.TextReflectionInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_enable_mirror_reflection), color = Color.White, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_enable_mirror_reflection), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.reflectionEnabled,
             onCheckedChange = { enable -> onUpdate(false) { it.copy(reflectionEnabled = enable) } }

@@ -1,9 +1,12 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
 import com.app.pixelcraft.presentation.i18n.historyLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,18 +64,19 @@ fun PixelCraftSaveProjectDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_save_project),
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 18.sp
             )
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.ui_project_name), color = Color.White, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_project_name), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = name,
@@ -85,15 +89,18 @@ fun PixelCraftSaveProjectDialog(
         confirmButton = {
             Button(
                 onClick = { onSave(name.ifBlank { untitledName }) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(6.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.action_save), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_save), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -108,12 +115,13 @@ fun PixelCraftUnsavedChangesDialog(
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_save_changes),
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 18.sp
             )
         },
@@ -121,31 +129,35 @@ fun PixelCraftUnsavedChangesDialog(
             Column {
                 Text(
                     text = stringResource(R.string.ui_unsaved_edits_in, projectName),
-                    color = Color.White,
+                    color = PixelCraftColors.TextPrimary,
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(14.dp))
                 OutlinedButton(
                     onClick = onDiscardAndExit,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, PixelCraftColors.Danger)
                 ) {
-                    Text(stringResource(R.string.ui_discard_changes), color = Color(0xFFFF5252), fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.ui_discard_changes), color = PixelCraftColors.Danger, fontWeight = FontWeight.SemiBold)
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = onSaveAndExit,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(8.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.ui_save_exit), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_save_exit), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.ui_keep_editing), color = Color.White)
+                Text(stringResource(R.string.ui_keep_editing), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -161,9 +173,10 @@ fun PixelCraftRenameDialog(
     var text by remember(initialName) { mutableStateOf(initialName) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Text(title, fontWeight = FontWeight.Bold, color = Color(0xFF00E5FF), fontSize = 18.sp)
+            Text(title, fontWeight = FontWeight.Bold, color = PixelCraftColors.TextPrimary, fontSize = 18.sp)
         },
         text = {
             OutlinedTextField(
@@ -176,14 +189,18 @@ fun PixelCraftRenameDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(text.trim().ifBlank { initialName }) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.action_rename), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_rename), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -197,17 +214,18 @@ fun PixelCraftHistoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.History, contentDescription = null, tint = Color(0xFF00E5FF))
+                Icon(Icons.Default.History, contentDescription = null, tint = PixelCraftColors.Accent)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.ui_edit_history_count, undoLabels.size), color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text(stringResource(R.string.ui_edit_history_count, undoLabels.size), color = PixelCraftColors.TextPrimary, fontWeight = FontWeight.Bold, fontSize = 17.sp)
             }
         },
         text = {
             if (undoLabels.isEmpty()) {
-                Text(stringResource(R.string.ui_no_edits_recorded_in_this_session_yet), color = Color(0xFFA0A8B8), fontSize = 13.sp)
+                Text(stringResource(R.string.ui_no_edits_recorded_in_this_session_yet), color = PixelCraftColors.TextSecondary, fontSize = 13.sp)
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -220,8 +238,9 @@ fun PixelCraftHistoryDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF151821))
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(PixelCraftColors.Background)
+                                .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(10.dp))
                                 .clickable { onJumpToIndex(originalIndex) }
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -229,12 +248,12 @@ fun PixelCraftHistoryDialog(
                         ) {
                             Text(
                                 text = "${originalIndex + 1}. ${historyLabel(label)}",
-                                color = Color.White,
+                                color = PixelCraftColors.TextPrimary,
                                 fontSize = 13.sp
                             )
                             Text(
                                 text = stringResource(R.string.ui_restore),
-                                color = Color(0xFF00E5FF),
+                                color = PixelCraftColors.Accent,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -245,7 +264,7 @@ fun PixelCraftHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.ui_close), color = Color.White)
+                Text(stringResource(R.string.ui_close), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -268,9 +287,10 @@ fun PixelCraftDateFormatDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Text(stringResource(R.string.ui_insert_date_time_stamp), color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(stringResource(R.string.ui_insert_date_time_stamp), color = PixelCraftColors.TextPrimary, fontWeight = FontWeight.Bold, fontSize = 17.sp)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -281,14 +301,15 @@ fun PixelCraftDateFormatDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF151821))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(PixelCraftColors.Background)
+                            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(10.dp))
                             .clickable { onSelectPattern(pat) }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(preview, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        Text(preview, color = PixelCraftColors.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -296,7 +317,7 @@ fun PixelCraftDateFormatDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -315,9 +336,10 @@ fun PixelCraftSavedStylesDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Text(stringResource(R.string.ui_my_saved_styles), color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(stringResource(R.string.ui_my_saved_styles), color = PixelCraftColors.TextPrimary, fontWeight = FontWeight.Bold, fontSize = 17.sp)
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -339,11 +361,15 @@ fun PixelCraftSavedStylesDialog(
                                 onSaveCurrent(styleName)
                                 styleName = ""
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PixelCraftColors.Accent,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.BookmarkAdd, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.BookmarkAdd, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.action_save), color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.action_save), color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -352,7 +378,7 @@ fun PixelCraftSavedStylesDialog(
                 if (savedStyles.isEmpty()) {
                     Text(
                         text = stringResource(R.string.ui_save_your_favorite_text_shape_styles_her),
-                        color = Color(0xFFA0A8B8),
+                        color = PixelCraftColors.TextSecondary,
                         fontSize = 13.sp
                     )
                 } else {
@@ -366,23 +392,24 @@ fun PixelCraftSavedStylesDialog(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF151821))
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(PixelCraftColors.Background)
+                                    .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(10.dp))
                                     .clickable(enabled = hasSelectedLayer) { onApplyStyle(item) }
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(item.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(item.name, color = PixelCraftColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                     Text(
                                         text = stringResource(R.string.ui_style_summary, item.styleLayer.fontKey, item.styleLayer.strokeWidth.toInt()),
-                                        color = Color(0xFF8E96A8),
+                                        color = PixelCraftColors.TextSecondary,
                                         fontSize = 11.sp
                                     )
                                 }
                                 IconButton(onClick = { onDeleteStyle(item.id) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_style), tint = Color(0xFFFF5252))
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_style), tint = PixelCraftColors.Danger)
                                 }
                             }
                         }
@@ -392,7 +419,7 @@ fun PixelCraftSavedStylesDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.ui_done), color = Color(0xFF00E5FF))
+                Text(stringResource(R.string.ui_done), color = PixelCraftColors.Accent)
             }
         }
     )
@@ -402,12 +429,13 @@ fun PixelCraftSavedStylesDialog(
 fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_about_version, BuildConfig.VERSION_NAME),
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 18.sp
             )
         },
@@ -415,13 +443,13 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.ui_offline_first_typography_vector_graphics),
-                    color = Color.White,
+                    color = PixelCraftColors.TextPrimary,
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = stringResource(R.string.ui_about_highlights),
-                    color = Color(0xFFCCCCCC),
+                    color = PixelCraftColors.TextSecondary,
                     fontSize = 12.sp
                 )
             }
@@ -429,10 +457,13 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(6.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.ui_close), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_close), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     )

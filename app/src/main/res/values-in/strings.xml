@@ -210,6 +210,7 @@
     <string name="ui_center_horizontally">Tengah Horizontal</string>
     <string name="ui_center_vertically">Tengah Vertikal</string>
     <string name="ui_clip_photo_into_shape">Potong Foto ke Bentuk</string>
+    <string name="ui_back">Kembali</string>
     <string name="ui_close">Tutup</string>
     <string name="ui_close_layers">Tutup Lapisan</string>
     <string name="ui_color">Warna</string>

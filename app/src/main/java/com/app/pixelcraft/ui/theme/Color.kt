@@ -3,16 +3,6 @@ package com.app.pixelcraft.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// Legacy colors (deprecated, kept for backward compatibility)
-val PixelCraftCyan = Color(0xFF00E5FF)
-val PixelCraftDark = Color(0xFF14161D)
-val PixelCraftSurface = Color(0xFF1E222B)
-val PixelCraftAccent = Color(0xFFFFD700)
-
-/**
- * Warm editorial palette: paper base, amber accents, editorial confidence.
- * Inspired by design studios, craft publications, and tactile print materials.
- */
 @Immutable
 object PixelCraftColors {
     // Base surfaces: warm paper tones
@@ -20,10 +10,10 @@ object PixelCraftColors {
     val Surface = Color(0xFFFFFDF8)           // Warm white card surface
     val SurfaceElevated = Color(0xFFEFE7DA)   // Pressed/hover state
     
-    // Canvas and panels (for editor, will update later)
-    val CanvasStage = Color(0xFFF7F2EA)       // Match background for now
-    val Panel = Color(0xFFEFE7DA)
-    val PanelElevated = Color(0xFFE5DDD0)
+    // Canvas and panels
+    val CanvasStage = Color(0xFFEDE5D8)       // Warm stone canvas workspace stage
+    val Panel = Color(0xFFFFFDF8)             // Primary tool panel surface
+    val PanelElevated = Color(0xFFF3ECE0)     // Sub-tool inspector & group bar surface
     val DialogSurface = Color(0xFFFFFDF8)
     val CardSurface = Color(0xFFFFFDF8)
     
@@ -52,4 +42,23 @@ object PixelCraftColors {
     val OutlineLocked = Color(0xFFC25E3F)
     val SmartGuide = Color(0xFFC8871A)
     val GridLine = Color(0x66C8871A)
+
+    // Containers & Inverses for Material 3
+    val PrimaryContainer = Color(0xFFFBEBD0)
+    val OnPrimaryContainer = Color(0xFF1C1814)
+    val SecondaryContainer = Color(0xFFEFE7DA)
+    val OnSecondaryContainer = Color(0xFF1C1814)
+    val TertiaryContainer = Color(0xFFE8F5E9)
+    val OnTertiaryContainer = Color(0xFF1C1814)
+    val ErrorContainer = Color(0xFFFBEAE5)
+    val OnErrorContainer = Color(0xFFC25E3F)
+    val InverseSurface = Color(0xFF2C251E)
+    val InverseOnSurface = Color(0xFFF7F2EA)
+    val Scrim = Color(0x331C1814)
 }
+
+// Legacy colors (mapped to warm editorial equivalents for compatibility)
+val PixelCraftCyan = PixelCraftColors.Accent
+val PixelCraftDark = PixelCraftColors.Background
+val PixelCraftSurface = PixelCraftColors.Surface
+val PixelCraftAccent = PixelCraftColors.AccentGold

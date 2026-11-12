@@ -3,6 +3,7 @@ package com.app.pixelcraft.presentation.components
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 
 @Composable
 fun PixelCraftLayersSheet(
@@ -80,9 +82,10 @@ fun PixelCraftLayersSheet(
             .width(316.dp)
             .fillMaxHeight(0.74f)
             .padding(8.dp),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1E29)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 18.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = PixelCraftColors.Surface),
+        border = BorderStroke(1.dp, PixelCraftColors.Border),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
@@ -93,11 +96,11 @@ fun PixelCraftLayersSheet(
                 Text(
                     text = stringResource(R.string.ui_layers_count, layers.size),
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF00E5FF),
+                    color = PixelCraftColors.TextPrimary,
                     fontSize = 15.sp
                 )
                 IconButton(onClick = onClose, modifier = Modifier.size(38.dp)) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close_layers), tint = Color.White)
+                    Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_close_layers), tint = PixelCraftColors.TextSecondary)
                 }
             }
 
@@ -109,16 +112,16 @@ fun PixelCraftLayersSheet(
                 ) {
                     if (selectedLayerIds.size >= 2) {
                         TextButton(onClick = onGroupSelected) {
-                            Icon(Icons.Default.GroupWork, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.GroupWork, contentDescription = null, tint = PixelCraftColors.Accent, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.ui_group_count, selectedLayerIds.size), color = Color(0xFF00E5FF), fontSize = 12.sp)
+                            Text(stringResource(R.string.ui_group_count, selectedLayerIds.size), color = PixelCraftColors.Accent, fontSize = 12.sp)
                         }
                     }
                     if (hasGroupInSelection) {
                         TextButton(onClick = onUngroupSelected) {
-                            Icon(Icons.Default.LinkOff, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.LinkOff, contentDescription = null, tint = PixelCraftColors.AccentHover, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.ui_ungroup), color = Color(0xFFFBBF24), fontSize = 12.sp)
+                            Text(stringResource(R.string.ui_ungroup), color = PixelCraftColors.AccentHover, fontSize = 12.sp)
                         }
                     }
                 }
@@ -135,7 +138,7 @@ fun PixelCraftLayersSheet(
                 ) {
                     Text(
                         text = stringResource(R.string.ui_no_layers_yet_tap_in_the_top_bar_to_add),
-                        color = Color(0xFF949CB0),
+                        color = PixelCraftColors.TextSecondary,
                         fontSize = 13.sp
                     )
                 }
@@ -160,13 +163,13 @@ fun PixelCraftLayersSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isPrimary) Color(0xFF263042) else Color(0xFF13161F))
+                                .background(if (isPrimary) PixelCraftColors.SurfaceElevated else PixelCraftColors.Background)
                                 .border(
                                     width = if (isPrimary) 1.5.dp else 1.dp,
                                     color = when {
-                                        isPrimary -> Color(0xFF00E5FF)
-                                        isMultiSelected -> Color(0xFF7C4DFF)
-                                        else -> Color(0xFF2B3140)
+                                        isPrimary -> PixelCraftColors.Accent
+                                        isMultiSelected -> PixelCraftColors.AccentHover
+                                        else -> PixelCraftColors.Border
                                     },
                                     shape = RoundedCornerShape(10.dp)
                                 )
@@ -183,7 +186,7 @@ fun PixelCraftLayersSheet(
                                 Icon(
                                     imageVector = typeIcon,
                                     contentDescription = typeLabel,
-                                    tint = if (isPrimary) Color(0xFF00E5FF) else Color(0xFFA0A8B8),
+                                    tint = if (isPrimary) PixelCraftColors.Accent else PixelCraftColors.TextSecondary,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -194,7 +197,7 @@ fun PixelCraftLayersSheet(
                                         } else {
                                             layer.name
                                         },
-                                        color = Color.White,
+                                        color = PixelCraftColors.TextPrimary,
                                         fontWeight = if (isPrimary) FontWeight.Bold else FontWeight.Medium,
                                         fontSize = 13.sp,
                                         maxLines = 1,
@@ -205,7 +208,7 @@ fun PixelCraftLayersSheet(
                                             append(typeLabel)
                                             if (layer.groupId != null) append(" • Grouped")
                                         },
-                                        color = Color(0xFF8E96A8),
+                                        color = PixelCraftColors.TextSecondary,
                                         fontSize = 12.sp,
                                         maxLines = 1
                                     )
@@ -224,7 +227,7 @@ fun PixelCraftLayersSheet(
                                     Icon(
                                         imageVector = Icons.Default.Edit,
                                         contentDescription = stringResource(R.string.ui_rename_named, layer.name),
-                                        tint = Color(0xFFA0A8B8),
+                                        tint = PixelCraftColors.TextSecondary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -236,7 +239,7 @@ fun PixelCraftLayersSheet(
                                     Icon(
                                         imageVector = if (layer.isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                         contentDescription = if (layer.isVisible) stringResource(R.string.ui_hide_layer) else stringResource(R.string.ui_show_layer),
-                                        tint = if (layer.isVisible) Color(0xFF00E5FF) else Color.Gray,
+                                        tint = if (layer.isVisible) PixelCraftColors.Accent else PixelCraftColors.TextMuted,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -248,7 +251,7 @@ fun PixelCraftLayersSheet(
                                     Icon(
                                         imageVector = if (layer.isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
                                         contentDescription = if (layer.isLocked) stringResource(R.string.ui_unlock_layer) else stringResource(R.string.ui_lock_layer),
-                                        tint = if (layer.isLocked) Color(0xFFFFB300) else Color.Gray,
+                                        tint = if (layer.isLocked) PixelCraftColors.Warning else PixelCraftColors.TextMuted,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -261,7 +264,7 @@ fun PixelCraftLayersSheet(
                                     Icon(
                                         imageVector = Icons.Default.ArrowUpward,
                                         contentDescription = stringResource(R.string.ui_move_forward),
-                                        tint = if (canMoveUp) Color.White else Color(0xFF444A58),
+                                        tint = if (canMoveUp) PixelCraftColors.TextPrimary else PixelCraftColors.TextMuted.copy(alpha = 0.4f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -274,7 +277,7 @@ fun PixelCraftLayersSheet(
                                     Icon(
                                         imageVector = Icons.Default.ArrowDownward,
                                         contentDescription = stringResource(R.string.ui_move_backward),
-                                        tint = if (canMoveDown) Color.White else Color(0xFF444A58),
+                                        tint = if (canMoveDown) PixelCraftColors.TextPrimary else PixelCraftColors.TextMuted.copy(alpha = 0.4f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -287,7 +290,7 @@ fun PixelCraftLayersSheet(
                                     Icon(
                                         imageVector = Icons.Default.Delete,
                                         contentDescription = stringResource(R.string.ui_delete_layer),
-                                        tint = if (!layer.isLocked) Color(0xFFFF5252) else Color(0xFF553333),
+                                        tint = if (!layer.isLocked) PixelCraftColors.Danger else PixelCraftColors.TextMuted.copy(alpha = 0.4f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }

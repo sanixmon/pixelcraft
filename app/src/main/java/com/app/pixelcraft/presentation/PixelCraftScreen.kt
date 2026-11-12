@@ -2,6 +2,7 @@ package com.app.pixelcraft.presentation
 
 import com.app.pixelcraft.presentation.i18n.asString
 import com.app.pixelcraft.presentation.i18n.UiText
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import android.Manifest
@@ -31,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -339,6 +341,7 @@ fun PixelCraftScreen(
                     else -> false
                 }
             },
+        containerColor = PixelCraftColors.Background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             PixelCraftTopBar(
@@ -371,7 +374,7 @@ fun PixelCraftScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFF12151E))
+                .background(PixelCraftColors.CanvasStage)
         ) {
             val isLandscapeWide = maxWidth > 640.dp && maxWidth > maxHeight
 
@@ -414,7 +417,8 @@ fun PixelCraftScreen(
                         modifier = Modifier
                             .width(340.dp)
                             .fillMaxHeight()
-                            .background(Color(0xFF1A1E29))
+                            .background(PixelCraftColors.Surface)
+                            .border(1.dp, PixelCraftColors.Border)
                             .shadow(10.dp),
                         contentAlignment = Alignment.BottomCenter
                     ) {
@@ -451,12 +455,13 @@ fun PixelCraftScreen(
                         .padding(bottom = PortraitCanvasBottomReserve)
                 )
 
-                Box(
+                Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .shadow(10.dp)
                 ) {
+                    HorizontalDivider(color = PixelCraftColors.Border, thickness = 1.dp)
                     ActiveToolSheetContent()
                 }
             }
@@ -660,8 +665,8 @@ private fun CoachMarksOverlay(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xEE181D2A))
-            .border(1.dp, Color(0xFF00E5FF), RoundedCornerShape(14.dp))
+            .background(PixelCraftColors.Surface)
+            .border(1.5.dp, PixelCraftColors.Accent, RoundedCornerShape(14.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -669,24 +674,24 @@ private fun CoachMarksOverlay(
         Icon(
             imageVector = Icons.Default.TouchApp,
             contentDescription = null,
-            tint = Color(0xFF00E5FF),
+            tint = PixelCraftColors.Accent,
             modifier = Modifier.size(22.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.ui_quick_gestures),
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.Accent,
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp
             )
             Text(
                 text = stringResource(R.string.ui_double_tap_text_to_edit_pinch_twist_with),
-                color = Color(0xFFD5DAE5),
+                color = PixelCraftColors.TextSecondary,
                 fontSize = 11.sp
             )
         }
         IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_dismiss_tips), tint = Color.White, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_dismiss_tips), tint = PixelCraftColors.TextSecondary, modifier = Modifier.size(16.dp))
         }
     }
 }

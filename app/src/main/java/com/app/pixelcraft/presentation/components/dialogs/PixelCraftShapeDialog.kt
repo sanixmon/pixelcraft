@@ -1,11 +1,13 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -55,12 +57,13 @@ fun PixelCraftShapeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_shapes_word_balloons),
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 17.sp
             )
         },
@@ -94,8 +97,9 @@ fun PixelCraftShapeDialog(
                     items(filteredShapes) { shape ->
                         Column(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF181A20))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(PixelCraftColors.Background)
+                                .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(12.dp))
                                 .clickable { onSelectShape(shape) }
                                 .padding(vertical = 10.dp, horizontal = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -108,7 +112,7 @@ fun PixelCraftShapeDialog(
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = shape.localizedLabel(),
-                                color = Color.White,
+                                color = PixelCraftColors.TextPrimary,
                                 fontSize = 10.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -121,7 +125,7 @@ fun PixelCraftShapeDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )
@@ -160,14 +164,14 @@ internal fun ShapeVectorPreview(
         val isBalloon = shapeType.category == ShapeCategory.BALLOONS
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
-            color = if (isBalloon) 0xFFEFF8FF.toInt() else 0x3800E5FF
+            color = if (isBalloon) 0xFFFFFDF8.toInt() else 0x26C8871A
         }
         val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = 2.dp.toPx()
             strokeJoin = Paint.Join.ROUND
             strokeCap = Paint.Cap.ROUND
-            color = 0xFF00E5FF.toInt()
+            color = 0xFFC8871A.toInt()
         }
         native.drawPath(path, fillPaint)
         native.drawPath(path, strokePaint)

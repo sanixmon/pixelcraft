@@ -1,7 +1,9 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -89,43 +91,55 @@ internal fun ColumnScope.PhotoCropInspector(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            OutlinedButton(onClick = {
-                onUpdate(false) {
-                    it.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
-                }
-            }) {
-                Text(stringResource(R.string.ui_full_reset), color = Color(0xFF00E5FF), fontSize = 11.sp)
+            OutlinedButton(
+                onClick = {
+                    onUpdate(false) {
+                        it.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
+                    }
+                },
+                border = BorderStroke(1.dp, PixelCraftColors.Border)
+            ) {
+                Text(stringResource(R.string.ui_full_reset), color = PixelCraftColors.Accent, fontSize = 11.sp)
             }
-            OutlinedButton(onClick = {
-                onUpdate(false) {
-                    val minSide = minOf(it.width, it.height)
-                    it.copy(
-                        cropLeft = 0.08f,
-                        cropTop = 0.08f,
-                        cropRight = 0.92f,
-                        cropBottom = 0.92f,
-                        width = minSide,
-                        height = minSide
-                    )
-                }
-            }) {
-                Text("1:1 Square", color = Color.White, fontSize = 11.sp)
+            OutlinedButton(
+                onClick = {
+                    onUpdate(false) {
+                        val minSide = minOf(it.width, it.height)
+                        it.copy(
+                            cropLeft = 0.08f,
+                            cropTop = 0.08f,
+                            cropRight = 0.92f,
+                            cropBottom = 0.92f,
+                            width = minSide,
+                            height = minSide
+                        )
+                    }
+                },
+                border = BorderStroke(1.dp, PixelCraftColors.Border)
+            ) {
+                Text("1:1 Square", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
             }
-            OutlinedButton(onClick = {
-                onUpdate(false) {
-                    val base = minOf(it.width, it.height)
-                    it.copy(width = base, height = base * 1.25f)
-                }
-            }) {
-                Text("4:5 Portrait", color = Color.White, fontSize = 11.sp)
+            OutlinedButton(
+                onClick = {
+                    onUpdate(false) {
+                        val base = minOf(it.width, it.height)
+                        it.copy(width = base, height = base * 1.25f)
+                    }
+                },
+                border = BorderStroke(1.dp, PixelCraftColors.Border)
+            ) {
+                Text("4:5 Portrait", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
             }
-            OutlinedButton(onClick = {
-                onUpdate(false) {
-                    val base = maxOf(it.width, it.height)
-                    it.copy(width = base, height = base * (9f / 16f))
-                }
-            }) {
-                Text("16:9 Wide", color = Color.White, fontSize = 11.sp)
+            OutlinedButton(
+                onClick = {
+                    onUpdate(false) {
+                        val base = maxOf(it.width, it.height)
+                        it.copy(width = base, height = base * (9f / 16f))
+                    }
+                },
+                border = BorderStroke(1.dp, PixelCraftColors.Border)
+            ) {
+                Text("16:9 Wide", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
             }
         }
 
@@ -205,12 +219,15 @@ internal fun ColumnScope.PhotoAdjustInspector(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.ui_filter_presets), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_filter_presets), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
             if (!adj.isDefault) {
-                OutlinedButton(onClick = {
-                    onUpdate(false) { it.copy(imageAdjustments = ImageAdjustments()) }
-                }) {
-                    Text(stringResource(R.string.ui_reset_all), color = Color(0xFF00E5FF), fontSize = 11.sp)
+                OutlinedButton(
+                    onClick = {
+                        onUpdate(false) { it.copy(imageAdjustments = ImageAdjustments()) }
+                    },
+                    border = BorderStroke(1.dp, PixelCraftColors.Border)
+                ) {
+                    Text(stringResource(R.string.ui_reset_all), color = PixelCraftColors.Accent, fontSize = 11.sp)
                 }
             }
         }
@@ -302,7 +319,7 @@ internal fun ColumnScope.PhotoMaskInspector(
     onStartEyedropper: (EyedropperTarget) -> Unit
 ) {
     if (layer.type == LayerType.IMAGE) {
-        Text(stringResource(R.string.ui_clip_photo_into_shape), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+        Text(stringResource(R.string.ui_clip_photo_into_shape), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()

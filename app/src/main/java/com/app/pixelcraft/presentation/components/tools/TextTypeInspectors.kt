@@ -1,8 +1,10 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.labelRes
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -145,10 +147,13 @@ internal fun ColumnScope.TextFontInspector(
             singleLine = true,
             modifier = Modifier.weight(1f)
         )
-        OutlinedButton(onClick = onImportFont) {
-            Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+        OutlinedButton(
+            onClick = onImportFont,
+            border = BorderStroke(1.dp, PixelCraftColors.Border)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null, tint = PixelCraftColors.Accent, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
-            Text(".ttf/.otf", color = Color(0xFF00E5FF), fontSize = 12.sp)
+            Text(".ttf/.otf", color = PixelCraftColors.Accent, fontSize = 12.sp)
         }
     }
 
@@ -196,10 +201,10 @@ internal fun ColumnScope.TextFontInspector(
             Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) Color(0xFF263346) else Color(0xFF11141C))
+                    .background(if (isSelected) PixelCraftColors.Accent.copy(alpha = 0.12f) else PixelCraftColors.Surface)
                     .border(
                         width = if (isSelected) 1.5.dp else 1.dp,
-                        color = if (isSelected) Color(0xFF00E5FF) else Color(0xFF2D3240),
+                        color = if (isSelected) PixelCraftColors.Accent else PixelCraftColors.Border,
                         shape = RoundedCornerShape(8.dp)
                     )
                     .clickable { onUpdate(false) { it.copy(fontKey = font.key) } }
@@ -213,14 +218,14 @@ internal fun ColumnScope.TextFontInspector(
                     Text(
                         text = previewSample,
                         fontFamily = composeFamily,
-                        color = Color.White,
+                        color = PixelCraftColors.TextPrimary,
                         fontSize = 17.sp,
                         maxLines = 1
                     )
                     Icon(
                         imageVector = if (isFav) Icons.Default.Star else Icons.Default.StarBorder,
                         contentDescription = stringResource(R.string.ui_favorite_named, font.displayName),
-                        tint = if (isFav) Color(0xFFFFD54F) else Color(0xFF687082),
+                        tint = if (isFav) PixelCraftColors.Accent else PixelCraftColors.TextMuted,
                         modifier = Modifier
                             .size(15.dp)
                             .clickable { onToggleFavoriteFont(font.key) }
@@ -229,14 +234,14 @@ internal fun ColumnScope.TextFontInspector(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = font.displayName,
-                    color = if (isSelected) Color(0xFF00E5FF) else Color(0xFFCCCCCC),
+                    color = if (isSelected) PixelCraftColors.Accent else PixelCraftColors.TextPrimary,
                     fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = font.category,
-                    color = Color(0xFF7D8597),
+                    color = PixelCraftColors.TextSecondary,
                     fontSize = 10.sp,
                     maxLines = 1
                 )
@@ -393,21 +398,30 @@ internal fun ColumnScope.TextStyleInspector(
     }
 
     Spacer(modifier = Modifier.height(6.dp))
-    Text(stringResource(R.string.ui_transform_case), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+    Text(stringResource(R.string.ui_transform_case), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.UPPERCASE) }) {
-            Text(stringResource(R.string.ui_uppercase), color = Color.White, fontSize = 11.sp)
+        OutlinedButton(
+            onClick = { onApplyTextCase(TextCaseMode.UPPERCASE) },
+            border = BorderStroke(1.dp, PixelCraftColors.Border)
+        ) {
+            Text(stringResource(R.string.ui_uppercase), color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
         }
-        OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.LOWERCASE) }) {
-            Text("lowercase", color = Color.White, fontSize = 11.sp)
+        OutlinedButton(
+            onClick = { onApplyTextCase(TextCaseMode.LOWERCASE) },
+            border = BorderStroke(1.dp, PixelCraftColors.Border)
+        ) {
+            Text("lowercase", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
         }
-        OutlinedButton(onClick = { onApplyTextCase(TextCaseMode.TITLE_CASE) }) {
-            Text(stringResource(R.string.ui_title_case), color = Color.White, fontSize = 11.sp)
+        OutlinedButton(
+            onClick = { onApplyTextCase(TextCaseMode.TITLE_CASE) },
+            border = BorderStroke(1.dp, PixelCraftColors.Border)
+        ) {
+            Text(stringResource(R.string.ui_title_case), color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
         }
     }
 }

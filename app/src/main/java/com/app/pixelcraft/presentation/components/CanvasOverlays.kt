@@ -1,5 +1,6 @@
 package com.app.pixelcraft.presentation.components
 import com.app.pixelcraft.R
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import androidx.compose.ui.res.stringResource
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
@@ -111,8 +112,8 @@ internal fun BoxScope.ViewportControlsPill(
             .align(Alignment.TopStart)
             .padding(10.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xCC181C26))
-            .border(1.dp, Color(0xFF2D3446), RoundedCornerShape(16.dp))
+            .background(PixelCraftColors.Surface.copy(alpha = 0.94f))
+            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -120,7 +121,7 @@ internal fun BoxScope.ViewportControlsPill(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (isPanMode) Color(0x3300E5FF) else Color.Transparent)
+                .background(if (isPanMode) PixelCraftColors.Accent.copy(alpha = 0.14f) else Color.Transparent)
                 .clickable(onClick = onTogglePanMode)
                 .padding(horizontal = 6.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -128,13 +129,13 @@ internal fun BoxScope.ViewportControlsPill(
             Icon(
                 imageVector = if (isPanMode) Icons.Default.PanTool else Icons.Default.ZoomIn,
                 contentDescription = stringResource(R.string.ui_toggle_canvas_pan_mode),
-                tint = if (isPanMode) Color(0xFF00E5FF) else Color(0xFFB8C0D0),
+                tint = if (isPanMode) PixelCraftColors.Accent else PixelCraftColors.TextSecondary,
                 modifier = Modifier.size(14.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "${(zoom * 100).roundToInt()}%",
-                color = if (isPanMode) Color(0xFF00E5FF) else Color.White,
+                color = if (isPanMode) PixelCraftColors.Accent else PixelCraftColors.TextPrimary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -143,7 +144,7 @@ internal fun BoxScope.ViewportControlsPill(
         if (canFit) {
             Text(
                 text = stringResource(R.string.ui_fit),
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.Accent,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -162,13 +163,13 @@ internal fun BoxScope.RotationSnapPill(degrees: Float) {
             .align(Alignment.TopCenter)
             .padding(top = 10.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xDD10131A))
-            .border(1.dp, Color(0xFF00E5FF), RoundedCornerShape(14.dp))
+            .background(PixelCraftColors.Surface.copy(alpha = 0.95f))
+            .border(1.dp, PixelCraftColors.Accent, RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
         Text(
             text = "${degrees.roundToInt()}°",
-            color = Color(0xFF00E5FF),
+            color = PixelCraftColors.Accent,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold
         )
@@ -182,21 +183,21 @@ internal fun BoxScope.EyedropperBanner(onCancel: () -> Unit) {
             .align(Alignment.TopCenter)
             .padding(top = 10.dp, start = 16.dp, end = 16.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xEE111827))
-            .border(1.5.dp, Color(0xFF00E5FF), RoundedCornerShape(20.dp))
+            .background(PixelCraftColors.Surface.copy(alpha = 0.96f))
+            .border(1.5.dp, PixelCraftColors.Accent, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Colorize,
             contentDescription = null,
-            tint = Color(0xFF00E5FF),
+            tint = PixelCraftColors.Accent,
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = stringResource(R.string.ui_tap_canvas_to_pick_color),
-            color = Color.White,
+            color = PixelCraftColors.TextPrimary,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -204,7 +205,7 @@ internal fun BoxScope.EyedropperBanner(onCancel: () -> Unit) {
         Icon(
             imageVector = Icons.Default.Close,
             contentDescription = stringResource(R.string.ui_cancel_eyedropper),
-            tint = Color(0xFFFF5252),
+            tint = PixelCraftColors.Danger,
             modifier = Modifier
                 .size(18.dp)
                 .clickable(onClick = onCancel)
@@ -233,13 +234,13 @@ internal fun LayerContextMenu(
         expanded = expanded && target != null,
         onDismissRequest = onDismiss,
         offset = offset,
-        modifier = Modifier.background(Color(0xFF1D222E))
+        modifier = Modifier.background(PixelCraftColors.Surface)
     ) {
         if (target != null) {
             if (target.type == LayerType.TEXT && !target.isLocked) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.ui_edit_text), color = Color.White) },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF00E5FF)) },
+                    text = { Text(stringResource(R.string.ui_edit_text), color = PixelCraftColors.TextPrimary) },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = PixelCraftColors.Accent) },
                     onClick = {
                         onDismiss()
                         onEditText()
@@ -248,8 +249,8 @@ internal fun LayerContextMenu(
             }
             if (!target.isLocked) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.action_duplicate), color = Color.White) },
-                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White) },
+                    text = { Text(stringResource(R.string.action_duplicate), color = PixelCraftColors.TextPrimary) },
+                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = PixelCraftColors.TextSecondary) },
                     onClick = {
                         onDismiss()
                         onDuplicate()
@@ -257,8 +258,8 @@ internal fun LayerContextMenu(
                 )
             }
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.ui_copy_style), color = Color.White) },
-                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color(0xFF00E5FF)) },
+                text = { Text(stringResource(R.string.ui_copy_style), color = PixelCraftColors.TextPrimary) },
+                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = PixelCraftColors.Accent) },
                 onClick = {
                     onDismiss()
                     onCopyStyle()
@@ -266,27 +267,27 @@ internal fun LayerContextMenu(
             )
             if (canPasteStyle && !target.isLocked) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.ui_paste_style), color = Color.White) },
-                    leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null, tint = Color(0xFF00E5FF)) },
+                    text = { Text(stringResource(R.string.ui_paste_style), color = PixelCraftColors.TextPrimary) },
+                    leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null, tint = PixelCraftColors.Accent) },
                     onClick = {
                         onDismiss()
                         onPasteStyle()
                     }
                 )
             }
-            HorizontalDivider(color = Color(0xFF2E3546))
+            HorizontalDivider(color = PixelCraftColors.Border)
             if (!target.isLocked) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.ui_bring_to_front), color = Color.White) },
-                    leadingIcon = { Icon(Icons.Default.VerticalAlignTop, contentDescription = null, tint = Color.White) },
+                    text = { Text(stringResource(R.string.ui_bring_to_front), color = PixelCraftColors.TextPrimary) },
+                    leadingIcon = { Icon(Icons.Default.VerticalAlignTop, contentDescription = null, tint = PixelCraftColors.TextSecondary) },
                     onClick = {
                         onDismiss()
                         onBringToFront()
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.ui_send_to_back), color = Color.White) },
-                    leadingIcon = { Icon(Icons.Default.VerticalAlignBottom, contentDescription = null, tint = Color.White) },
+                    text = { Text(stringResource(R.string.ui_send_to_back), color = PixelCraftColors.TextPrimary) },
+                    leadingIcon = { Icon(Icons.Default.VerticalAlignBottom, contentDescription = null, tint = PixelCraftColors.TextSecondary) },
                     onClick = {
                         onDismiss()
                         onSendToBack()
@@ -294,12 +295,12 @@ internal fun LayerContextMenu(
                 )
             }
             DropdownMenuItem(
-                text = { Text(if (target.isLocked) stringResource(R.string.ui_unlock_layer) else stringResource(R.string.ui_lock_layer), color = Color.White) },
+                text = { Text(if (target.isLocked) stringResource(R.string.ui_unlock_layer) else stringResource(R.string.ui_lock_layer), color = PixelCraftColors.TextPrimary) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (target.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
                         contentDescription = null,
-                        tint = Color(0xFFFFB300)
+                        tint = PixelCraftColors.Warning
                     )
                 },
                 onClick = {
@@ -309,8 +310,8 @@ internal fun LayerContextMenu(
             )
             if (!target.isLocked) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.action_delete), color = Color(0xFFFF5252)) },
-                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252)) },
+                    text = { Text(stringResource(R.string.action_delete), color = PixelCraftColors.Danger) },
+                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = PixelCraftColors.Danger) },
                     onClick = {
                         onDismiss()
                         onDelete()
@@ -331,7 +332,7 @@ internal fun DrawScope.drawVirtualGrid(
     val rows = state.gridRows + 1
     val colStep = canvasW / cols
     val rowStep = canvasH / rows
-    val gridColor = Color(0x5500E5FF)
+    val gridColor = PixelCraftColors.GridLine
     val strokeW = 1.2f / effectiveScale
 
     for (c in 1 until cols) {
@@ -360,7 +361,7 @@ internal fun DrawScope.drawSafeZoneOverlay(
     val dash = PathEffect.dashPathEffect(floatArrayOf(14f / effectiveScale, 10f / effectiveScale))
 
     drawRect(
-        color = Color(0xAAFF4081),
+        color = PixelCraftColors.Terracotta.copy(alpha = 0.75f),
         topLeft = Offset(leftInset, topInset),
         size = Size(safeW, safeH),
         style = Stroke(width = 2f / effectiveScale, pathEffect = dash)

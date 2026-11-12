@@ -60,7 +60,7 @@ data class CanvasConfig(
     val height: Int = 1080,
     val preset: AspectRatioPreset = AspectRatioPreset.SQUARE,
     val backgroundType: BackgroundType = BackgroundType.SOLID_COLOR,
-    val backgroundColor: Long = 0xFF2A2E39,
+    val backgroundColor: Long = 0xFFFFFFFFL,
     val gradientColors: List<Long> = listOf(0xFF1F1C2C, 0xFF928DAB),
     val gradientAngle: Float = 45f,
     val gradientType: GradientType = GradientType.LINEAR,

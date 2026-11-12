@@ -1,6 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -75,7 +76,7 @@ fun PresetsToolPanel(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(max = 235.dp)
-            .background(Color(0xFF1B1F2B))
+            .background(PixelCraftColors.Surface)
             .verticalScroll(rememberScrollState())
             .padding(10.dp)
     ) {
@@ -86,17 +87,20 @@ fun PresetsToolPanel(
         ) {
             Text(
                 text = stringResource(R.string.ui_templates_count, filteredPresets.size),
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
 
             Button(
                 onClick = { onOpenDialog(ActiveDialog.SAVE_PROJECT) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2B3242)),
-                shape = RoundedCornerShape(8.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                Text(stringResource(R.string.ui_save_project), fontSize = 12.sp)
+                Text(stringResource(R.string.ui_save_project), color = Color.White, fontSize = 12.sp)
             }
         }
 
@@ -148,9 +152,9 @@ fun PresetsToolPanel(
                 Column(
                     modifier = Modifier
                         .width(114.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF13161F))
-                        .border(1.dp, Color(0xFF2B3140), RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PixelCraftColors.Background)
+                        .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(12.dp))
                         .clickable { onApplyPreset(preset) }
                         .padding(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -170,7 +174,7 @@ fun PresetsToolPanel(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = preset.title,
-                        color = Color.White,
+                        color = PixelCraftColors.TextPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -178,7 +182,7 @@ fun PresetsToolPanel(
                     )
                     Text(
                         text = preset.category.localizedLabel(),
-                        color = Color(0xFF8E96A8),
+                        color = PixelCraftColors.TextMuted,
                         fontSize = 10.sp
                     )
                 }
@@ -187,7 +191,7 @@ fun PresetsToolPanel(
 
         if (savedProjects.isNotEmpty()) {
             Spacer(modifier = Modifier.height(10.dp))
-            Text(stringResource(R.string.ui_recent_projects_count, savedProjects.size), color = Color(0xFFCCCCCC), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_recent_projects_count, savedProjects.size), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier
@@ -198,18 +202,18 @@ fun PresetsToolPanel(
                 for (p in savedProjects) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF13161F))
-                            .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(PixelCraftColors.Background)
+                            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(10.dp))
                             .clickable { onLoadProject(p.id) }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.FolderOpen, contentDescription = null, tint = PixelCraftColors.Accent, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = p.name,
-                            color = Color.White,
+                            color = PixelCraftColors.TextPrimary,
                             fontSize = 12.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -220,7 +224,7 @@ fun PresetsToolPanel(
                             onClick = { onDeleteProject(p.id) },
                             modifier = Modifier.size(28.dp)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_named, p.name), tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_delete_named, p.name), tint = PixelCraftColors.Danger, modifier = Modifier.size(16.dp))
                         }
                     }
                 }

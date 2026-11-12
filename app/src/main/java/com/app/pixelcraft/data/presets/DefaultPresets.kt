@@ -64,7 +64,7 @@ object DefaultPresets {
                 height = 1080,
                 preset = AspectRatioPreset.SQUARE,
                 backgroundType = BackgroundType.SOLID_COLOR,
-                backgroundColor = 0xFF2A2E39
+                backgroundColor = 0xFFFFFFFFL
             ),
             initialLayers = listOf(
                 TextSizing.withEstimatedBounds(
@@ -75,7 +75,7 @@ object DefaultPresets {
                         text = "New Text",
                         fontKey = "poppins",
                         fontSize = 48f,
-                        textColor = 0xFFFFFFFF,
+                        textColor = 0xFF1C1814L,
                         positionX = 0f,
                         positionY = 0f,
                         zIndex = 0,
