@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">PixelCraft</string>
-    <string name="app_subtitle">Text on Photo Studio</string>
-    <string name="home_new_canvas">New Canvas</string>
-    <string name="home_from_photo">From Photo</string>
-    <string name="home_templates">Templates</string>
-    <string name="home_my_projects">My Projects</string>
-    <string name="home_continue_draft">Continue Unsaved Draft</string>
-    <string name="home_import_project">Import .pixelcraft</string>
-    <string name="home_search_projects">Search saved projects…</string>
-    <string name="home_no_projects">No saved projects yet. Start a new canvas or pick a template above.</string>
     <string name="action_save">Save</string>
     <string name="action_discard">Discard</string>
     <string name="action_cancel">Cancel</string>
@@ -18,16 +9,17 @@
     <string name="action_delete">Delete</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_rename">Rename</string>
-    <string name="action_reset">Reset</string>
-    <string name="unsaved_changes_title">Save changes?</string>
-    <string name="unsaved_changes_body">Your design has unsaved changes. Save as a project before leaving?</string>
-    <string name="autosaved_indicator">Autosaved</string>
     <string name="nav_templates">Templates</string>
     <string name="nav_text">Text</string>
-    <string name="nav_objects">Objects</string>
     <string name="nav_canvas">Canvas</string>
     <string name="nav_effects">Effects</string>
-    <string name="onboarding_tip">Tip: Tap to select, pinch with 2 fingers to resize &amp; rotate, double-tap text to edit.</string>
+    <string name="nav_date">Date</string>
+    <string name="nav_shapes">Shapes</string>
+    <string name="nav_layers">Layers</string>
+    <string name="ui_position">Position</string>
+    <string name="ui_save_as_project">Save as project</string>
+    <string name="ui_new_project">New project</string>
+    <string name="ui_projects">Projects</string>
 
     <!-- Generated UI strings -->
     <string name="enum_blend_darken">Darken</string>
@@ -180,9 +172,7 @@
     <string name="ui_about_highlights">Highlights:\n• 15 bundled open-source fonts + custom .ttf/.otf import\n• Curved arc text, letter spacing, gradient fill, neon glow &amp; 3D extrusion\n• Vector path strokes (Outside / Center / Inside, dash patterns, join &amp; cap)\n• 24 vector shapes &amp; word balloons + photo crop, filters &amp; shape masks\n• 2-finger pinch/rotate gestures, Smart Guides, Canvas Eyedropper &amp; autosave\n• PNG, JPEG &amp; WebP (lossy/lossless) export + portable .pixelcraft archives</string>
     <string name="ui_about_pixelcraft">About PixelCraft</string>
     <string name="ui_about_version">PixelCraft v%1$s</string>
-    <string name="ui_add_layer">Add Layer</string>
     <string name="ui_adjust">Adjust</string>
-    <string name="ui_align">Align</string>
     <string name="ui_align_bottom">Align Bottom</string>
     <string name="ui_align_left">Align Left</string>
     <string name="ui_align_right">Align Right</string>
@@ -194,9 +184,8 @@
     <string name="ui_alpha">Alpha</string>
     <string name="ui_apply">Apply</string>
     <string name="ui_arc_curve_angle">Arc Curve Angle</string>
-    <string name="ui_autosaved_at">Autosaved %1$s</string>
     <string name="ui_back_to_home">Back to Home</string>
-    <string name="ui_bg_pill">Bg Pill</string>
+    <string name="ui_bg_pill">Background</string>
     <string name="ui_blend">Blend</string>
     <string name="ui_blur_radius">Blur Radius</string>
     <string name="ui_bold">Bold</string>
@@ -211,6 +200,7 @@
     <string name="ui_center_horizontally">Center Horizontally</string>
     <string name="ui_center_vertically">Center Vertically</string>
     <string name="ui_clip_photo_into_shape">Clip Photo into Shape</string>
+    <string name="ui_back">Back</string>
     <string name="ui_close">Close</string>
     <string name="ui_close_layers">Close Layers</string>
     <string name="ui_color">Color</string>
@@ -235,7 +225,6 @@
     <string name="ui_dash_gap">Dash Gap</string>
     <string name="ui_dash_length">Dash Length</string>
     <string name="ui_dash_pattern">Dash Pattern</string>
-    <string name="ui_date_time_stamp">Date / Time Stamp…</string>
     <string name="ui_decrease_named">Decrease %1$s</string>
     <string name="ui_delete_layer">Delete Layer</string>
     <string name="ui_delete_named">Delete %1$s</string>
@@ -260,10 +249,7 @@
     <string name="ui_enable_vector_stroke">Enable Vector Stroke</string>
     <string name="ui_end_color">End Color</string>
     <string name="ui_enter_text">Enter text…</string>
-    <string name="ui_export_image">Export Image</string>
-    <string name="ui_export_output">Output: %1$d × %2$d px • %3$s</string>
     <string name="ui_export_selected_layer_only_sticker">Export selected layer only (Sticker)</string>
-    <string name="ui_export_share_image">Export &amp; Share Image</string>
     <string name="ui_extrusion_angle">Extrusion Angle</string>
     <string name="ui_favorite_named">Favorite %1$s</string>
     <string name="ui_fill">Fill</string>
@@ -280,7 +266,6 @@
     <string name="ui_font_size">Font Size</string>
     <string name="ui_format">Format</string>
     <string name="ui_full_reset">Full Reset</string>
-    <string name="ui_gallery_picture">Gallery picture</string>
     <string name="ui_gap_distance">Gap Distance</string>
     <string name="ui_glow">Glow</string>
     <string name="ui_glow_blur_radius">Glow Blur Radius</string>
@@ -316,16 +301,14 @@
     <string name="ui_more_options">More Options</string>
     <string name="ui_move_backward">Move Backward</string>
     <string name="ui_move_forward">Move Forward</string>
-    <string name="ui_my_projects_count">My Projects (%1$d)</string>
     <string name="ui_my_saved_styles">My Saved Styles</string>
     <string name="ui_new_style_name">New style name…</string>
     <string name="ui_no_edits_recorded_in_this_session_yet">No edits recorded in this session yet.</string>
-    <string name="ui_no_layers_yet_tap_in_the_top_bar_to_add">No layers yet — tap + in the top bar to add text, shapes, or photos.</string>
+    <string name="ui_no_layers_yet_tap_in_the_top_bar_to_add">No layers yet.</string>
     <string name="ui_no_matching_projects">No matching projects found</string>
     <string name="ui_no_saved_projects_yet">No saved projects yet</string>
     <string name="ui_none">None</string>
     <string name="ui_none_hollow">None (Hollow)</string>
-    <string name="ui_nudge">Nudge</string>
     <string name="ui_nudge_down">Nudge Down</string>
     <string name="ui_nudge_left">Nudge Left</string>
     <string name="ui_nudge_right">Nudge Right</string>
@@ -336,7 +319,6 @@
     <string name="ui_offset_y">Offset Y</string>
     <string name="ui_ok">OK</string>
     <string name="ui_opacity">Opacity</string>
-    <string name="ui_optimized_for_device_ram">Optimized for device RAM</string>
     <string name="ui_outer_glow_color">Outer Glow Color</string>
     <string name="ui_paste_style">Paste Style</string>
     <string name="ui_phase_offset">Phase Offset</string>
@@ -347,19 +329,15 @@
     <string name="ui_photo_corner_radius">Photo Corner Radius</string>
     <string name="ui_photo_dim_overlay">Photo Dim Overlay</string>
     <string name="ui_photo_layer">Photo Layer</string>
-    <string name="ui_pick_a_template_above_or_start_a_new_can">Pick a template above or start a New Canvas — saved designs appear here with instant previews.</string>
     <string name="ui_pick_color_from_canvas">Pick Color from Canvas</string>
-    <string name="ui_pick_ratio_size">Pick ratio &amp; size</string>
     <string name="ui_pill_padding">Pill Padding</string>
     <string name="ui_preset_aspect_ratio">Preset Aspect Ratio:</string>
     <string name="ui_project_actions">Project Actions</string>
     <string name="ui_project_name">Project Name</string>
     <string name="ui_quick_gestures">Quick Gestures</string>
-    <string name="ui_quick_share">Quick Share</string>
     <string name="ui_radial_gradient">Radial Gradient</string>
     <string name="ui_range">Range: %1$s – %2$s %3$s</string>
     <string name="ui_recent_projects_count">Recent Saved Projects (%1$d)</string>
-    <string name="ui_recently">Recently</string>
     <string name="ui_redo">Redo</string>
     <string name="ui_redo_named">Redo %1$s</string>
     <string name="ui_reflect">Reflect</string>
@@ -385,7 +363,6 @@
     <string name="ui_save_project">Save Project</string>
     <string name="ui_save_to_gallery">Save to Gallery</string>
     <string name="ui_save_your_favorite_text_shape_styles_her">Save your favorite text &amp; shape styles here to reuse across any project.</string>
-    <string name="ui_saved">Saved</string>
     <string name="ui_saved_styles">Saved Styles</string>
     <string name="ui_search_fonts">Search %1$d fonts…</string>
     <string name="ui_search_saved_projects">Search saved projects…</string>
@@ -398,7 +375,6 @@
     <string name="ui_share_design">Share design</string>
     <string name="ui_share_image">Share image</string>
     <string name="ui_share_pixelcraft">Share .pixelcraft</string>
-    <string name="ui_share_without_saving_to_gallery">Share Without Saving to Gallery</string>
     <string name="ui_show_layer">Show Layer</string>
     <string name="ui_side_darken">Side Darken</string>
     <string name="ui_size">Size</string>
@@ -407,8 +383,6 @@
     <string name="ui_solid_fill">Solid Fill</string>
     <string name="ui_spacing">Spacing</string>
     <string name="ui_start_color">Start Color</string>
-    <string name="ui_start_creating">Start Creating</string>
-    <string name="ui_starter_templates_count">Starter Templates (%1$d)</string>
     <string name="ui_stop">Stop</string>
     <string name="ui_stroke">Stroke</string>
     <string name="ui_stroke_alignment">Stroke Alignment</string>
@@ -418,14 +392,10 @@
     <string name="ui_style_summary">Font: %1$s • Stroke: %2$dpx</string>
     <string name="ui_styles">Styles</string>
     <string name="ui_tab_all">All</string>
-    <string name="ui_tab_fx">Color &amp; FX</string>
-    <string name="ui_tab_layout">Layout</string>
-    <string name="ui_tab_type">Type</string>
     <string name="ui_tap_canvas_to_pick_color">Tap canvas to pick color</string>
     <string name="ui_templates_count">Templates (%1$d)</string>
     <string name="ui_text_background_color">Text Background Color</string>
     <string name="ui_text_color">Text Color</string>
-    <string name="ui_text_layer">Text Layer</string>
     <string name="ui_text_shadow_color">Text Shadow Color</string>
     <string name="ui_title_case">Title Case</string>
     <string name="ui_to_back">To Back</string>
@@ -434,13 +404,11 @@
     <string name="ui_transform_case">Transform Case</string>
     <string name="ui_transparent">Transparent</string>
     <string name="ui_trim_empty_transparent_margins">Trim empty transparent margins</string>
-    <string name="ui_typography_graphic_studio">Typography &amp; Graphic Studio</string>
     <string name="ui_underline">Underline</string>
     <string name="ui_undo">Undo</string>
     <string name="ui_undo_named">Undo %1$s</string>
     <string name="ui_ungroup">Ungroup</string>
     <string name="ui_unlock_layer">Unlock Layer</string>
-    <string name="ui_unsaved_draft_ready">Unsaved Draft Ready: %1$s</string>
     <string name="ui_unsaved_edits">Unsaved edits</string>
     <string name="ui_unsaved_edits_in">You have unsaved edits in “%1$s”. Save as a project before leaving?</string>
     <string name="ui_untitled">Untitled</string>

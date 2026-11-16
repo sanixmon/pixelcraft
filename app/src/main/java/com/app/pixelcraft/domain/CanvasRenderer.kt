@@ -46,8 +46,8 @@ object CanvasRenderer {
 
     private class RenderPaints {
         val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val lightCheckerPaint = Paint().apply { color = 0xFF333333.toInt() }
-        val darkCheckerPaint = Paint().apply { color = 0xFF222222.toInt() }
+        val lightCheckerPaint = Paint().apply { color = 0xFFFFFFFF.toInt() }
+        val darkCheckerPaint = Paint().apply { color = 0xFFE2D8C8.toInt() }
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG)
         val shadowCasterPaint = Paint(Paint.ANTI_ALIAS_FLAG)

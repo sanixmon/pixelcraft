@@ -1,5 +1,11 @@
 package com.app.pixelcraft.presentation
 
+import androidx.compose.material.icons.filled.DashboardCustomize
+
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+
+import com.app.pixelcraft.ui.theme.PixelCraftColors
+
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.asString
 import androidx.compose.ui.platform.LocalContext
@@ -114,6 +120,7 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val gridState = rememberLazyGridState()
 
     var showNewCanvasSizeDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -177,7 +184,7 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFF10131A),
+        containerColor = PixelCraftColors.Background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             HomeTopBar(onAbout = { showAboutDialog = true })
@@ -185,6 +192,7 @@ fun HomeScreen(
     ) { innerPadding ->
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 160.dp),
+            state = gridState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -197,7 +205,6 @@ fun HomeScreen(
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     DraftRecoveryCard(
                         projectName = state.draftProjectName ?: stringResource(R.string.ui_untitled),
-                        timestamp = state.draftTimestamp,
                         onResume = {
                             viewModel.resumeSavedDraft()
                             onNavigateToEditor()
@@ -207,51 +214,40 @@ fun HomeScreen(
                 }
             }
 
-            // 2. Quick Start Actions
+            // 2. CapCut-style quick start: big New project button + round shortcuts
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
-                    Text(
-                        text = stringResource(R.string.ui_start_creating),
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
+                    NewProjectButton(onClick = { showNewCanvasSizeDialog = true })
+                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        QuickStartActionCard(
-                            icon = Icons.Default.Add,
-                            title = stringResource(R.string.home_new_canvas),
-                            subtitle = stringResource(R.string.ui_pick_ratio_size),
-                            accentColor = Color(0xFF00E5FF),
-                            onClick = { showNewCanvasSizeDialog = true },
-                            modifier = Modifier.weight(1f)
-                        )
-                        QuickStartActionCard(
+                        HomeShortcut(
                             icon = Icons.Default.AddPhotoAlternate,
-                            title = stringResource(R.string.home_from_photo),
-                            subtitle = stringResource(R.string.ui_gallery_picture),
-                            accentColor = Color(0xFF00E676),
+                            label = stringResource(R.string.ui_photo),
                             onClick = {
                                 pickPhotoLauncher.launch(
                                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                 )
-                            },
-                            modifier = Modifier.weight(1f)
+                            }
                         )
-                        QuickStartActionCard(
+                        HomeShortcut(
                             icon = Icons.Default.FileOpen,
-                            title = stringResource(R.string.ui_import),
-                            subtitle = ".pixelcraft file",
-                            accentColor = Color(0xFFFFAB40),
+                            label = stringResource(R.string.ui_import),
                             onClick = {
                                 importArchiveLauncher.launch(
                                     arrayOf("application/octet-stream", "application/zip", "*/*")
                                 )
-                            },
-                            modifier = Modifier.weight(1f)
+                            }
+                        )
+                        HomeShortcut(
+                            icon = Icons.Default.DashboardCustomize,
+                            label = stringResource(R.string.nav_templates),
+                            onClick = {
+                                val templatesIndex = if (state.hasRecoverableDraft) 2 else 1
+                                scope.launch { gridState.animateScrollToItem(templatesIndex) }
+                            }
                         )
                     }
                 }
@@ -262,9 +258,9 @@ fun HomeScreen(
                 Column {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = stringResource(R.string.ui_starter_templates_count, DefaultPresets.presets.size),
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        text = stringResource(R.string.nav_templates),
+                        color = PixelCraftColors.TextPrimary,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -312,9 +308,9 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.ui_my_projects_count, state.projectSummaries.size),
-                            color = Color.White,
-                            fontSize = 15.sp,
+                            text = stringResource(R.string.ui_projects),
+                            color = PixelCraftColors.TextPrimary,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -336,34 +332,28 @@ fun HomeScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFF171B26))
-                            .border(1.dp, Color(0xFF252B3B), RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(PixelCraftColors.Surface)
+                            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = Color(0xFF00E5FF),
-                            modifier = Modifier.size(32.dp)
+                            tint = PixelCraftColors.Accent,
+                            modifier = Modifier.size(36.dp)
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = if (state.projectSummaries.isEmpty()) {
                                 stringResource(R.string.ui_no_saved_projects_yet)
                             } else {
                                 stringResource(R.string.ui_no_matching_projects)
                             },
-                            color = Color.White,
+                            color = PixelCraftColors.TextPrimary,
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.ui_pick_a_template_above_or_start_a_new_can),
-                            color = Color(0xFF8E97AA),
-                            fontSize = 12.sp
+                            fontSize = 15.sp
                         )
                     }
                 }

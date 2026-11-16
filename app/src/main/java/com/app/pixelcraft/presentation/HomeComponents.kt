@@ -1,15 +1,16 @@
 package com.app.pixelcraft.presentation
+
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.presentation.i18n.asString
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import androidx.compose.ui.platform.LocalContext
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -54,6 +55,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -105,52 +107,52 @@ import java.util.Locale
 
 @Composable
 internal fun HomeTopBar(onAbout: () -> Unit) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF141822))
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .background(PixelCraftColors.Surface)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(Color(0xFF00E5FF), Color(0xFF651FFF))
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("P", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PixelCraftColors.Accent),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "P",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(R.string.app_name),
-                    color = Color.White,
+                    color = PixelCraftColors.TextPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = stringResource(R.string.ui_typography_graphic_studio),
-                    color = Color(0xFF8E97AA),
-                    fontSize = 11.sp
+            }
+
+            IconButton(onClick = { onAbout() }) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = stringResource(R.string.ui_about_pixelcraft),
+                    tint = PixelCraftColors.TextSecondary
                 )
             }
         }
-
-        IconButton(onClick = { onAbout() }) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = stringResource(R.string.ui_about_pixelcraft),
-                tint = Color(0xFFB8C0D0)
-            )
-        }
+        HorizontalDivider(color = PixelCraftColors.Border, thickness = 1.dp)
     }
 }
 
@@ -166,14 +168,20 @@ internal fun DeleteProjectDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Text(stringResource(R.string.ui_delete_project), color = Color(0xFFFF5252), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(
+                text = stringResource(R.string.ui_delete_project),
+                color = PixelCraftColors.Danger,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
         },
         text = {
             Text(
                 text = stringResource(R.string.ui_remove_project_confirm, projectName),
-                color = Color.White,
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 14.sp
             )
         },
@@ -182,112 +190,139 @@ internal fun DeleteProjectDialog(
             val undoLabel = stringResource(R.string.ui_undo)
             Button(
                 onClick = { onConfirm(deletedMessage, undoLabel) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Danger,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(stringResource(R.string.action_delete), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )
 }
 
+/** One-line draft banner: "<name> · Resume · Discard". */
 @Composable
 internal fun DraftRecoveryCard(
     projectName: String,
-    timestamp: Long?,
     onResume: () -> Unit,
     onDiscard: () -> Unit
 ) {
-    val recentlyLabel = stringResource(R.string.ui_recently)
-    val formattedTime = remember(timestamp, recentlyLabel) {
-        if (timestamp == null) recentlyLabel
-        else SimpleDateFormat("d MMM, HH:mm", Locale.getDefault()).format(Date(timestamp))
-    }
-
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(Color(0xFF18283B), Color(0xFF1F1D36))
-                )
-            )
-            .border(1.dp, Color(0xFF00E5FF), RoundedCornerShape(14.dp))
-            .padding(14.dp)
+            .background(PixelCraftColors.Surface)
+            .border(1.dp, PixelCraftColors.Accent, RoundedCornerShape(14.dp))
+            .clickable(onClick = onResume)
+            .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.History,
-                contentDescription = null,
-                tint = Color(0xFF00E5FF),
-                modifier = Modifier.size(20.dp)
+        Icon(
+            imageVector = Icons.Default.History,
+            contentDescription = null,
+            tint = PixelCraftColors.Accent,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = projectName,
+            color = PixelCraftColors.TextPrimary,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onResume) {
+            Text(
+                text = stringResource(R.string.ui_resume_draft),
+                color = PixelCraftColors.Accent,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.ui_unsaved_draft_ready, projectName),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = stringResource(R.string.ui_autosaved_at, formattedTime),
-                    color = Color(0xFFA5B1C6),
-                    fontSize = 11.sp
-                )
-            }
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(
-                onClick = onResume,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.ui_resume_draft), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            }
-            OutlinedButton(onClick = onDiscard) {
-                Text(stringResource(R.string.action_discard), color = Color(0xFFFF8A80), fontSize = 12.sp)
-            }
+        TextButton(onClick = onDiscard) {
+            Text(
+                text = stringResource(R.string.action_discard),
+                color = PixelCraftColors.TextSecondary,
+                fontSize = 13.sp
+            )
         }
     }
 }
 
+/** Big CapCut-style "+ New project" button. */
 @Composable
-internal fun QuickStartActionCard(
+internal fun NewProjectButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(PixelCraftColors.Accent)
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(26.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.ui_new_project),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp
+        )
+    }
+}
+
+/** Round icon shortcut with a one-word label. */
+@Composable
+internal fun HomeShortcut(
     icon: ImageVector,
-    title: String,
-    subtitle: String,
-    accentColor: Color,
+    label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF181C27))
-            .border(1.dp, Color(0xFF272E40), RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(12.dp),
-        horizontalAlignment = Alignment.Start
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(34.dp)
+                .size(52.dp)
                 .clip(CircleShape)
-                .background(accentColor.copy(alpha = 0.16f)),
+                .background(PixelCraftColors.SurfaceElevated),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = title, tint = accentColor, modifier = Modifier.size(18.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = PixelCraftColors.TextPrimary,
+                modifier = Modifier.size(24.dp)
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
-        Text(subtitle, color = Color(0xFF8E97AA), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = label,
+            color = PixelCraftColors.TextPrimary,
+            fontSize = 12.sp,
+            maxLines = 1
+        )
     }
 }
 
@@ -300,7 +335,7 @@ internal fun HomeTemplateCard(
         when (preset.canvasConfig.backgroundType) {
             BackgroundType.GRADIENT -> {
                 val cols = preset.canvasConfig.gradientColors.map { Color(it.toInt()) }
-                Brush.linearGradient(if (cols.size >= 2) cols else listOf(Color(0xFF1F1C2C), Color(0xFF928DAB)))
+                Brush.linearGradient(if (cols.size >= 2) cols else listOf(PixelCraftColors.SurfaceElevated, PixelCraftColors.Border))
             }
             else -> {
                 val c = Color(preset.canvasConfig.backgroundColor.toInt())
@@ -314,43 +349,37 @@ internal fun HomeTemplateCard(
 
     Column(
         modifier = Modifier
-            .width(146.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF171B26))
-            .border(1.dp, Color(0xFF283044), RoundedCornerShape(12.dp))
+            .width(160.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(PixelCraftColors.Surface)
+            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(86.dp)
+                .height(100.dp)
                 .background(bgBrush)
-                .padding(8.dp),
+                .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = primaryText?.text?.lineSequence()?.firstOrNull()?.take(14) ?: preset.title,
                 color = Color((primaryText?.textColor ?: 0xFFFFFFFFL).toInt()),
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Column(modifier = Modifier.padding(8.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = preset.title,
-                color = Color.White,
+                color = PixelCraftColors.TextPrimary,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "${preset.category.localizedLabel()} • ${preset.canvasConfig.width}×${preset.canvasConfig.height}",
-                color = Color(0xFF8E97AA),
-                fontSize = 10.sp,
-                maxLines = 1
             )
         }
     }
@@ -389,23 +418,19 @@ internal fun ProjectThumbnailCard(
         }
     }
 
-    val dateStr = remember(summary.timestamp) {
-        SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(summary.timestamp))
-    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF171B26))
-            .border(1.dp, Color(0xFF262D40), RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(PixelCraftColors.Surface)
+            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
             .clickable(onClick = onOpen)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.2f)
-                .background(Color(0xFF10131C)),
+                .background(PixelCraftColors.Background),
             contentAlignment = Alignment.Center
         ) {
             val bmp = thumbImage
@@ -419,7 +444,7 @@ internal fun ProjectThumbnailCard(
             } else {
                 Text(
                     text = "${summary.width}×${summary.height}",
-                    color = Color(0xFF5D667A),
+                    color = PixelCraftColors.TextMuted,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -429,72 +454,93 @@ internal fun ProjectThumbnailCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 10.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = summary.name,
-                    color = Color.White,
+                    color = PixelCraftColors.TextPrimary,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${summary.layerCount} layers • $dateStr",
-                    color = Color(0xFF8E97AA),
-                    fontSize = 11.sp,
-                    maxLines = 1
                 )
             }
 
             Box {
                 IconButton(
                     onClick = { menuExpanded = true },
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = stringResource(R.string.ui_project_actions),
-                        tint = Color(0xFFB8C0D0),
-                        modifier = Modifier.size(18.dp)
+                        tint = PixelCraftColors.TextSecondary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
                 DropdownMenu(
                     expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
-                    modifier = Modifier.background(Color(0xFF1E2330))
+                    onDismissRequest = { menuExpanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_rename), color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF00E5FF)) },
+                        text = { Text(stringResource(R.string.action_rename)) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = PixelCraftColors.Accent
+                            )
+                        },
                         onClick = {
                             menuExpanded = false
                             onRename()
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_duplicate), color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White) },
+                        text = { Text(stringResource(R.string.action_duplicate)) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.ContentCopy,
+                                contentDescription = null
+                            )
+                        },
                         onClick = {
                             menuExpanded = false
                             onDuplicate()
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.ui_share_pixelcraft), color = Color.White) },
-                        leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFF00E676)) },
+                        text = { Text(stringResource(R.string.ui_share_pixelcraft)) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = null,
+                                tint = PixelCraftColors.Success
+                            )
+                        },
                         onClick = {
                             menuExpanded = false
                             onExportArchive()
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_delete), color = Color(0xFFFF5252)) },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252)) },
+                        text = {
+                            Text(
+                                stringResource(R.string.action_delete),
+                                color = PixelCraftColors.Danger
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = PixelCraftColors.Danger
+                            )
+                        },
                         onClick = {
                             menuExpanded = false
                             onDelete()

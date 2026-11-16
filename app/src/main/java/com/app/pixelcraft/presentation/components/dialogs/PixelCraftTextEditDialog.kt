@@ -1,6 +1,7 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
 import com.app.pixelcraft.R
+import com.app.pixelcraft.ui.theme.PixelCraftColors
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,12 +33,13 @@ fun PixelCraftTextEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E222B),
+        containerColor = PixelCraftColors.DialogSurface,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_edit_text),
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF),
+                color = PixelCraftColors.TextPrimary,
                 fontSize = 18.sp
             )
         },
@@ -49,22 +51,25 @@ fun PixelCraftTextEditDialog(
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 6,
-                    placeholder = { Text(stringResource(R.string.ui_enter_text), color = Color.Gray) }
+                    placeholder = { Text(stringResource(R.string.ui_enter_text), color = PixelCraftColors.TextMuted) }
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = { onConfirm(text.ifBlank { " " }) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
-                shape = RoundedCornerShape(6.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelCraftColors.Accent,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.ui_ok), color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_ok), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = Color.White)
+                Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
             }
         }
     )

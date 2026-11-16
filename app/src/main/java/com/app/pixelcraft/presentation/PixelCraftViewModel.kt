@@ -29,6 +29,7 @@ import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.presets.DefaultPresets
 import com.app.pixelcraft.data.presets.FontCatalog
 import com.app.pixelcraft.domain.CanvasRenderer
+import com.app.pixelcraft.domain.ColorMath
 import com.app.pixelcraft.domain.DraftStore
 import com.app.pixelcraft.domain.ExportFormat
 import com.app.pixelcraft.domain.ExportOptions
@@ -569,7 +570,7 @@ class PixelCraftViewModel internal constructor(
         preset: AspectRatioPreset = AspectRatioPreset.SQUARE,
         customW: Int? = null,
         customH: Int? = null,
-        backgroundColor: Long = 0xFF1F2430L
+        backgroundColor: Long = 0xFFFFFFFFL
     ) {
         drafts.cancelAutosave()
         history.clear()
@@ -584,7 +585,7 @@ class PixelCraftViewModel internal constructor(
                 text = text(R.string.default_tap_to_edit, "Tap to Edit"),
                 fontKey = "poppins",
                 fontSize = (minOf(w, h) * 0.055f).coerceIn(28f, 96f),
-                textColor = 0xFFFFFFFF,
+                textColor = 0xFF1C1814L,
                 zIndex = 0
             )
         )
@@ -663,6 +664,9 @@ class PixelCraftViewModel internal constructor(
         resetDragTracking()
         val nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
         val labelIndex = _uiState.value.layers.count { it.type == LayerType.TEXT } + 1
+        val bgCol = _uiState.value.canvasConfig.backgroundColor
+        val bgHsv = ColorMath.argbToHsv(bgCol)
+        val defaultTextColor = if (bgHsv[2] > 0.6f && (bgCol ushr 24) > 0x40L) 0xFF1C1814L else 0xFFFFFFFFL
         val newLayer = TextSizing.withEstimatedBounds(
             Layer(
                 id = UUID.randomUUID().toString(),
@@ -671,7 +675,7 @@ class PixelCraftViewModel internal constructor(
                 text = initialText,
                 fontKey = "poppins",
                 fontSize = 44f,
-                textColor = 0xFFFFFFFF,
+                textColor = defaultTextColor,
                 positionX = 0f,
                 positionY = 0f,
                 zIndex = nextZ
@@ -732,8 +736,8 @@ class PixelCraftViewModel internal constructor(
             shapeType = shapeType,
             width = shapeType.defaultWidth,
             height = shapeType.defaultHeight,
-            shapeFillColor = if (isWordBalloon) 0xFFFFFFFF else 0xFF00B0FF,
-            shapeStrokeColor = if (isWordBalloon) 0xFF111111 else 0xFFFFFFFF,
+            shapeFillColor = if (isWordBalloon) 0xFFFFFFFFL else 0xFFC8871AL,
+            shapeStrokeColor = 0xFF1C1814L,
             shapeStrokeWidth = if (isWordBalloon) 5f else 0f,
             strokePosition = StrokePosition.OUTSIDE,
             positionX = 0f,

@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_subtitle">Studio Teks di Atas Foto</string>
-    <string name="home_new_canvas">Kanvas Baru</string>
-    <string name="home_from_photo">Dari Foto</string>
-    <string name="home_templates">Template</string>
-    <string name="home_my_projects">Proyek Saya</string>
-    <string name="home_continue_draft">Lanjutkan Draf Terakhir</string>
-    <string name="home_import_project">Impor .pixelcraft</string>
-    <string name="home_search_projects">Cari proyek tersimpan…</string>
-    <string name="home_no_projects">Belum ada proyek tersimpan. Buat kanvas baru atau pilih template di atas.</string>
     <string name="action_save">Simpan</string>
     <string name="action_discard">Buang</string>
     <string name="action_cancel">Batal</string>
@@ -17,16 +8,17 @@
     <string name="action_delete">Hapus</string>
     <string name="action_duplicate">Duplikat</string>
     <string name="action_rename">Ganti Nama</string>
-    <string name="action_reset">Atur Ulang</string>
-    <string name="unsaved_changes_title">Simpan perubahan?</string>
-    <string name="unsaved_changes_body">Desain memiliki perubahan belum disimpan. Simpan sebagai proyek sebelum keluar?</string>
-    <string name="autosaved_indicator">Tersimpan otomatis</string>
     <string name="nav_templates">Template</string>
     <string name="nav_text">Teks</string>
-    <string name="nav_objects">Objek</string>
     <string name="nav_canvas">Kanvas</string>
     <string name="nav_effects">Efek</string>
-    <string name="onboarding_tip">Tips: Ketuk untuk memilih, cubit 2 jari untuk skala &amp; putar, ketuk dua kali teks untuk mengedit.</string>
+    <string name="nav_date">Tanggal</string>
+    <string name="nav_shapes">Bentuk</string>
+    <string name="nav_layers">Lapisan</string>
+    <string name="ui_position">Posisi</string>
+    <string name="ui_save_as_project">Simpan sebagai proyek</string>
+    <string name="ui_new_project">Proyek baru</string>
+    <string name="ui_projects">Proyek</string>
 
     <!-- Generated UI strings -->
     <string name="enum_blend_darken">Gelapkan</string>
@@ -179,9 +171,7 @@
     <string name="ui_about_highlights">Fitur utama:\n• 15 font open-source bawaan + impor .ttf/.otf kustom\n• Teks melengkung, jarak huruf, isi gradien, pendar neon &amp; ekstrusi 3D\n• Garis tepi vektor (Luar / Tengah / Dalam, pola putus-putus, sambungan &amp; ujung)\n• 24 bentuk vektor &amp; balon kata + potong foto, filter &amp; masker bentuk\n• Gestur cubit/putar 2 jari, Smart Guides, pipet kanvas &amp; simpan otomatis\n• Ekspor PNG, JPEG &amp; WebP (lossy/lossless) + arsip .pixelcraft portabel</string>
     <string name="ui_about_pixelcraft">Tentang PixelCraft</string>
     <string name="ui_about_version">PixelCraft v%1$s</string>
-    <string name="ui_add_layer">Tambah Lapisan</string>
     <string name="ui_adjust">Atur</string>
-    <string name="ui_align">Ratakan</string>
     <string name="ui_align_bottom">Rata Bawah</string>
     <string name="ui_align_left">Rata Kiri</string>
     <string name="ui_align_right">Rata Kanan</string>
@@ -193,7 +183,6 @@
     <string name="ui_alpha">Alfa</string>
     <string name="ui_apply">Terapkan</string>
     <string name="ui_arc_curve_angle">Sudut Lengkungan</string>
-    <string name="ui_autosaved_at">Tersimpan otomatis %1$s</string>
     <string name="ui_back_to_home">Kembali ke Beranda</string>
     <string name="ui_bg_pill">Latar</string>
     <string name="ui_blend">Campur</string>
@@ -210,6 +199,7 @@
     <string name="ui_center_horizontally">Tengah Horizontal</string>
     <string name="ui_center_vertically">Tengah Vertikal</string>
     <string name="ui_clip_photo_into_shape">Potong Foto ke Bentuk</string>
+    <string name="ui_back">Kembali</string>
     <string name="ui_close">Tutup</string>
     <string name="ui_close_layers">Tutup Lapisan</string>
     <string name="ui_color">Warna</string>
@@ -234,7 +224,6 @@
     <string name="ui_dash_gap">Jarak Putus</string>
     <string name="ui_dash_length">Panjang Putus</string>
     <string name="ui_dash_pattern">Pola Putus-putus</string>
-    <string name="ui_date_time_stamp">Stempel Tanggal / Waktu…</string>
     <string name="ui_decrease_named">Kurangi %1$s</string>
     <string name="ui_delete_layer">Hapus Lapisan</string>
     <string name="ui_delete_named">Hapus %1$s</string>
@@ -259,10 +248,7 @@
     <string name="ui_enable_vector_stroke">Aktifkan Garis Tepi Vektor</string>
     <string name="ui_end_color">Warna Akhir</string>
     <string name="ui_enter_text">Masukkan teks…</string>
-    <string name="ui_export_image">Ekspor Gambar</string>
-    <string name="ui_export_output">Hasil: %1$d × %2$d px • %3$s</string>
     <string name="ui_export_selected_layer_only_sticker">Ekspor lapisan terpilih saja (Stiker)</string>
-    <string name="ui_export_share_image">Ekspor &amp; Bagikan Gambar</string>
     <string name="ui_extrusion_angle">Sudut Ekstrusi</string>
     <string name="ui_favorite_named">Favoritkan %1$s</string>
     <string name="ui_fill">Isi</string>
@@ -279,7 +265,6 @@
     <string name="ui_font_size">Ukuran Font</string>
     <string name="ui_format">Format</string>
     <string name="ui_full_reset">Atur Ulang Semua</string>
-    <string name="ui_gallery_picture">Gambar galeri</string>
     <string name="ui_gap_distance">Jarak Celah</string>
     <string name="ui_glow">Pendar</string>
     <string name="ui_glow_blur_radius">Radius Blur Pendar</string>
@@ -315,16 +300,14 @@
     <string name="ui_more_options">Opsi Lainnya</string>
     <string name="ui_move_backward">Pindah ke Belakang</string>
     <string name="ui_move_forward">Pindah ke Depan</string>
-    <string name="ui_my_projects_count">Proyek Saya (%1$d)</string>
     <string name="ui_my_saved_styles">Gaya Tersimpan Saya</string>
     <string name="ui_new_style_name">Nama gaya baru…</string>
     <string name="ui_no_edits_recorded_in_this_session_yet">Belum ada edit yang tercatat di sesi ini.</string>
-    <string name="ui_no_layers_yet_tap_in_the_top_bar_to_add">Belum ada lapisan — ketuk + di bilah atas untuk menambah teks, bentuk, atau foto.</string>
+    <string name="ui_no_layers_yet_tap_in_the_top_bar_to_add">Belum ada lapisan.</string>
     <string name="ui_no_matching_projects">Tidak ada proyek yang cocok</string>
     <string name="ui_no_saved_projects_yet">Belum ada proyek tersimpan</string>
     <string name="ui_none">Tidak Ada</string>
     <string name="ui_none_hollow">Tidak Ada (Kosong)</string>
-    <string name="ui_nudge">Geser</string>
     <string name="ui_nudge_down">Geser ke Bawah</string>
     <string name="ui_nudge_left">Geser ke Kiri</string>
     <string name="ui_nudge_right">Geser ke Kanan</string>
@@ -335,7 +318,6 @@
     <string name="ui_offset_y">Offset Y</string>
     <string name="ui_ok">OK</string>
     <string name="ui_opacity">Opasitas</string>
-    <string name="ui_optimized_for_device_ram">Dioptimalkan untuk RAM perangkat</string>
     <string name="ui_outer_glow_color">Warna Pendar Luar</string>
     <string name="ui_paste_style">Tempel Gaya</string>
     <string name="ui_phase_offset">Offset Fase</string>
@@ -346,19 +328,15 @@
     <string name="ui_photo_corner_radius">Radius Sudut Foto</string>
     <string name="ui_photo_dim_overlay">Lapisan Peredup Foto</string>
     <string name="ui_photo_layer">Lapisan Foto</string>
-    <string name="ui_pick_a_template_above_or_start_a_new_can">Pilih template di atas atau mulai Kanvas Baru — desain tersimpan muncul di sini dengan pratinjau.</string>
     <string name="ui_pick_color_from_canvas">Ambil Warna dari Kanvas</string>
-    <string name="ui_pick_ratio_size">Pilih rasio &amp; ukuran</string>
     <string name="ui_pill_padding">Padding Latar</string>
     <string name="ui_preset_aspect_ratio">Preset Rasio Aspek:</string>
     <string name="ui_project_actions">Aksi Proyek</string>
     <string name="ui_project_name">Nama Proyek</string>
     <string name="ui_quick_gestures">Gestur Cepat</string>
-    <string name="ui_quick_share">Bagikan Cepat</string>
     <string name="ui_radial_gradient">Gradien Radial</string>
     <string name="ui_range">Rentang: %1$s – %2$s %3$s</string>
     <string name="ui_recent_projects_count">Proyek Tersimpan Terbaru (%1$d)</string>
-    <string name="ui_recently">Baru saja</string>
     <string name="ui_redo">Ulangi</string>
     <string name="ui_redo_named">Ulangi %1$s</string>
     <string name="ui_reflect">Pantul</string>
@@ -384,7 +362,6 @@
     <string name="ui_save_project">Simpan Proyek</string>
     <string name="ui_save_to_gallery">Simpan ke Galeri</string>
     <string name="ui_save_your_favorite_text_shape_styles_her">Simpan gaya teks &amp; bentuk favorit di sini untuk dipakai ulang di proyek mana pun.</string>
-    <string name="ui_saved">Tersimpan</string>
     <string name="ui_saved_styles">Gaya Tersimpan</string>
     <string name="ui_search_fonts">Cari %1$d font…</string>
     <string name="ui_search_saved_projects">Cari proyek tersimpan…</string>
@@ -397,7 +374,6 @@
     <string name="ui_share_design">Bagikan desain</string>
     <string name="ui_share_image">Bagikan gambar</string>
     <string name="ui_share_pixelcraft">Bagikan .pixelcraft</string>
-    <string name="ui_share_without_saving_to_gallery">Bagikan Tanpa Menyimpan ke Galeri</string>
     <string name="ui_show_layer">Tampilkan Lapisan</string>
     <string name="ui_side_darken">Gelapkan Sisi</string>
     <string name="ui_size">Ukuran</string>
@@ -406,8 +382,6 @@
     <string name="ui_solid_fill">Isi Polos</string>
     <string name="ui_spacing">Jarak</string>
     <string name="ui_start_color">Warna Awal</string>
-    <string name="ui_start_creating">Mulai Berkarya</string>
-    <string name="ui_starter_templates_count">Template Awal (%1$d)</string>
     <string name="ui_stop">Berhenti</string>
     <string name="ui_stroke">Garis Tepi</string>
     <string name="ui_stroke_alignment">Posisi Garis Tepi</string>
@@ -417,14 +391,10 @@
     <string name="ui_style_summary">Font: %1$s • Garis tepi: %2$dpx</string>
     <string name="ui_styles">Gaya</string>
     <string name="ui_tab_all">Semua</string>
-    <string name="ui_tab_fx">Warna &amp; Efek</string>
-    <string name="ui_tab_layout">Tata Letak</string>
-    <string name="ui_tab_type">Huruf</string>
     <string name="ui_tap_canvas_to_pick_color">Ketuk kanvas untuk mengambil warna</string>
     <string name="ui_templates_count">Template (%1$d)</string>
     <string name="ui_text_background_color">Warna Latar Teks</string>
     <string name="ui_text_color">Warna Teks</string>
-    <string name="ui_text_layer">Lapisan Teks</string>
     <string name="ui_text_shadow_color">Warna Bayangan Teks</string>
     <string name="ui_title_case">Huruf Judul</string>
     <string name="ui_to_back">Ke Belakang</string>
@@ -433,13 +403,11 @@
     <string name="ui_transform_case">Ubah Huruf</string>
     <string name="ui_transparent">Transparan</string>
     <string name="ui_trim_empty_transparent_margins">Pangkas tepi transparan kosong</string>
-    <string name="ui_typography_graphic_studio">Studio Tipografi &amp; Grafis</string>
     <string name="ui_underline">Garis Bawah</string>
     <string name="ui_undo">Urungkan</string>
     <string name="ui_undo_named">Urungkan %1$s</string>
     <string name="ui_ungroup">Pisahkan</string>
     <string name="ui_unlock_layer">Buka Kunci Lapisan</string>
-    <string name="ui_unsaved_draft_ready">Draf Belum Disimpan: %1$s</string>
     <string name="ui_unsaved_edits">Edit belum disimpan</string>
     <string name="ui_unsaved_edits_in">Ada edit yang belum disimpan di “%1$s”. Simpan sebagai proyek sebelum keluar?</string>
     <string name="ui_untitled">Tanpa Judul</string>
