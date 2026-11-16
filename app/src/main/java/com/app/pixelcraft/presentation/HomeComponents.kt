@@ -136,19 +136,12 @@ internal fun HomeTopBar(onAbout: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        color = PixelCraftColors.TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(R.string.ui_typography_graphic_studio),
-                        color = PixelCraftColors.TextSecondary,
-                        fontSize = 11.sp
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.app_name),
+                    color = PixelCraftColors.TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             IconButton(onClick = { onAbout() }) {
@@ -214,127 +207,121 @@ internal fun DeleteProjectDialog(
     )
 }
 
+/** One-line draft banner: "<name> · Resume · Discard". */
 @Composable
 internal fun DraftRecoveryCard(
     projectName: String,
-    timestamp: Long?,
     onResume: () -> Unit,
     onDiscard: () -> Unit
 ) {
-    val recentlyLabel = stringResource(R.string.ui_recently)
-    val formattedTime = remember(timestamp, recentlyLabel) {
-        if (timestamp == null) recentlyLabel
-        else SimpleDateFormat("d MMM, HH:mm", Locale.getDefault()).format(Date(timestamp))
-    }
-
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(PixelCraftColors.Surface)
-            .border(2.dp, PixelCraftColors.Accent, RoundedCornerShape(16.dp))
-            .padding(16.dp)
+            .border(1.dp, PixelCraftColors.Accent, RoundedCornerShape(14.dp))
+            .clickable(onClick = onResume)
+            .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.History,
-                contentDescription = null,
-                tint = PixelCraftColors.Accent,
-                modifier = Modifier.size(24.dp)
+        Icon(
+            imageVector = Icons.Default.History,
+            contentDescription = null,
+            tint = PixelCraftColors.Accent,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = projectName,
+            color = PixelCraftColors.TextPrimary,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onResume) {
+            Text(
+                text = stringResource(R.string.ui_resume_draft),
+                color = PixelCraftColors.Accent,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.ui_unsaved_draft_ready, projectName),
-                    color = PixelCraftColors.TextPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-                Text(
-                    text = stringResource(R.string.ui_autosaved_at, formattedTime),
-                    color = PixelCraftColors.TextSecondary,
-                    fontSize = 12.sp
-                )
-            }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(
-                onClick = onResume,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.Accent,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = stringResource(R.string.ui_resume_draft),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp
-                )
-            }
-            OutlinedButton(
-                onClick = onDiscard,
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, PixelCraftColors.Danger)
-            ) {
-                Text(
-                    text = stringResource(R.string.action_discard),
-                    color = PixelCraftColors.Danger,
-                    fontSize = 13.sp
-                )
-            }
+        TextButton(onClick = onDiscard) {
+            Text(
+                text = stringResource(R.string.action_discard),
+                color = PixelCraftColors.TextSecondary,
+                fontSize = 13.sp
+            )
         }
     }
 }
 
+/** Big CapCut-style "+ New project" button. */
 @Composable
-internal fun QuickStartActionCard(
+internal fun NewProjectButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(PixelCraftColors.Accent)
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(26.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.ui_new_project),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp
+        )
+    }
+}
+
+/** Round icon shortcut with a one-word label. */
+@Composable
+internal fun HomeShortcut(
     icon: ImageVector,
-    title: String,
-    subtitle: String,
-    accentColor: Color,
+    label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(PixelCraftColors.Surface)
-            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.Start
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(52.dp)
                 .clip(CircleShape)
-                .background(accentColor.copy(alpha = 0.12f)),
+                .background(PixelCraftColors.SurfaceElevated),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = title,
-                tint = accentColor,
-                modifier = Modifier.size(20.dp)
+                contentDescription = null,
+                tint = PixelCraftColors.TextPrimary,
+                modifier = Modifier.size(24.dp)
             )
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = title,
+            text = label,
             color = PixelCraftColors.TextPrimary,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            maxLines = 1
-        )
-        Text(
-            text = subtitle,
-            color = PixelCraftColors.TextSecondary,
             fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            maxLines = 1
         )
     }
 }
@@ -394,12 +381,6 @@ internal fun HomeTemplateCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Text(
-                text = "${preset.category.localizedLabel()} • ${preset.canvasConfig.width}×${preset.canvasConfig.height}",
-                color = PixelCraftColors.TextMuted,
-                fontSize = 11.sp,
-                maxLines = 1
-            )
         }
     }
 }
@@ -435,10 +416,6 @@ internal fun ProjectThumbnailCard(
         } else {
             thumbImage = null
         }
-    }
-
-    val dateStr = remember(summary.timestamp) {
-        SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(summary.timestamp))
     }
 
     Column(
@@ -489,12 +466,6 @@ internal fun ProjectThumbnailCard(
                     fontSize = 13.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${summary.layerCount} layers • $dateStr",
-                    color = PixelCraftColors.TextMuted,
-                    fontSize = 11.sp,
-                    maxLines = 1
                 )
             }
 
