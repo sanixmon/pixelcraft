@@ -26,6 +26,13 @@
     <string name="nav_objects">Objek</string>
     <string name="nav_canvas">Kanvas</string>
     <string name="nav_effects">Efek</string>
+    <string name="nav_date">Tanggal</string>
+    <string name="nav_shapes">Bentuk</string>
+    <string name="nav_layers">Lapisan</string>
+    <string name="ui_position">Posisi</string>
+    <string name="ui_save_as_project">Simpan sebagai proyek</string>
+    <string name="ui_new_project">Proyek baru</string>
+    <string name="ui_projects">Proyek</string>
     <string name="onboarding_tip">Tips: Ketuk untuk memilih, cubit 2 jari untuk skala &amp; putar, ketuk dua kali teks untuk mengedit.</string>
 
     <!-- Generated UI strings -->

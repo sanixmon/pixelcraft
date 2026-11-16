@@ -1,6 +1,15 @@
 package com.app.pixelcraft.presentation
 
 import android.app.Activity
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.app.pixelcraft.presentation.components.EditorHalfSheet
+import com.app.pixelcraft.presentation.components.EditorTool
+import com.app.pixelcraft.presentation.components.EditorToolLevel
+import com.app.pixelcraft.presentation.components.EditorToolRow
+import com.app.pixelcraft.presentation.components.EditorUndoStrip
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.runtime.DisposableEffect
@@ -74,10 +83,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.pixelcraft.data.model.ActiveDialog
-import com.app.pixelcraft.data.model.BottomNavTab
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerType
-import com.app.pixelcraft.presentation.components.PixelCraftBottomNavigation
 import com.app.pixelcraft.presentation.components.PixelCraftCanvas
 import com.app.pixelcraft.presentation.components.PixelCraftLayersSheet
 import com.app.pixelcraft.presentation.components.PixelCraftTopBar
@@ -98,8 +105,6 @@ import com.app.pixelcraft.presentation.components.tools.ObjectToolPanel
 import com.app.pixelcraft.presentation.components.tools.PresetsToolPanel
 import com.app.pixelcraft.presentation.components.tools.TextToolPanel
 
-/** Constant bottom reserve in portrait so the canvas slot stays steady across tabs & subtool panels. */
-private val PortraitCanvasBottomReserve = 104.dp
 
 @Composable
 fun PixelCraftScreen(
@@ -146,6 +151,13 @@ private fun PixelCraftEditorContent(
 
     var layerPendingRename by remember { mutableStateOf<Layer?>(null) }
     var exitAfterSave by remember { mutableStateOf(false) }
+    var openTool by rememberSaveable { mutableStateOf<EditorTool?>(null) }
+    var showTemplatesSheet by rememberSaveable { mutableStateOf(false) }
+
+    // Selecting a layer jumps straight to its sub-tools; deselecting returns to the top-level row.
+    LaunchedEffect(state.selectedLayerId) {
+        if (state.selectedLayerId != null) openTool = null
+    }
 
     // Ordered BackHandler preventing accidental loss of user work (Fixes Bug 2.1)
     fun handleNavigateBackStep() {
@@ -153,7 +165,9 @@ private fun PixelCraftEditorContent(
             state.isEyedropperActive -> viewModel.cancelEyedropper()
             state.activeSubTool != ActiveSubTool.NONE -> viewModel.setActiveSubTool(ActiveSubTool.NONE)
             state.isLayersDrawerOpen -> viewModel.setLayersDrawerOpen(false)
+            showTemplatesSheet -> showTemplatesSheet = false
             state.selectedLayerId != null -> viewModel.selectLayer(null)
+            openTool != null -> openTool = null
             state.isDirty -> viewModel.openDialog(ActiveDialog.UNSAVED_CHANGES)
             else -> onNavigateHome()
         }
@@ -225,113 +239,176 @@ private fun PixelCraftEditorContent(
         }
     }
 
+    // CapCut-style tool area: top-level row -> a tool's sub-tool row -> its compact inspector.
     @Composable
-    fun ActiveToolSheetContent() {
-        when (state.activeTab) {
-            BottomNavTab.PRESETS -> {
-                PresetsToolPanel(
-                    savedProjects = state.savedProjects,
-                    onApplyPreset = { viewModel.applyPreset(it) },
-                    onLoadProject = { viewModel.loadProject(it) },
-                    onDeleteProject = { viewModel.deleteProject(it) },
-                    onOpenDialog = { viewModel.openDialog(it) }
-                )
-            }
-
-            BottomNavTab.TEXT -> {
-                TextToolPanel(
-                    selectedLayer = state.selectedLayer,
-                    activeSubTool = state.activeSubTool,
-                    recentColors = state.recentColors,
-                    favoriteFontKeys = state.favoriteFontKeys,
-                    availableFontsCount = state.availableFontsCount,
-                    hasCopiedStyle = state.copiedStyleLayer != null,
-                    onSubToolSelected = { viewModel.setActiveSubTool(it) },
-                    onUpdateLayer = { continuous, transform ->
-                        viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
-                    },
-                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
-                    onApplyTextCase = { mode -> viewModel.applyTextCase(mode) },
-                    onToggleFavoriteFont = { key -> viewModel.toggleFavoriteFont(key) },
-                    onImportFont = {
-                        pickCustomFont.launch(
-                            arrayOf(
-                                "font/*",
-                                "application/x-font-ttf",
-                                "application/x-font-otf",
-                                "application/octet-stream"
+    fun ToolArea() {
+        val selected = state.selectedLayer
+        val inspectorOpen = state.activeSubTool != ActiveSubTool.NONE
+        when {
+            selected != null && selected.type == LayerType.TEXT -> {
+                EditorToolLevel(onBack = { viewModel.selectLayer(null) }, showBack = !inspectorOpen) {
+                    TextToolPanel(
+                        selectedLayer = state.selectedLayer,
+                        activeSubTool = state.activeSubTool,
+                        recentColors = state.recentColors,
+                        favoriteFontKeys = state.favoriteFontKeys,
+                        availableFontsCount = state.availableFontsCount,
+                        hasCopiedStyle = state.copiedStyleLayer != null,
+                        onSubToolSelected = { viewModel.setActiveSubTool(it) },
+                        onUpdateLayer = { continuous, transform ->
+                            viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
+                        },
+                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                        onApplyTextCase = { mode -> viewModel.applyTextCase(mode) },
+                        onToggleFavoriteFont = { key -> viewModel.toggleFavoriteFont(key) },
+                        onImportFont = {
+                            pickCustomFont.launch(
+                                arrayOf(
+                                    "font/*",
+                                    "application/x-font-ttf",
+                                    "application/x-font-otf",
+                                    "application/octet-stream"
+                                )
                             )
-                        )
-                    },
-                    onStartEyedropper = { target -> viewModel.startEyedropper(target) },
-                    onCopyStyle = { viewModel.copySelectedStyle() },
-                    onPasteStyle = { viewModel.pasteStyleToSelected() },
-                    onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
-                    onDeleteLayer = { viewModel.deleteSelectedLayer() },
-                    onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
-                    onBringToFront = { viewModel.bringLayerToFront() },
-                    onSendToBack = { viewModel.sendLayerToBack() },
-                    onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
-                    onAlign = { action -> viewModel.alignSelectedLayer(action) },
-                    onOpenEditDialog = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
-                    onAddText = { viewModel.addTextLayer() }
-                )
+                        },
+                        onStartEyedropper = { target -> viewModel.startEyedropper(target) },
+                        onCopyStyle = { viewModel.copySelectedStyle() },
+                        onPasteStyle = { viewModel.pasteStyleToSelected() },
+                        onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
+                        onDeleteLayer = { viewModel.deleteSelectedLayer() },
+                        onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
+                        onBringToFront = { viewModel.bringLayerToFront() },
+                        onSendToBack = { viewModel.sendLayerToBack() },
+                        onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
+                        onAlign = { action -> viewModel.alignSelectedLayer(action) },
+                        onOpenEditDialog = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
+                        onAddText = { viewModel.addTextLayer() }
+                    )
+                }
             }
 
-            BottomNavTab.OBJECTS -> {
-                ObjectToolPanel(
-                    selectedLayer = state.selectedLayer,
-                    activeSubTool = state.activeSubTool,
-                    recentColors = state.recentColors,
-                    hasCopiedStyle = state.copiedStyleLayer != null,
-                    onSubToolSelected = { viewModel.setActiveSubTool(it) },
-                    onUpdateLayer = { continuous, transform ->
-                        viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
-                    },
-                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
-                    onStartEyedropper = { target -> viewModel.startEyedropper(target) },
-                    onCopyStyle = { viewModel.copySelectedStyle() },
-                    onPasteStyle = { viewModel.pasteStyleToSelected() },
-                    onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
-                    onDeleteLayer = { viewModel.deleteSelectedLayer() },
-                    onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
-                    onBringToFront = { viewModel.bringLayerToFront() },
-                    onSendToBack = { viewModel.sendLayerToBack() },
-                    onOpenDialog = { viewModel.openDialog(it) },
-                    onAddImage = { pickLayerImage.launch(imagesOnly) }
-                )
+            selected != null -> {
+                EditorToolLevel(onBack = { viewModel.selectLayer(null) }, showBack = !inspectorOpen) {
+                    ObjectToolPanel(
+                        selectedLayer = state.selectedLayer,
+                        activeSubTool = state.activeSubTool,
+                        recentColors = state.recentColors,
+                        hasCopiedStyle = state.copiedStyleLayer != null,
+                        onSubToolSelected = { viewModel.setActiveSubTool(it) },
+                        onUpdateLayer = { continuous, transform ->
+                            viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
+                        },
+                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                        onStartEyedropper = { target -> viewModel.startEyedropper(target) },
+                        onCopyStyle = { viewModel.copySelectedStyle() },
+                        onPasteStyle = { viewModel.pasteStyleToSelected() },
+                        onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
+                        onDeleteLayer = { viewModel.deleteSelectedLayer() },
+                        onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
+                        onBringToFront = { viewModel.bringLayerToFront() },
+                        onSendToBack = { viewModel.sendLayerToBack() },
+                        onOpenDialog = { viewModel.openDialog(it) },
+                        onAddImage = { pickLayerImage.launch(imagesOnly) }
+                    )
+                }
             }
 
-            BottomNavTab.BACKGROUND -> {
-                BackgroundToolPanel(
-                    canvasConfig = state.canvasConfig,
-                    recentColors = state.recentColors,
-                    onSetColor = { viewModel.setBackgroundColor(it) },
-                    onSetGradient = { colors, angle, gradType, continuous ->
-                        viewModel.setBackgroundGradient(colors, angle, gradType, continuous)
-                    },
-                    onUpdatePhotoEffects = { blur, dim, continuous ->
-                        viewModel.updateBackgroundPhotoEffects(blur, dim, continuous)
-                    },
-                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
-                    onSetTransparent = { viewModel.setBackgroundTransparent() },
-                    onPickImage = { pickBackgroundImage.launch(imagesOnly) },
-                    onPickEyedropper = { viewModel.startEyedropper(EyedropperTarget.CANVAS_BACKGROUND) },
-                    onOpenDialog = { viewModel.openDialog(it) }
-                )
+            openTool == EditorTool.CANVAS -> {
+                EditorToolLevel(onBack = { openTool = null }) {
+                    BackgroundToolPanel(
+                        canvasConfig = state.canvasConfig,
+                        recentColors = state.recentColors,
+                        onSetColor = { viewModel.setBackgroundColor(it) },
+                        onSetGradient = { colors, angle, gradType, continuous ->
+                            viewModel.setBackgroundGradient(colors, angle, gradType, continuous)
+                        },
+                        onUpdatePhotoEffects = { blur, dim, continuous ->
+                            viewModel.updateBackgroundPhotoEffects(blur, dim, continuous)
+                        },
+                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                        onSetTransparent = { viewModel.setBackgroundTransparent() },
+                        onPickImage = { pickBackgroundImage.launch(imagesOnly) },
+                        onPickEyedropper = { viewModel.startEyedropper(EyedropperTarget.CANVAS_BACKGROUND) },
+                        onOpenDialog = { viewModel.openDialog(it) }
+                    )
+                }
             }
 
-            BottomNavTab.FILTERS -> {
-                FilterToolPanel(
-                    filters = state.canvasConfig.filters,
-                    recentColors = state.recentColors,
-                    onUpdateFilters = { continuous, transform ->
-                        viewModel.updateCanvasFilters(continuous = continuous, transform = transform)
-                    },
-                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() }
+            openTool == EditorTool.EFFECTS -> {
+                EditorToolLevel(onBack = { openTool = null }) {
+                    FilterToolPanel(
+                        filters = state.canvasConfig.filters,
+                        recentColors = state.recentColors,
+                        onUpdateFilters = { continuous, transform ->
+                            viewModel.updateCanvasFilters(continuous = continuous, transform = transform)
+                        },
+                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() }
+                    )
+                }
+            }
+
+            else -> {
+                EditorToolRow(
+                    onToolSelected = { tool ->
+                        when (tool) {
+                            EditorTool.TEMPLATES -> showTemplatesSheet = true
+                            EditorTool.TEXT -> viewModel.addTextLayer()
+                            EditorTool.DATE -> viewModel.openDialog(ActiveDialog.DATE_FORMAT)
+                            EditorTool.SHAPES -> viewModel.openDialog(ActiveDialog.ADD_SHAPE)
+                            EditorTool.PHOTO -> pickLayerImage.launch(imagesOnly)
+                            EditorTool.CANVAS, EditorTool.EFFECTS -> openTool = tool
+                            EditorTool.LAYERS -> viewModel.setLayersDrawerOpen(true)
+                        }
+                    }
                 )
             }
         }
+    }
+
+    @Composable
+    fun TemplatesSheetContent() {
+        PresetsToolPanel(
+            savedProjects = state.savedProjects,
+            onApplyPreset = {
+                viewModel.applyPreset(it)
+                showTemplatesSheet = false
+            },
+            onLoadProject = {
+                viewModel.loadProject(it)
+                showTemplatesSheet = false
+            },
+            onDeleteProject = { viewModel.deleteProject(it) },
+            onOpenDialog = { viewModel.openDialog(it) }
+        )
+    }
+
+    @Composable
+    fun EditorCanvas(canvasModifier: Modifier) {
+        PixelCraftCanvas(
+            state = state,
+            onSelectLayer = { viewModel.selectLayer(it) },
+            onDragDelta = { dx, dy, snapThreshold ->
+                viewModel.updateLayerPositionWithSnapping(dx, dy, snapThreshold)
+            },
+            onTransformGesture = { panDx, panDy, zoom, rot ->
+                viewModel.transformSelectedLayerGesture(panDx, panDy, zoom, rot)
+            },
+            onUpdateSelectedLayer = { cont, tf ->
+                viewModel.updateSelectedLayer(continuous = cont, transform = tf)
+            },
+            onDragEnd = { viewModel.clearSnappingGuides() },
+            onOpenTextEdit = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
+            onDeleteSelected = { viewModel.deleteSelectedLayer() },
+            onDuplicateSelected = { viewModel.duplicateSelectedLayer() },
+            onCopyStyle = { viewModel.copySelectedStyle() },
+            onPasteStyle = { viewModel.pasteStyleToSelected() },
+            onBringToFront = { viewModel.bringLayerToFront() },
+            onSendToBack = { viewModel.sendLayerToBack() },
+            onToggleLock = { viewModel.toggleLayerLock(it) },
+            onEyedropperColorPicked = { viewModel.applyEyedropperColor(it) },
+            onCancelEyedropper = { viewModel.cancelEyedropper() },
+            modifier = canvasModifier
+        )
     }
 
     Scaffold(
@@ -392,23 +469,10 @@ private fun PixelCraftEditorContent(
                     if (state.isDirty) viewModel.openDialog(ActiveDialog.UNSAVED_CHANGES)
                     else onNavigateHome()
                 },
-                onAddText = { viewModel.addTextLayer() },
-                onAddDate = { viewModel.openDialog(ActiveDialog.DATE_FORMAT) },
-                onAddShape = { viewModel.openDialog(ActiveDialog.ADD_SHAPE) },
-                onAddImage = { pickLayerImage.launch(imagesOnly) },
-                onDirectShare = { viewModel.shareCanvasDirectly() },
                 onOpenDialog = { viewModel.openDialog(it) },
-                onUndo = { viewModel.undo() },
-                onRedo = { viewModel.redo() },
                 onToggleGrid = { viewModel.toggleGrid() },
                 onToggleSafeZone = { viewModel.toggleSafeZone() },
                 onToggleLayers = { viewModel.toggleLayersDrawer() }
-            )
-        },
-        bottomBar = {
-            PixelCraftBottomNavigation(
-                activeTab = state.activeTab,
-                onTabSelected = { viewModel.setActiveTab(it) }
             )
         }
     ) { innerPadding ->
@@ -419,92 +483,59 @@ private fun PixelCraftEditorContent(
                 .background(EditorColors.CanvasStage)
         ) {
             val isLandscapeWide = maxWidth > 640.dp && maxWidth > maxHeight
+            // Compact settings panel never takes more than ~30% of the editor height;
+            // the canvas resizes above it instead of being covered.
+            val toolAreaMaxHeight = maxOf(maxHeight * 0.3f, 120.dp)
 
             if (isLandscapeWide) {
-                // Responsive Landscape / Tablet side-by-side workspace (§ 5.3)
                 Row(modifier = Modifier.fillMaxSize()) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                     ) {
-                        PixelCraftCanvas(
+                        EditorCanvas(
+                            Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        )
+                        EditorUndoStrip(
                             state = state,
-                            onSelectLayer = { viewModel.selectLayer(it) },
-                            onDragDelta = { dx, dy, snapThreshold ->
-                                viewModel.updateLayerPositionWithSnapping(dx, dy, snapThreshold)
-                            },
-                            onTransformGesture = { panDx, panDy, zoom, rot ->
-                                viewModel.transformSelectedLayerGesture(panDx, panDy, zoom, rot)
-                            },
-                            onUpdateSelectedLayer = { cont, tf ->
-                                viewModel.updateSelectedLayer(continuous = cont, transform = tf)
-                            },
-                            onDragEnd = { viewModel.clearSnappingGuides() },
-                            onOpenTextEdit = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
-                            onDeleteSelected = { viewModel.deleteSelectedLayer() },
-                            onDuplicateSelected = { viewModel.duplicateSelectedLayer() },
-                            onCopyStyle = { viewModel.copySelectedStyle() },
-                            onPasteStyle = { viewModel.pasteStyleToSelected() },
-                            onBringToFront = { viewModel.bringLayerToFront() },
-                            onSendToBack = { viewModel.sendLayerToBack() },
-                            onToggleLock = { viewModel.toggleLayerLock(it) },
-                            onEyedropperColorPicked = { viewModel.applyEyedropperColor(it) },
-                            onCancelEyedropper = { viewModel.cancelEyedropper() },
-                            modifier = Modifier.fillMaxSize()
+                            onUndo = { viewModel.undo() },
+                            onRedo = { viewModel.redo() }
                         )
                     }
-
                     Box(
                         modifier = Modifier
                             .width(340.dp)
                             .fillMaxHeight()
-                            .background(EditorColors.Surface)
-                            .border(1.dp, EditorColors.Border)
-                            .shadow(10.dp),
+                            .background(EditorColors.Panel)
+                            .border(1.dp, EditorColors.Border),
                         contentAlignment = Alignment.BottomCenter
                     ) {
-                        ActiveToolSheetContent()
+                        ToolArea()
                     }
                 }
             } else {
-                // Portrait layout with stable canvas slot + anchored bottom tool panel
-                PixelCraftCanvas(
-                    state = state,
-                    onSelectLayer = { viewModel.selectLayer(it) },
-                    onDragDelta = { dx, dy, snapThreshold ->
-                        viewModel.updateLayerPositionWithSnapping(dx, dy, snapThreshold)
-                    },
-                    onTransformGesture = { panDx, panDy, zoom, rot ->
-                        viewModel.transformSelectedLayerGesture(panDx, panDy, zoom, rot)
-                    },
-                    onUpdateSelectedLayer = { cont, tf ->
-                        viewModel.updateSelectedLayer(continuous = cont, transform = tf)
-                    },
-                    onDragEnd = { viewModel.clearSnappingGuides() },
-                    onOpenTextEdit = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
-                    onDeleteSelected = { viewModel.deleteSelectedLayer() },
-                    onDuplicateSelected = { viewModel.duplicateSelectedLayer() },
-                    onCopyStyle = { viewModel.copySelectedStyle() },
-                    onPasteStyle = { viewModel.pasteStyleToSelected() },
-                    onBringToFront = { viewModel.bringLayerToFront() },
-                    onSendToBack = { viewModel.sendLayerToBack() },
-                    onToggleLock = { viewModel.toggleLayerLock(it) },
-                    onEyedropperColorPicked = { viewModel.applyEyedropperColor(it) },
-                    onCancelEyedropper = { viewModel.cancelEyedropper() },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = PortraitCanvasBottomReserve)
-                )
-
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .shadow(10.dp)
-                ) {
-                    HorizontalDivider(color = EditorColors.Border, thickness = 1.dp)
-                    ActiveToolSheetContent()
+                Column(modifier = Modifier.fillMaxSize()) {
+                    EditorCanvas(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    )
+                    EditorUndoStrip(
+                        state = state,
+                        onUndo = { viewModel.undo() },
+                        onRedo = { viewModel.redo() }
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = toolAreaMaxHeight)
+                            .background(EditorColors.Panel)
+                    ) {
+                        ToolArea()
+                    }
                 }
             }
 
@@ -518,28 +549,41 @@ private fun PixelCraftEditorContent(
                 )
             }
 
-            // Floating Layers Drawer
+            if (showTemplatesSheet) {
+                EditorHalfSheet(
+                    title = null,
+                    onDismiss = { showTemplatesSheet = false }
+                ) {
+                    TemplatesSheetContent()
+                }
+            }
+
             if (state.isLayersDrawerOpen) {
-                PixelCraftLayersSheet(
-                    layers = state.layers,
-                    selectedLayerId = state.selectedLayerId,
-                    selectedLayerIds = state.selectedLayerIds,
-                    onSelectLayer = { viewModel.selectLayer(it) },
-                    onToggleMultiSelect = { viewModel.toggleLayerMultiSelection(it) },
-                    onGroupSelected = { viewModel.groupSelectedLayers() },
-                    onUngroupSelected = { viewModel.ungroupSelectedLayers() },
-                    onRequestRename = { layer ->
-                        layerPendingRename = layer
-                        viewModel.openDialog(ActiveDialog.RENAME_LAYER)
-                    },
-                    onToggleLock = { viewModel.toggleLayerLock(it) },
-                    onToggleVisibility = { viewModel.toggleLayerVisibility(it) },
-                    onMoveUp = { id -> viewModel.moveLayerUp(id) },
-                    onMoveDown = { id -> viewModel.moveLayerDown(id) },
-                    onDelete = { viewModel.deleteLayer(it) },
-                    onClose = { viewModel.setLayersDrawerOpen(false) },
-                    modifier = Modifier.align(Alignment.TopEnd)
-                )
+                EditorHalfSheet(
+                    title = null,
+                    onDismiss = { viewModel.setLayersDrawerOpen(false) }
+                ) {
+                    PixelCraftLayersSheet(
+                        layers = state.layers,
+                        selectedLayerId = state.selectedLayerId,
+                        selectedLayerIds = state.selectedLayerIds,
+                        onSelectLayer = { viewModel.selectLayer(it) },
+                        onToggleMultiSelect = { viewModel.toggleLayerMultiSelection(it) },
+                        onGroupSelected = { viewModel.groupSelectedLayers() },
+                        onUngroupSelected = { viewModel.ungroupSelectedLayers() },
+                        onRequestRename = { layer ->
+                            layerPendingRename = layer
+                            viewModel.openDialog(ActiveDialog.RENAME_LAYER)
+                        },
+                        onToggleLock = { viewModel.toggleLayerLock(it) },
+                        onToggleVisibility = { viewModel.toggleLayerVisibility(it) },
+                        onMoveUp = { id -> viewModel.moveLayerUp(id) },
+                        onMoveDown = { id -> viewModel.moveLayerDown(id) },
+                        onDelete = { viewModel.deleteLayer(it) },
+                        onClose = { viewModel.setLayersDrawerOpen(false) },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }

@@ -27,6 +27,13 @@
     <string name="nav_objects">Objects</string>
     <string name="nav_canvas">Canvas</string>
     <string name="nav_effects">Effects</string>
+    <string name="nav_date">Date</string>
+    <string name="nav_shapes">Shapes</string>
+    <string name="nav_layers">Layers</string>
+    <string name="ui_position">Position</string>
+    <string name="ui_save_as_project">Save as project</string>
+    <string name="ui_new_project">New project</string>
+    <string name="ui_projects">Projects</string>
     <string name="onboarding_tip">Tip: Tap to select, pinch with 2 fingers to resize &amp; rotate, double-tap text to edit.</string>
 
     <!-- Generated UI strings -->

@@ -75,7 +75,6 @@ fun PresetsToolPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 235.dp)
             .background(EditorColors.Surface)
             .verticalScroll(rememberScrollState())
             .padding(10.dp)

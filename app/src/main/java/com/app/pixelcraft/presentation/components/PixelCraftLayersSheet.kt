@@ -78,11 +78,9 @@ fun PixelCraftLayersSheet(
     val hasGroupInSelection = layers.any { it.id in selectedLayerIds && it.groupId != null }
 
     Card(
-        modifier = modifier
-            .width(316.dp)
-            .fillMaxHeight(0.74f)
-            .padding(8.dp),
-        shape = RoundedCornerShape(16.dp),
+        // Half-height bottom sheet; the caller sets the height.
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
         colors = CardDefaults.cardColors(containerColor = EditorColors.Surface),
         border = BorderStroke(1.dp, EditorColors.Border),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
