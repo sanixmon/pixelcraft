@@ -1,5 +1,22 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import com.app.pixelcraft.data.presets.BundledFont
+import com.app.pixelcraft.data.presets.FontCatalog
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
@@ -12,7 +29,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,7 +46,6 @@ import androidx.compose.material.icons.automirrored.filled.AlignHorizontalLeft
 import androidx.compose.material.icons.automirrored.filled.AlignHorizontalRight
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AlignHorizontalCenter
 import androidx.compose.material.icons.filled.AlignVerticalBottom
 import androidx.compose.material.icons.filled.AlignVerticalCenter
@@ -41,7 +56,6 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.BorderStyle
 import androidx.compose.material.icons.filled.BlurOn
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
@@ -59,14 +73,11 @@ import androidx.compose.material.icons.filled.Looks
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material.icons.filled.SettingsBackupRestore
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -80,17 +91,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerBlendMode
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.TextAlignment
-import com.app.pixelcraft.data.presets.FontCatalog
 import com.app.pixelcraft.domain.TextCaseMode
 import com.app.pixelcraft.presentation.ActiveSubTool
 import com.app.pixelcraft.presentation.AlignmentAction
@@ -98,6 +105,10 @@ import com.app.pixelcraft.presentation.EyedropperTarget
 import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import kotlin.math.roundToInt
 
+/**
+ * CapCut-style font picker: category chips with search/import icons on one line,
+ * then a 3-column grid where each tile shows the font's name set in that font.
+ */
 @Composable
 internal fun ColumnScope.TextFontInspector(
     layer: Layer,
@@ -108,6 +119,7 @@ internal fun ColumnScope.TextFontInspector(
     onImportFont: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var searchOpen by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf("All") }
     val allFonts = remember(availableFontsCount) { FontCatalog.allFonts() }
     val categories = remember(allFonts, favoriteFontKeys) {
@@ -131,122 +143,185 @@ internal fun ColumnScope.TextFontInspector(
             matchesCategory && matchesSearch
         }
     }
-    val previewSample = remember(layer.text) {
-        layer.text.lineSequence().firstOrNull()?.trim()?.take(10)?.ifBlank { "Abc" } ?: "Abc"
-    }
 
+    // Header: search field (when open) or category chips, with search + import icons.
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text(stringResource(R.string.ui_search_fonts, allFonts.size), fontSize = 12.sp) },
-            singleLine = true,
-            modifier = Modifier.weight(1f)
-        )
-        OutlinedButton(
-            onClick = onImportFont,
-            border = BorderStroke(1.dp, EditorColors.Border)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null, tint = EditorColors.Accent, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(".ttf/.otf", color = EditorColors.Accent, fontSize = 12.sp)
-        }
-    }
-
-    Spacer(modifier = Modifier.height(6.dp))
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        for (cat in categories) {
-            FilterChip(
-                selected = selectedCategory == cat,
-                onClick = { selectedCategory = cat },
-                label = {
-                    Text(
-                        text = when (cat) {
+        if (searchOpen) {
+            BasicTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                singleLine = true,
+                textStyle = TextStyle(color = EditorColors.TextPrimary, fontSize = 14.sp),
+                cursorBrush = SolidColor(EditorColors.Accent),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(EditorColors.SurfaceElevated)
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                decorationBox = { inner ->
+                    Box {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.ui_search_fonts, allFonts.size),
+                                color = EditorColors.TextMuted,
+                                fontSize = 14.sp,
+                                maxLines = 1
+                            )
+                        }
+                        inner()
+                    }
+                }
+            )
+        } else {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                for (cat in categories) {
+                    FontCategoryChip(
+                        label = when (cat) {
                             "All" -> stringResource(R.string.ui_tab_all)
                             "Favorites" -> stringResource(R.string.ui_font_cat_favorites)
                             "Imported" -> stringResource(R.string.ui_font_cat_imported)
                             else -> cat
                         },
-                        fontSize = 11.sp
+                        selected = selectedCategory == cat,
+                        onClick = { selectedCategory = cat }
                     )
                 }
+            }
+        }
+        IconButton(
+            onClick = {
+                if (searchOpen) searchQuery = ""
+                searchOpen = !searchOpen
+            },
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
+                contentDescription = stringResource(R.string.ui_search_fonts, allFonts.size),
+                tint = EditorColors.TextPrimary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        IconButton(onClick = onImportFont, modifier = Modifier.size(36.dp)) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = stringResource(R.string.ui_import),
+                tint = EditorColors.TextPrimary,
+                modifier = Modifier.size(20.dp)
             )
         }
     }
 
-    Spacer(modifier = Modifier.height(6.dp))
+    Spacer(modifier = Modifier.height(8.dp))
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        for (font in filteredFonts) {
-            val isSelected = layer.fontKey == font.key
-            val isFav = font.key in favoriteFontKeys
-            val composeFamily = remember(font.key) {
-                FontCatalog.resolveComposeFontFamily(font.key)
-            }
-            Column(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) EditorColors.Accent.copy(alpha = 0.12f) else EditorColors.Surface)
-                    .border(
-                        width = if (isSelected) 1.5.dp else 1.dp,
-                        color = if (isSelected) EditorColors.Accent else EditorColors.Border,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clickable { onUpdate(false) { it.copy(fontKey = font.key) } }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    // 3-column grid built from rows: the inspector already scrolls vertically,
+    // so a lazy grid can't be nested here.
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (rowFonts in filteredFonts.chunked(FontGridColumns)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = previewSample,
-                        fontFamily = composeFamily,
-                        color = EditorColors.TextPrimary,
-                        fontSize = 17.sp,
-                        maxLines = 1
-                    )
-                    Icon(
-                        imageVector = if (isFav) Icons.Default.Star else Icons.Default.StarBorder,
-                        contentDescription = stringResource(R.string.ui_favorite_named, font.displayName),
-                        tint = if (isFav) EditorColors.Accent else EditorColors.TextMuted,
-                        modifier = Modifier
-                            .size(15.dp)
-                            .clickable { onToggleFavoriteFont(font.key) }
+                for (font in rowFonts) {
+                    FontTile(
+                        font = font,
+                        isSelected = layer.fontKey == font.key,
+                        isFavorite = font.key in favoriteFontKeys,
+                        onSelect = { onUpdate(false) { it.copy(fontKey = font.key) } },
+                        onToggleFavorite = { onToggleFavoriteFont(font.key) },
+                        modifier = Modifier.weight(1f)
                     )
                 }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = font.displayName,
-                    color = if (isSelected) EditorColors.Accent else EditorColors.TextPrimary,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = font.category,
-                    color = EditorColors.TextSecondary,
-                    fontSize = 10.sp,
-                    maxLines = 1
-                )
+                repeat(FontGridColumns - rowFonts.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
+    }
+}
+
+private const val FontGridColumns = 3
+
+@Composable
+private fun FontCategoryChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .height(32.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) EditorColors.TextPrimary else EditorColors.SurfaceElevated)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = if (selected) EditorColors.Background else EditorColors.TextSecondary,
+            fontSize = 13.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun FontTile(
+    font: BundledFont,
+    isSelected: Boolean,
+    isFavorite: Boolean,
+    onSelect: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val composeFamily = remember(font.key) { FontCatalog.resolveComposeFontFamily(font.key) }
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (isSelected) EditorColors.Accent.copy(alpha = 0.16f) else EditorColors.SurfaceElevated)
+            .border(
+                width = 1.5.dp,
+                color = if (isSelected) EditorColors.Accent else Color.Transparent,
+                shape = RoundedCornerShape(10.dp)
+            )
+            .clickable(onClick = onSelect)
+    ) {
+        Text(
+            text = font.displayName,
+            fontFamily = composeFamily,
+            color = if (isSelected) EditorColors.Accent else EditorColors.TextPrimary,
+            fontSize = 15.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 10.dp)
+        )
+        // Small star in the corner; only shown solid when the font is a favorite.
+        Icon(
+            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+            contentDescription = stringResource(R.string.ui_favorite_named, font.displayName),
+            tint = if (isFavorite) EditorColors.Accent else EditorColors.TextMuted,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(3.dp)
+                .size(20.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onToggleFavorite)
+                .padding(3.dp)
+        )
     }
 }
 
