@@ -624,23 +624,27 @@ private fun PixelCraftEditorContent(
         }
 
         ActiveDialog.EXPORT -> {
-            PixelCraftExportDialog(
-                canvasConfig = state.canvasConfig,
-                initialOptions = state.exportOptions,
-                hasSelectedLayer = state.selectedLayer != null,
-                isExporting = state.isExporting,
-                onExport = { opts ->
-                    viewModel.setExportOptions(opts)
-                    exportWithPermission()
-                },
-                onShareDirectly = { opts ->
-                    viewModel.setExportOptions(opts)
-                    viewModel.closeDialog()
-                    viewModel.shareCanvasDirectly()
-                },
-                onCancelExport = { viewModel.cancelExport() },
-                onDismiss = { viewModel.closeDialog() }
-            )
+            // The export sheet belongs to the dark editor chrome.
+            PixelCraftEditorTheme {
+                PixelCraftExportDialog(
+                    canvasConfig = state.canvasConfig,
+                    initialOptions = state.exportOptions,
+                    hasSelectedLayer = state.selectedLayer != null,
+                    isExporting = state.isExporting,
+                    onExport = { opts ->
+                        viewModel.setExportOptions(opts)
+                        exportWithPermission()
+                    },
+                    onShareDirectly = { opts ->
+                        viewModel.setExportOptions(opts)
+                        viewModel.closeDialog()
+                        viewModel.shareCanvasDirectly()
+                    },
+                    onSaveAsProject = { viewModel.openDialog(ActiveDialog.SAVE_PROJECT) },
+                    onCancelExport = { viewModel.cancelExport() },
+                    onDismiss = { viewModel.closeDialog() }
+                )
+            }
         }
 
         ActiveDialog.ADD_SHAPE -> {

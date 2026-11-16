@@ -1,12 +1,5 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
-import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.EditorColors
-import com.app.pixelcraft.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,39 +18,49 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
+import com.app.pixelcraft.R
 import com.app.pixelcraft.data.model.BackgroundType
 import com.app.pixelcraft.data.model.CanvasConfig
 import com.app.pixelcraft.domain.ExportFormat
 import com.app.pixelcraft.domain.ExportOptions
 import com.app.pixelcraft.domain.ExportQuality
-import com.app.pixelcraft.domain.ImageExporter
+import com.app.pixelcraft.presentation.i18n.localizedLabel
+import com.app.pixelcraft.ui.theme.EditorColors
 import kotlin.math.roundToInt
 
+/** CapCut-style export sheet: format/quality/resolution chips, then Save and Share. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PixelCraftExportDialog(
     canvasConfig: CanvasConfig,
@@ -65,6 +69,7 @@ fun PixelCraftExportDialog(
     isExporting: Boolean,
     onExport: (ExportOptions) -> Unit,
     onShareDirectly: (ExportOptions) -> Unit,
+    onSaveAsProject: () -> Unit,
     onCancelExport: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -80,10 +85,6 @@ fun PixelCraftExportDialog(
         mutableStateOf(initialOptions.trimTransparent)
     }
 
-    val activeEstimate = remember(canvasConfig.width, canvasConfig.height, qualityPreset) {
-        ImageExporter.estimateDimensions(canvasConfig.width, canvasConfig.height, qualityPreset)
-    }
-
     fun currentOptions(): ExportOptions = ExportOptions(
         format = format,
         qualityPreset = qualityPreset,
@@ -92,210 +93,187 @@ fun PixelCraftExportDialog(
         trimTransparent = trimTransparent && format.supportsTransparency
     )
 
-    AlertDialog(
+    val exporting by rememberUpdatedState(isExporting)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { it != SheetValue.Hidden || !exporting }
+    )
+    val chipColors = FilterChipDefaults.filterChipColors(
+        containerColor = EditorColors.SurfaceElevated,
+        labelColor = EditorColors.TextSecondary,
+        selectedContainerColor = EditorColors.Accent,
+        selectedLabelColor = Color.Black
+    )
+
+    ModalBottomSheet(
         onDismissRequest = { if (!isExporting) onDismiss() },
-        containerColor = EditorColors.DialogSurface,
-        shape = RoundedCornerShape(20.dp),
-        title = {
-            Text(
-                text = stringResource(R.string.ui_export_share_image),
-                fontWeight = FontWeight.Bold,
-                color = EditorColors.TextPrimary,
-                fontSize = 18.sp
-            )
-        },
-        text = {
-            Column(
+        sheetState = sheetState,
+        containerColor = EditorColors.Surface,
+        contentColor = EditorColors.TextPrimary
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .navigationBarsPadding()
+        ) {
+            SectionLabel(stringResource(R.string.ui_format))
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(stringResource(R.string.ui_format), color = EditorColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    for (fmt in ExportFormat.entries) {
-                        FilterChip(
-                            selected = format == fmt,
-                            onClick = { format = fmt },
-                            label = { Text(fmt.label, fontSize = 12.sp) }
-                        )
-                    }
-                }
-
-                if (format.usesQualitySlider) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(stringResource(R.string.ui_compression_quality), color = EditorColors.TextSecondary, fontSize = 12.sp)
-                        Text("${compressionQuality.roundToInt()}%", color = EditorColors.Accent, fontSize = 12.sp)
-                    }
-                    Slider(
-                        value = compressionQuality,
-                        onValueChange = { compressionQuality = it },
-                        valueRange = 20f..100f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = EditorColors.Accent,
-                            activeTrackColor = EditorColors.Accent,
-                            inactiveTrackColor = EditorColors.Border
-                        )
+                for (fmt in ExportFormat.entries) {
+                    FilterChip(
+                        selected = format == fmt,
+                        onClick = { format = fmt },
+                        label = { Text(fmt.label, fontSize = 13.sp) },
+                        colors = chipColors,
+                        border = null
                     )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(stringResource(R.string.ui_resolution_scale), color = EditorColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(6.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    for (q in ExportQuality.entries) {
-                        val isSelected = qualityPreset == q
-                        val est = ImageExporter.estimateDimensions(canvasConfig.width, canvasConfig.height, q)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) EditorColors.Accent.copy(alpha = 0.12f) else EditorColors.Background)
-                                .border(
-                                    1.dp,
-                                    if (isSelected) EditorColors.Accent else EditorColors.Border,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .clickable { qualityPreset = q }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = q.localizedLabel(),
-                                    color = if (isSelected) EditorColors.Accent else EditorColors.TextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                if (est.cappedByMemory) {
-                                    Text(
-                                        text = stringResource(R.string.ui_optimized_for_device_ram),
-                                        color = EditorColors.Warning,
-                                        fontSize = 11.sp
-                                    )
-                                }
-                            }
-                            Text(
-                                text = "${est.safeWidth}×${est.safeHeight} (~${"%.1f".format(est.estimatedBitmapMb)} MB)",
-                                color = EditorColors.TextSecondary,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-                }
-
-                if (format.supportsTransparency) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    if (hasSelectedLayer) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { selectedLayerOnly = !selectedLayerOnly },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedLayerOnly,
-                                onCheckedChange = { selectedLayerOnly = it }
-                            )
-                            Text(
-                                text = stringResource(R.string.ui_export_selected_layer_only_sticker),
-                                color = EditorColors.TextPrimary,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                    if (selectedLayerOnly || canvasConfig.backgroundType == BackgroundType.TRANSPARENT) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { trimTransparent = !trimTransparent },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = trimTransparent,
-                                onCheckedChange = { trimTransparent = it }
-                            )
-                            Text(
-                                text = stringResource(R.string.ui_trim_empty_transparent_margins),
-                                color = EditorColors.TextPrimary,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = stringResource(R.string.ui_export_output, activeEstimate.safeWidth, activeEstimate.safeHeight, format.label),
-                    color = EditorColors.Accent,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { onShareDirectly(currentOptions()) },
-                    enabled = !isExporting,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, EditorColors.Border)
-                ) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = null,
-                        tint = EditorColors.Accent,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.ui_share_without_saving_to_gallery), color = EditorColors.TextPrimary, fontSize = 12.sp)
                 }
             }
-        },
-        confirmButton = {
+
+            if (format.usesQualitySlider) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.ui_compression_quality), color = EditorColors.TextSecondary, fontSize = 12.sp)
+                    Text("${compressionQuality.roundToInt()}%", color = EditorColors.Accent, fontSize = 12.sp)
+                }
+                Slider(
+                    value = compressionQuality,
+                    onValueChange = { compressionQuality = it },
+                    valueRange = 20f..100f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = EditorColors.Accent,
+                        activeTrackColor = EditorColors.Accent,
+                        inactiveTrackColor = EditorColors.Border
+                    )
+                )
+            }
+
+            SectionLabel(stringResource(R.string.ui_resolution_scale))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                for (q in ExportQuality.entries) {
+                    FilterChip(
+                        selected = qualityPreset == q,
+                        onClick = { qualityPreset = q },
+                        label = { Text(q.localizedLabel(), fontSize = 13.sp) },
+                        colors = chipColors,
+                        border = null
+                    )
+                }
+            }
+
+            if (format.supportsTransparency) {
+                if (hasSelectedLayer) {
+                    CheckRow(
+                        checked = selectedLayerOnly,
+                        label = stringResource(R.string.ui_export_selected_layer_only_sticker),
+                        onToggle = { selectedLayerOnly = !selectedLayerOnly }
+                    )
+                }
+                if (selectedLayerOnly || canvasConfig.backgroundType == BackgroundType.TRANSPARENT) {
+                    CheckRow(
+                        checked = trimTransparent,
+                        label = stringResource(R.string.ui_trim_empty_transparent_margins),
+                        onToggle = { trimTransparent = !trimTransparent }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
                 onClick = { onExport(currentOptions()) },
                 enabled = !isExporting,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = EditorColors.Accent,
-                    contentColor = Color.White
+                    contentColor = Color.Black
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 if (isExporting) {
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = Color.Black,
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.ui_rendering), color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_rendering), fontWeight = FontWeight.SemiBold)
                 } else {
-                    Icon(Icons.Default.Download, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.ui_save_to_gallery), color = Color.White, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.ui_save_to_gallery), fontWeight = FontWeight.SemiBold)
                 }
             }
-        },
-        dismissButton = {
-            if (isExporting) {
-                TextButton(onClick = onCancelExport) {
-                    Text(stringResource(R.string.ui_stop), color = EditorColors.Danger, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_cancel), color = EditorColors.TextSecondary)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = { onShareDirectly(currentOptions()) },
+                enabled = !isExporting,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, EditorColors.Border)
+            ) {
+                Icon(Icons.Default.Share, contentDescription = null, tint = EditorColors.TextPrimary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.action_share), color = EditorColors.TextPrimary, fontWeight = FontWeight.SemiBold)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                if (isExporting) {
+                    TextButton(onClick = onCancelExport) {
+                        Text(stringResource(R.string.ui_stop), color = EditorColors.Danger, fontWeight = FontWeight.SemiBold)
+                    }
+                } else {
+                    TextButton(onClick = onSaveAsProject) {
+                        Text(stringResource(R.string.ui_save_as_project), color = EditorColors.TextSecondary, fontSize = 13.sp)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        color = EditorColors.TextPrimary,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
     )
+}
+
+@Composable
+private fun CheckRow(
+    checked: Boolean,
+    label: String,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(checked = checked, onCheckedChange = { onToggle() })
+        Text(text = label, color = EditorColors.TextPrimary, fontSize = 13.sp)
+    }
 }
