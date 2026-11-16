@@ -25,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.AlignHorizontalLeft
 import androidx.compose.material.icons.automirrored.filled.AlignHorizontalRight
@@ -104,13 +105,6 @@ internal val TextColorPalette = listOf(
     0xFF00E676, 0xFF00E5FF, 0xFF2979FF, 0xFF651FFF, 0xFFFF80AB
 )
 
-private enum class TextToolGroup(@androidx.annotation.StringRes val labelRes: Int) {
-    ALL(R.string.ui_tab_all),
-    TYPE(R.string.ui_tab_type),
-    FX(R.string.ui_tab_fx),
-    LAYOUT(R.string.ui_tab_layout)
-}
-
 @Composable
 fun TextToolPanel(
     selectedLayer: Layer?,
@@ -174,7 +168,6 @@ fun TextToolPanel(
         return
     }
 
-    var selectedGroup by remember { mutableStateOf(TextToolGroup.ALL) }
     // Hoisted so the tool row keeps its scroll position while an inspector replaces it.
     val toolRowScroll = rememberScrollState()
 
@@ -203,61 +196,7 @@ fun TextToolPanel(
                 onClose = { onSubToolSelected(ActiveSubTool.NONE) }
             )
         } else {
-        // Compact group filter + Style Clipboard bar (§ 5.2e & § 7.1)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(EditorColors.PanelElevated)
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            for (group in TextToolGroup.entries) {
-                val active = selectedGroup == group
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (active) EditorColors.Accent.copy(alpha = 0.14f) else Color.Transparent)
-                        .border(
-                            width = 1.dp,
-                            color = if (active) EditorColors.Accent else EditorColors.Border,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { selectedGroup = group }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = stringResource(group.labelRes),
-                        color = if (active) EditorColors.Accent else EditorColors.TextSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            MiniActionPill(
-                icon = Icons.Default.ContentCopy,
-                label = stringResource(R.string.ui_copy_style),
-                onClick = onCopyStyle
-            )
-            if (hasCopiedStyle) {
-                MiniActionPill(
-                    icon = Icons.Default.ContentPaste,
-                    label = stringResource(R.string.ui_paste_style),
-                    accent = true,
-                    onClick = onPasteStyle
-                )
-            }
-            MiniActionPill(
-                icon = Icons.Default.Bookmarks,
-                label = stringResource(R.string.ui_styles),
-                onClick = onOpenSavedStyles
-            )
-        }
-
+        // One flat CapCut-style sub-tool row, most-used first.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -267,150 +206,152 @@ fun TextToolPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val showType = selectedGroup == TextToolGroup.ALL || selectedGroup == TextToolGroup.TYPE
-            val showFx = selectedGroup == TextToolGroup.ALL || selectedGroup == TextToolGroup.FX
-            val showLayout = selectedGroup == TextToolGroup.ALL || selectedGroup == TextToolGroup.LAYOUT
-
-            if (showType) {
+            ToolButton(
+                icon = Icons.Default.Edit,
+                label = stringResource(R.string.ui_edit),
+                isActive = false,
+                onClick = onOpenEditDialog
+            )
+            ToolButton(
+                icon = Icons.Default.FontDownload,
+                label = stringResource(R.string.ui_font),
+                isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
+            )
+            ToolButton(
+                icon = Icons.Default.ColorLens,
+                label = stringResource(R.string.ui_color),
+                isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
+            )
+            ToolButton(
+                icon = Icons.Default.FormatSize,
+                label = stringResource(R.string.ui_size),
+                isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
+            )
+            ToolButton(
+                icon = Icons.Default.FormatBold,
+                label = stringResource(R.string.ui_style),
+                isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
+            )
+            ToolButton(
+                icon = Icons.Default.BorderStyle,
+                label = stringResource(R.string.ui_stroke),
+                isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
+            )
+            ToolButton(
+                icon = Icons.Default.Lightbulb,
+                label = stringResource(R.string.ui_shadow),
+                isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
+            )
+            ToolButton(
+                icon = Icons.Default.FormatColorFill,
+                label = stringResource(R.string.ui_bg_pill),
+                isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
+            )
+            ToolButton(
+                icon = Icons.Default.Opacity,
+                label = stringResource(R.string.ui_opacity),
+                isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
+            )
+            ToolButton(
+                icon = Icons.Default.FormatLineSpacing,
+                label = stringResource(R.string.ui_spacing),
+                isActive = activeSubTool == ActiveSubTool.TEXT_SPACING,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SPACING) }
+            )
+            ToolButton(
+                icon = Icons.Default.Looks,
+                label = stringResource(R.string.ui_curve),
+                isActive = activeSubTool == ActiveSubTool.TEXT_CURVE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_CURVE) }
+            )
+            ToolButton(
+                icon = Icons.Default.Rotate90DegreesCcw,
+                label = stringResource(R.string.ui_rotate),
+                isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
+            )
+            ToolButton(
+                icon = Icons.Default.ArrowUpward,
+                label = stringResource(R.string.ui_position),
+                isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
+            )
+            ToolButton(
+                icon = Icons.Default.AutoAwesome,
+                label = stringResource(R.string.ui_glow),
+                isActive = activeSubTool == ActiveSubTool.TEXT_GLOW,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_GLOW) }
+            )
+            ToolButton(
+                icon = Icons.Default.ViewInAr,
+                label = "3D",
+                isActive = activeSubTool == ActiveSubTool.TEXT_3D,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_3D) }
+            )
+            ToolButton(
+                icon = Icons.Default.SettingsBackupRestore,
+                label = stringResource(R.string.ui_reflect),
+                isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
+            )
+            ToolButton(
+                icon = Icons.Default.BlurOn,
+                label = stringResource(R.string.ui_blend),
+                isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
+                onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
+            )
+            ToolButton(
+                icon = Icons.Default.ContentCopy,
+                label = stringResource(R.string.ui_copy_style),
+                isActive = false,
+                onClick = onCopyStyle
+            )
+            if (hasCopiedStyle) {
                 ToolButton(
-                    icon = Icons.Default.Edit,
-                    label = stringResource(R.string.ui_edit),
+                    icon = Icons.Default.ContentPaste,
+                    label = stringResource(R.string.ui_paste_style),
                     isActive = false,
-                    onClick = onOpenEditDialog
-                )
-                ToolButton(
-                    icon = Icons.Default.FontDownload,
-                    label = stringResource(R.string.ui_font),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
-                )
-                ToolButton(
-                    icon = Icons.Default.FormatSize,
-                    label = stringResource(R.string.ui_size),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
-                )
-                ToolButton(
-                    icon = Icons.Default.FormatBold,
-                    label = stringResource(R.string.ui_style),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
-                )
-                ToolButton(
-                    icon = Icons.Default.FormatLineSpacing,
-                    label = stringResource(R.string.ui_spacing),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_SPACING,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_SPACING) }
-                )
-                ToolButton(
-                    icon = Icons.Default.Looks,
-                    label = stringResource(R.string.ui_curve),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_CURVE,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_CURVE) }
+                    onClick = onPasteStyle
                 )
             }
-
-            if (showFx) {
-                ToolButton(
-                    icon = Icons.Default.ColorLens,
-                    label = stringResource(R.string.ui_color),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
-                )
-                ToolButton(
-                    icon = Icons.Default.BorderStyle,
-                    label = stringResource(R.string.ui_stroke),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
-                )
-                ToolButton(
-                    icon = Icons.Default.AutoAwesome,
-                    label = stringResource(R.string.ui_glow),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_GLOW,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_GLOW) }
-                )
-                ToolButton(
-                    icon = Icons.Default.Lightbulb,
-                    label = stringResource(R.string.ui_shadow),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
-                )
-                ToolButton(
-                    icon = Icons.Default.FormatColorFill,
-                    label = stringResource(R.string.ui_bg_pill),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
-                )
-                ToolButton(
-                    icon = Icons.Default.ViewInAr,
-                    label = "3D Text",
-                    isActive = activeSubTool == ActiveSubTool.TEXT_3D,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_3D) }
-                )
-                ToolButton(
-                    icon = Icons.Default.SettingsBackupRestore,
-                    label = stringResource(R.string.ui_reflect),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
-                )
-                ToolButton(
-                    icon = Icons.Default.BlurOn,
-                    label = stringResource(R.string.ui_blend),
-                    isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
-                    onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
-                )
-                ToolButton(
-                    icon = Icons.Default.Opacity,
-                    label = stringResource(R.string.ui_opacity),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
-                )
-            }
-
-            if (showLayout) {
-                ToolButton(
-                    icon = Icons.Default.Rotate90DegreesCcw,
-                    label = stringResource(R.string.ui_rotate),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
-                )
-                ToolButton(
-                    icon = Icons.Default.ArrowUpward,
-                    label = stringResource(R.string.ui_nudge),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
-                )
-                ToolButton(
-                    icon = Icons.Default.AlignHorizontalCenter,
-                    label = stringResource(R.string.ui_align),
-                    isActive = activeSubTool == ActiveSubTool.TEXT_RELATIVE_POSITION,
-                    onClick = { onSubToolSelected(ActiveSubTool.TEXT_RELATIVE_POSITION) }
-                )
-                ToolButton(
-                    icon = Icons.Default.Layers,
-                    label = stringResource(R.string.ui_to_front),
-                    isActive = false,
-                    onClick = onBringToFront
-                )
-                ToolButton(
-                    icon = Icons.Default.Layers,
-                    label = stringResource(R.string.ui_to_back),
-                    isActive = false,
-                    onClick = onSendToBack
-                )
-                ToolButton(
-                    icon = Icons.Default.ContentCopy,
-                    label = stringResource(R.string.action_duplicate),
-                    isActive = false,
-                    onClick = onDuplicateLayer
-                )
-                ToolButton(
-                    icon = Icons.Default.Delete,
-                    label = stringResource(R.string.action_delete),
-                    isActive = false,
-                    onClick = onDeleteLayer
-                )
-            }
+            ToolButton(
+                icon = Icons.Default.Bookmarks,
+                label = stringResource(R.string.ui_styles),
+                isActive = false,
+                onClick = onOpenSavedStyles
+            )
+            ToolButton(
+                icon = Icons.Default.Layers,
+                label = stringResource(R.string.ui_to_front),
+                isActive = false,
+                onClick = onBringToFront
+            )
+            ToolButton(
+                icon = Icons.Default.Layers,
+                label = stringResource(R.string.ui_to_back),
+                isActive = false,
+                onClick = onSendToBack
+            )
+            ToolButton(
+                icon = Icons.Default.ContentCopy,
+                label = stringResource(R.string.action_duplicate),
+                isActive = false,
+                onClick = onDuplicateLayer
+            )
+            ToolButton(
+                icon = Icons.Default.Delete,
+                label = stringResource(R.string.action_delete),
+                isActive = false,
+                onClick = onDeleteLayer
+            )
         }
         }
     }
@@ -507,8 +448,8 @@ private fun SubToolInspector(
             .background(EditorColors.Surface)
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            contentDescription = stringResource(R.string.ui_back),
+            imageVector = Icons.Default.Check,
+            contentDescription = stringResource(R.string.ui_done),
             tint = EditorColors.TextPrimary
         )
     }
@@ -533,7 +474,11 @@ private fun SubToolInspector(
         when (subTool) {
             ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont)
 
-            ActiveSubTool.TEXT_POSITION -> TextPositionInspector(onNudge = onNudge)
+            ActiveSubTool.TEXT_POSITION -> {
+                TextPositionInspector(onNudge = onNudge)
+                Spacer(modifier = Modifier.height(8.dp))
+                TextAlignInspector(onAlign = onAlign)
+            }
 
             ActiveSubTool.TEXT_RELATIVE_POSITION -> TextAlignInspector(onAlign = onAlign)
 

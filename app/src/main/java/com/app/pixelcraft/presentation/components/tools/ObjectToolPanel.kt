@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AspectRatio
@@ -168,46 +169,6 @@ fun ObjectToolPanel(
                 onClose = { onSubToolSelected(ActiveSubTool.NONE) }
             )
         } else {
-        // Quick Add + Style Clipboard bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(EditorColors.PanelElevated)
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            MiniActionPill(
-                icon = Icons.Default.FormatShapes,
-                label = "+ Shape",
-                onClick = { onOpenDialog(ActiveDialog.ADD_SHAPE) }
-            )
-            MiniActionPill(
-                icon = Icons.Default.AddPhotoAlternate,
-                label = "+ Photo",
-                onClick = onAddImage
-            )
-            MiniActionPill(
-                icon = Icons.Default.ContentCopy,
-                label = stringResource(R.string.ui_copy_style),
-                onClick = onCopyStyle
-            )
-            if (hasCopiedStyle) {
-                MiniActionPill(
-                    icon = Icons.Default.ContentPaste,
-                    label = stringResource(R.string.ui_paste_style),
-                    accent = true,
-                    onClick = onPasteStyle
-                )
-            }
-            MiniActionPill(
-                icon = Icons.Default.Bookmarks,
-                label = stringResource(R.string.ui_styles),
-                onClick = onOpenSavedStyles
-            )
-        }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -308,6 +269,26 @@ fun ObjectToolPanel(
                 onClick = { onSubToolSelected(ActiveSubTool.SHAPE_OPACITY) }
             )
             ObjectToolItem(
+                icon = Icons.Default.ContentCopy,
+                label = stringResource(R.string.ui_copy_style),
+                isActive = false,
+                onClick = onCopyStyle
+            )
+            if (hasCopiedStyle) {
+                ObjectToolItem(
+                    icon = Icons.Default.ContentPaste,
+                    label = stringResource(R.string.ui_paste_style),
+                    isActive = false,
+                    onClick = onPasteStyle
+                )
+            }
+            ObjectToolItem(
+                icon = Icons.Default.Bookmarks,
+                label = stringResource(R.string.ui_styles),
+                isActive = false,
+                onClick = onOpenSavedStyles
+            )
+            ObjectToolItem(
                 icon = Icons.Default.Layers,
                 label = stringResource(R.string.ui_to_front),
                 isActive = false,
@@ -398,8 +379,8 @@ private fun ObjectSubToolInspector(
             .background(EditorColors.Surface)
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            contentDescription = stringResource(R.string.ui_back),
+            imageVector = Icons.Default.Check,
+            contentDescription = stringResource(R.string.ui_done),
             tint = EditorColors.TextPrimary
         )
     }
