@@ -1,7 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -80,13 +80,13 @@ fun BackgroundToolPanel(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(max = 240.dp)
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
             .verticalScroll(rememberScrollState())
             .padding(10.dp)
     ) {
         Text(
             text = stringResource(R.string.ui_canvas_background_size, canvasConfig.width, canvasConfig.height),
-            color = PixelCraftColors.TextPrimary,
+            color = EditorColors.TextPrimary,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
         )
@@ -103,7 +103,7 @@ fun BackgroundToolPanel(
             Button(
                 onClick = onPickImage,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.Accent,
+                    containerColor = EditorColors.Accent,
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(8.dp),
@@ -117,29 +117,29 @@ fun BackgroundToolPanel(
             Button(
                 onClick = { onOpenDialog(ActiveDialog.IMAGE_SIZE) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.SurfaceElevated,
-                    contentColor = PixelCraftColors.TextPrimary
+                    containerColor = EditorColors.SurfaceElevated,
+                    contentColor = EditorColors.TextPrimary
                 ),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Icon(Icons.Default.AspectRatio, contentDescription = null, tint = PixelCraftColors.TextPrimary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.AspectRatio, contentDescription = null, tint = EditorColors.TextPrimary, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.ui_canvas_size), fontSize = 12.sp, color = PixelCraftColors.TextPrimary)
+                Text(stringResource(R.string.ui_canvas_size), fontSize = 12.sp, color = EditorColors.TextPrimary)
             }
 
             Button(
                 onClick = onSetTransparent,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.SurfaceElevated,
-                    contentColor = PixelCraftColors.TextPrimary
+                    containerColor = EditorColors.SurfaceElevated,
+                    contentColor = EditorColors.TextPrimary
                 ),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Icon(Icons.Default.Texture, contentDescription = null, tint = PixelCraftColors.TextPrimary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Texture, contentDescription = null, tint = EditorColors.TextPrimary, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.ui_transparent), fontSize = 12.sp, color = PixelCraftColors.TextPrimary)
+                Text(stringResource(R.string.ui_transparent), fontSize = 12.sp, color = EditorColors.TextPrimary)
             }
         }
 
@@ -174,7 +174,7 @@ fun BackgroundToolPanel(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(stringResource(R.string.ui_solid_color), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_solid_color), color = EditorColors.TextSecondary, fontSize = 12.sp)
         ColorPaletteRow(
             colors = solidColors,
             recentColors = recentColors,
@@ -191,7 +191,7 @@ fun BackgroundToolPanel(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text(stringResource(R.string.ui_curated_gradients_count, DefaultPresets.curatedGradients.size), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_curated_gradients_count, DefaultPresets.curatedGradients.size), color = EditorColors.TextSecondary, fontSize = 12.sp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -210,7 +210,7 @@ fun BackgroundToolPanel(
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(Color(activeStops.first() and 0xFFFFFFFFL))
-                    .border(1.5.dp, PixelCraftColors.Accent, CircleShape)
+                    .border(1.5.dp, EditorColors.Accent, CircleShape)
                     .clickable { editingGradientStopIndex = 0 },
                 contentAlignment = Alignment.Center
             ) {
@@ -221,7 +221,7 @@ fun BackgroundToolPanel(
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(Color(activeStops.last() and 0xFFFFFFFFL))
-                    .border(1.5.dp, PixelCraftColors.Accent, CircleShape)
+                    .border(1.5.dp, EditorColors.Accent, CircleShape)
                     .clickable { editingGradientStopIndex = 1 },
                 contentAlignment = Alignment.Center
             ) {
@@ -239,7 +239,7 @@ fun BackgroundToolPanel(
                         .background(Brush.linearGradient(grad.colors.map { Color(it and 0xFFFFFFFFL) }))
                         .border(
                             width = if (isSelected) 2.5.dp else 1.dp,
-                            color = if (isSelected) PixelCraftColors.Accent else PixelCraftColors.Border,
+                            color = if (isSelected) EditorColors.Accent else EditorColors.Border,
                             shape = CircleShape
                         )
                         .clickable {

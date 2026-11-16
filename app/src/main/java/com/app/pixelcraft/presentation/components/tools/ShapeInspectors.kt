@@ -2,7 +2,7 @@ package com.app.pixelcraft.presentation.components.tools
 
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -167,7 +167,7 @@ internal fun ColumnScope.ShapeColorInspector(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = if (layer.shapeGradientEnabled) stringResource(R.string.ui_start_color) else stringResource(R.string.ui_fill_color),
-                color = PixelCraftColors.TextSecondary,
+                color = EditorColors.TextSecondary,
                 fontSize = 12.sp
             )
             ColorPaletteRow(
@@ -181,7 +181,7 @@ internal fun ColumnScope.ShapeColorInspector(
             )
 
             if (layer.shapeGradientEnabled) {
-                Text(stringResource(R.string.ui_end_color), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_end_color), color = EditorColors.TextSecondary, fontSize = 12.sp)
                 ColorPaletteRow(
                     colors = ObjectPalette,
                     recentColors = recentColors,
@@ -262,7 +262,7 @@ internal fun ColumnScope.ShapeShadowInspector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.ui_enable_drop_shadow), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_enable_drop_shadow), color = EditorColors.TextPrimary, fontSize = 12.sp)
         Switch(
             checked = layer.shadowEnabled,
             onCheckedChange = { en -> onUpdate(false) { it.copy(shadowEnabled = en) } }

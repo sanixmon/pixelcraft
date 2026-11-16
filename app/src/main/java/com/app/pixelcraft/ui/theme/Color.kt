@@ -62,3 +62,53 @@ val PixelCraftCyan = PixelCraftColors.Accent
 val PixelCraftDark = PixelCraftColors.Background
 val PixelCraftSurface = PixelCraftColors.Surface
 val PixelCraftAccent = PixelCraftColors.AccentGold
+
+/**
+ * Dark, CapCut-style editor palette. Property names mirror [PixelCraftColors] so editor
+ * components can swap palettes without other changes. The warm accent is kept for identity.
+ */
+@Immutable
+object EditorColors {
+    val Background = Color(0xFF0E0E10)
+    val Surface = Color(0xFF1A1A1E)
+    val SurfaceElevated = Color(0xFF26262C)
+
+    val CanvasStage = Color(0xFF0E0E10)
+    val Panel = Color(0xFF1A1A1E)
+    val PanelElevated = Color(0xFF1A1A1E)
+    val DialogSurface = Color(0xFF1A1A1E)
+    val CardSurface = Color(0xFF222227)
+
+    val Border = Color(0xFF2E2E34)
+    val Hairline = Color(0xFF2E2E34)
+
+    val Accent = Color(0xFFE0A33A)
+    val AccentHover = Color(0xFFF0B85A)
+    val AccentGold = Color(0xFFE0A33A)
+    val Terracotta = Color(0xFFE07A5A)
+
+    val Success = Color(0xFF66BB6A)
+    val Warning = Color(0xFFE0A33A)
+    val Danger = Color(0xFFE07A5A)
+
+    val TextPrimary = Color(0xFFFFFFFF)
+    val TextSecondary = Color(0x99FFFFFF)
+    val TextMuted = Color(0x66FFFFFF)
+
+    val OutlineSelected = Color(0xFFE0A33A)
+    val OutlineLocked = Color(0xFFE07A5A)
+    val SmartGuide = Color(0xFFE0A33A)
+    val GridLine = Color(0x66E0A33A)
+
+    val PrimaryContainer = Color(0xFF3A2C14)
+    val OnPrimaryContainer = Color(0xFFFFFFFF)
+    val SecondaryContainer = Color(0xFF26262C)
+    val OnSecondaryContainer = Color(0xFFFFFFFF)
+    val TertiaryContainer = Color(0xFF1E3320)
+    val OnTertiaryContainer = Color(0xFFFFFFFF)
+    val ErrorContainer = Color(0xFF3A1E16)
+    val OnErrorContainer = Color(0xFFE07A5A)
+    val InverseSurface = Color(0xFFF2F2F2)
+    val InverseOnSurface = Color(0xFF1A1A1E)
+    val Scrim = Color(0x99000000)
+}

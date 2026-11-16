@@ -1,8 +1,17 @@
 package com.app.pixelcraft.presentation
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import com.app.pixelcraft.ui.theme.PixelCraftEditorTheme
+import com.app.pixelcraft.ui.theme.PixelCraftTheme
+
 import com.app.pixelcraft.presentation.i18n.asString
 import com.app.pixelcraft.presentation.i18n.UiText
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import android.Manifest
@@ -96,6 +105,39 @@ private val PortraitCanvasBottomReserve = 104.dp
 fun PixelCraftScreen(
     viewModel: PixelCraftViewModel,
     onNavigateHome: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    // Dark editor chrome needs light system-bar icons; restore the home screen's dark icons on exit.
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val window = view.context.findActivity()?.window
+        val controller = window?.let { WindowCompat.getInsetsController(it, view) }
+        controller?.isAppearanceLightStatusBars = false
+        controller?.isAppearanceLightNavigationBars = false
+        onDispose {
+            controller?.isAppearanceLightStatusBars = true
+            controller?.isAppearanceLightNavigationBars = true
+        }
+    }
+    PixelCraftEditorTheme {
+        PixelCraftEditorContent(
+            viewModel = viewModel,
+            onNavigateHome = onNavigateHome,
+            modifier = modifier
+        )
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+@Composable
+private fun PixelCraftEditorContent(
+    viewModel: PixelCraftViewModel,
+    onNavigateHome: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -341,7 +383,7 @@ fun PixelCraftScreen(
                     else -> false
                 }
             },
-        containerColor = PixelCraftColors.Background,
+        containerColor = EditorColors.Background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             PixelCraftTopBar(
@@ -374,7 +416,7 @@ fun PixelCraftScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(PixelCraftColors.CanvasStage)
+                .background(EditorColors.CanvasStage)
         ) {
             val isLandscapeWide = maxWidth > 640.dp && maxWidth > maxHeight
 
@@ -417,8 +459,8 @@ fun PixelCraftScreen(
                         modifier = Modifier
                             .width(340.dp)
                             .fillMaxHeight()
-                            .background(PixelCraftColors.Surface)
-                            .border(1.dp, PixelCraftColors.Border)
+                            .background(EditorColors.Surface)
+                            .border(1.dp, EditorColors.Border)
                             .shadow(10.dp),
                         contentAlignment = Alignment.BottomCenter
                     ) {
@@ -461,7 +503,7 @@ fun PixelCraftScreen(
                         .fillMaxWidth()
                         .shadow(10.dp)
                 ) {
-                    HorizontalDivider(color = PixelCraftColors.Border, thickness = 1.dp)
+                    HorizontalDivider(color = EditorColors.Border, thickness = 1.dp)
                     ActiveToolSheetContent()
                 }
             }
@@ -502,6 +544,8 @@ fun PixelCraftScreen(
         }
     }
 
+    // Legacy dialogs keep the light theme until they get their own pass.
+    PixelCraftTheme {
     when (state.activeDialog) {
         ActiveDialog.TEXT_EDIT -> {
             val selected = state.selectedLayer
@@ -655,6 +699,7 @@ fun PixelCraftScreen(
 
         null -> {}
     }
+    }
 }
 
 @Composable
@@ -665,8 +710,8 @@ private fun CoachMarksOverlay(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(PixelCraftColors.Surface)
-            .border(1.5.dp, PixelCraftColors.Accent, RoundedCornerShape(14.dp))
+            .background(EditorColors.Surface)
+            .border(1.5.dp, EditorColors.Accent, RoundedCornerShape(14.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -674,24 +719,24 @@ private fun CoachMarksOverlay(
         Icon(
             imageVector = Icons.Default.TouchApp,
             contentDescription = null,
-            tint = PixelCraftColors.Accent,
+            tint = EditorColors.Accent,
             modifier = Modifier.size(22.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.ui_quick_gestures),
-                color = PixelCraftColors.Accent,
+                color = EditorColors.Accent,
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp
             )
             Text(
                 text = stringResource(R.string.ui_double_tap_text_to_edit_pinch_twist_with),
-                color = PixelCraftColors.TextSecondary,
+                color = EditorColors.TextSecondary,
                 fontSize = 11.sp
             )
         }
         IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_dismiss_tips), tint = PixelCraftColors.TextSecondary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_dismiss_tips), tint = EditorColors.TextSecondary, modifier = Modifier.size(16.dp))
         }
     }
 }

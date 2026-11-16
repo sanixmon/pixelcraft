@@ -1,7 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.horizontalScroll
@@ -67,7 +67,7 @@ fun VectorStrokeInspector(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.ui_enable_vector_stroke), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_enable_vector_stroke), color = EditorColors.TextPrimary, fontSize = 12.sp)
             Switch(
                 checked = strokeWidth > 0f,
                 onCheckedChange = { enable ->
@@ -89,7 +89,7 @@ fun VectorStrokeInspector(
                 onValueChangeFinished = onFinishContinuousEdit
             )
 
-            Text(stringResource(R.string.ui_stroke_color), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_stroke_color), color = EditorColors.TextSecondary, fontSize = 12.sp)
             ColorPaletteRow(
                 colors = palette,
                 recentColors = recentColors,
@@ -101,7 +101,7 @@ fun VectorStrokeInspector(
             )
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text(stringResource(R.string.ui_stroke_alignment), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_stroke_alignment), color = EditorColors.TextSecondary, fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,7 +118,7 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text(stringResource(R.string.ui_dash_pattern), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_dash_pattern), color = EditorColors.TextSecondary, fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -170,7 +170,7 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text(stringResource(R.string.ui_corner_join), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_corner_join), color = EditorColors.TextSecondary, fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -199,7 +199,7 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text(stringResource(R.string.ui_line_cap), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_line_cap), color = EditorColors.TextSecondary, fontSize = 12.sp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

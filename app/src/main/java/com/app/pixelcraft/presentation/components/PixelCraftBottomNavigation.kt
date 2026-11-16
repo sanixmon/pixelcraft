@@ -34,7 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.BottomNavTab
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 
 @Composable
 fun PixelCraftBottomNavigation(
@@ -45,9 +45,9 @@ fun PixelCraftBottomNavigation(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
     ) {
-        HorizontalDivider(color = PixelCraftColors.Border, thickness = 1.dp)
+        HorizontalDivider(color = EditorColors.Border, thickness = 1.dp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,8 +98,8 @@ private fun BottomNavTabItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val activeColor = PixelCraftColors.Accent
-    val inactiveColor = PixelCraftColors.TextSecondary
+    val activeColor = EditorColors.Accent
+    val inactiveColor = EditorColors.TextSecondary
 
     Column(
         modifier = Modifier

@@ -1,7 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.R
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,13 +42,13 @@ fun FilterToolPanel(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(max = 235.dp)
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
             .verticalScroll(rememberScrollState())
             .padding(12.dp)
     ) {
         Text(
             text = stringResource(R.string.ui_canvas_post_processing_effects),
-            color = PixelCraftColors.TextPrimary,
+            color = EditorColors.TextPrimary,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
         )
@@ -61,7 +61,7 @@ fun FilterToolPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.ui_vignette_frame), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_vignette_frame), color = EditorColors.TextPrimary, fontSize = 12.sp)
             Switch(
                 checked = filters.vignetteEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(vignetteEnabled = en) } }
@@ -95,7 +95,7 @@ fun FilterToolPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.ui_film_grain_texture), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_film_grain_texture), color = EditorColors.TextPrimary, fontSize = 12.sp)
             Switch(
                 checked = filters.grainEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(grainEnabled = en) } }
@@ -121,7 +121,7 @@ fun FilterToolPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.ui_retro_scanlines), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_retro_scanlines), color = EditorColors.TextPrimary, fontSize = 12.sp)
             Switch(
                 checked = filters.stripesEnabled,
                 onCheckedChange = { en -> onUpdateFilters(false) { it.copy(stripesEnabled = en) } }

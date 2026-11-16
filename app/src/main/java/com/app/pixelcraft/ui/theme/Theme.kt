@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -49,6 +50,45 @@ private val WarmLightColorScheme = lightColorScheme(
     surfaceContainerHighest = PixelCraftColors.SurfaceElevated,
     surfaceContainerLow = PixelCraftColors.Background,
     surfaceContainerLowest = PixelCraftColors.Surface
+)
+
+private val EditorDarkColorScheme = darkColorScheme(
+    primary = EditorColors.Accent,
+    onPrimary = Color.Black,
+    primaryContainer = EditorColors.PrimaryContainer,
+    onPrimaryContainer = EditorColors.OnPrimaryContainer,
+    inversePrimary = EditorColors.AccentHover,
+    secondary = EditorColors.AccentHover,
+    onSecondary = Color.Black,
+    secondaryContainer = EditorColors.SecondaryContainer,
+    onSecondaryContainer = EditorColors.OnSecondaryContainer,
+    tertiary = EditorColors.Success,
+    onTertiary = Color.Black,
+    tertiaryContainer = EditorColors.TertiaryContainer,
+    onTertiaryContainer = EditorColors.OnTertiaryContainer,
+    background = EditorColors.Background,
+    onBackground = EditorColors.TextPrimary,
+    surface = EditorColors.Surface,
+    onSurface = EditorColors.TextPrimary,
+    surfaceVariant = EditorColors.SurfaceElevated,
+    onSurfaceVariant = EditorColors.TextSecondary,
+    surfaceTint = EditorColors.Accent,
+    inverseSurface = EditorColors.InverseSurface,
+    inverseOnSurface = EditorColors.InverseOnSurface,
+    error = EditorColors.Danger,
+    onError = Color.Black,
+    errorContainer = EditorColors.ErrorContainer,
+    onErrorContainer = EditorColors.OnErrorContainer,
+    outline = EditorColors.Border,
+    outlineVariant = EditorColors.Border,
+    scrim = EditorColors.Scrim,
+    surfaceBright = EditorColors.SurfaceElevated,
+    surfaceDim = EditorColors.Background,
+    surfaceContainer = EditorColors.Surface,
+    surfaceContainerHigh = EditorColors.SurfaceElevated,
+    surfaceContainerHighest = EditorColors.SurfaceElevated,
+    surfaceContainerLow = EditorColors.Surface,
+    surfaceContainerLowest = EditorColors.Background
 )
 
 val PixelCraftTypography = Typography(
@@ -130,6 +170,19 @@ fun PixelCraftTheme(
 ) {
     MaterialTheme(
         colorScheme = WarmLightColorScheme,
+        typography = PixelCraftTypography,
+        shapes = PixelCraftShapes,
+        content = content
+    )
+}
+
+/** Dark CapCut-style theme used by the editor screen only; home stays on [PixelCraftTheme]. */
+@Composable
+fun PixelCraftEditorTheme(
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = EditorDarkColorScheme,
         typography = PixelCraftTypography,
         shapes = PixelCraftShapes,
         content = content

@@ -1,7 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -114,7 +114,7 @@ fun ObjectToolPanel(
             modifier = modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(PixelCraftColors.Surface)
+                .background(EditorColors.Surface)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
@@ -123,7 +123,7 @@ fun ObjectToolPanel(
             Button(
                 onClick = { onOpenDialog(ActiveDialog.ADD_SHAPE) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.Accent,
+                    containerColor = EditorColors.Accent,
                     contentColor = Color.White
                 )
             ) {
@@ -135,7 +135,7 @@ fun ObjectToolPanel(
             Button(
                 onClick = onAddImage,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.Success,
+                    containerColor = EditorColors.Success,
                     contentColor = Color.White
                 )
             ) {
@@ -153,7 +153,7 @@ fun ObjectToolPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
     ) {
         // The inspector replaces the tool rows in place instead of stacking above them,
         // so an open sub-tool does not cover more of the canvas.
@@ -172,7 +172,7 @@ fun ObjectToolPanel(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PixelCraftColors.PanelElevated)
+                .background(EditorColors.PanelElevated)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -344,7 +344,7 @@ private fun ObjectToolItem(
     iconRotation: Float = 0f,
     onClick: () -> Unit
 ) {
-    val activeColor = PixelCraftColors.Accent
+    val activeColor = EditorColors.Accent
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
@@ -357,7 +357,7 @@ private fun ObjectToolItem(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (isActive) activeColor else PixelCraftColors.TextPrimary,
+            tint = if (isActive) activeColor else EditorColors.TextPrimary,
             modifier = Modifier
                 .size(22.dp)
                 .rotate(iconRotation)
@@ -366,7 +366,7 @@ private fun ObjectToolItem(
         Text(
             text = label,
             fontSize = 11.sp,
-            color = if (isActive) activeColor else PixelCraftColors.TextSecondary
+            color = if (isActive) activeColor else EditorColors.TextSecondary
         )
     }
 }
@@ -386,7 +386,7 @@ private fun ObjectSubToolInspector(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 240.dp)
-            .background(PixelCraftColors.PanelElevated),
+            .background(EditorColors.PanelElevated),
         verticalAlignment = Alignment.CenterVertically
     ) {
     IconButton(
@@ -395,12 +395,12 @@ private fun ObjectSubToolInspector(
             .padding(start = 6.dp)
             .size(40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             contentDescription = stringResource(R.string.ui_back),
-            tint = PixelCraftColors.TextPrimary
+            tint = EditorColors.TextPrimary
         )
     }
     Column(
@@ -417,7 +417,7 @@ private fun ObjectSubToolInspector(
                 .removePrefix("LAYER_")
                 .replace("_", " "),
             fontWeight = FontWeight.Bold,
-            color = PixelCraftColors.Accent,
+            color = EditorColors.Accent,
             fontSize = 13.sp
         )
 

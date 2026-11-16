@@ -2,7 +2,7 @@ package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.labelRes
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.BorderStroke
@@ -144,7 +144,7 @@ fun TextToolPanel(
             modifier = modifier
                 .fillMaxWidth()
                 .height(62.dp)
-                .background(PixelCraftColors.Surface)
+                .background(EditorColors.Surface)
                 .padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
@@ -152,7 +152,7 @@ fun TextToolPanel(
             Button(
                 onClick = onAddText,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.Accent,
+                    containerColor = EditorColors.Accent,
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(12.dp)
@@ -164,11 +164,11 @@ fun TextToolPanel(
             OutlinedButton(
                 onClick = onOpenSavedStyles,
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, PixelCraftColors.Border)
+                border = BorderStroke(1.dp, EditorColors.Border)
             ) {
-                Icon(Icons.Default.Bookmarks, contentDescription = null, tint = PixelCraftColors.Accent, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Bookmarks, contentDescription = null, tint = EditorColors.Accent, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_saved_styles), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_saved_styles), color = EditorColors.TextPrimary, fontSize = 12.sp)
             }
         }
         return
@@ -181,7 +181,7 @@ fun TextToolPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
     ) {
         // The inspector replaces the tool rows in place instead of stacking above them,
         // so an open sub-tool does not cover more of the canvas.
@@ -207,7 +207,7 @@ fun TextToolPanel(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PixelCraftColors.PanelElevated)
+                .background(EditorColors.PanelElevated)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -218,10 +218,10 @@ fun TextToolPanel(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (active) PixelCraftColors.Accent.copy(alpha = 0.14f) else Color.Transparent)
+                        .background(if (active) EditorColors.Accent.copy(alpha = 0.14f) else Color.Transparent)
                         .border(
                             width = 1.dp,
-                            color = if (active) PixelCraftColors.Accent else PixelCraftColors.Border,
+                            color = if (active) EditorColors.Accent else EditorColors.Border,
                             shape = RoundedCornerShape(12.dp)
                         )
                         .clickable { selectedGroup = group }
@@ -229,7 +229,7 @@ fun TextToolPanel(
                 ) {
                     Text(
                         text = stringResource(group.labelRes),
-                        color = if (active) PixelCraftColors.Accent else PixelCraftColors.TextSecondary,
+                        color = if (active) EditorColors.Accent else EditorColors.TextSecondary,
                         fontSize = 11.sp,
                         fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
                     )
@@ -423,12 +423,12 @@ internal fun MiniActionPill(
     accent: Boolean = false,
     onClick: () -> Unit
 ) {
-    val fg = if (accent) PixelCraftColors.Accent else PixelCraftColors.TextPrimary
+    val fg = if (accent) EditorColors.Accent else EditorColors.TextPrimary
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(PixelCraftColors.Surface)
-            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(10.dp))
+            .background(EditorColors.Surface)
+            .border(1.dp, EditorColors.Border, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -446,8 +446,8 @@ private fun ToolButton(
     isActive: Boolean,
     onClick: () -> Unit
 ) {
-    val activeColor = PixelCraftColors.Accent
-    val inactiveColor = PixelCraftColors.TextPrimary
+    val activeColor = EditorColors.Accent
+    val inactiveColor = EditorColors.TextPrimary
 
     Column(
         modifier = Modifier
@@ -468,7 +468,7 @@ private fun ToolButton(
         Text(
             text = label,
             fontSize = 11.sp,
-            color = if (isActive) activeColor else PixelCraftColors.TextSecondary
+            color = if (isActive) activeColor else EditorColors.TextSecondary
         )
     }
 }
@@ -495,7 +495,7 @@ private fun SubToolInspector(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 240.dp)
-            .background(PixelCraftColors.PanelElevated),
+            .background(EditorColors.PanelElevated),
         verticalAlignment = Alignment.CenterVertically
     ) {
     IconButton(
@@ -504,12 +504,12 @@ private fun SubToolInspector(
             .padding(start = 6.dp)
             .size(40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(PixelCraftColors.Surface)
+            .background(EditorColors.Surface)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             contentDescription = stringResource(R.string.ui_back),
-            tint = PixelCraftColors.TextPrimary
+            tint = EditorColors.TextPrimary
         )
     }
     Column(
@@ -524,7 +524,7 @@ private fun SubToolInspector(
                 .removePrefix("LAYER_")
                 .replace("_", " "),
             fontWeight = FontWeight.Bold,
-            color = PixelCraftColors.Accent,
+            color = EditorColors.Accent,
             fontSize = 13.sp
         )
 

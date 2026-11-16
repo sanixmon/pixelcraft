@@ -3,7 +3,7 @@ package com.app.pixelcraft.presentation.components.tools
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ColumnScope
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -97,9 +97,9 @@ internal fun ColumnScope.PhotoCropInspector(
                         it.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
                     }
                 },
-                border = BorderStroke(1.dp, PixelCraftColors.Border)
+                border = BorderStroke(1.dp, EditorColors.Border)
             ) {
-                Text(stringResource(R.string.ui_full_reset), color = PixelCraftColors.Accent, fontSize = 11.sp)
+                Text(stringResource(R.string.ui_full_reset), color = EditorColors.Accent, fontSize = 11.sp)
             }
             OutlinedButton(
                 onClick = {
@@ -115,9 +115,9 @@ internal fun ColumnScope.PhotoCropInspector(
                         )
                     }
                 },
-                border = BorderStroke(1.dp, PixelCraftColors.Border)
+                border = BorderStroke(1.dp, EditorColors.Border)
             ) {
-                Text("1:1 Square", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
+                Text("1:1 Square", color = EditorColors.TextPrimary, fontSize = 11.sp)
             }
             OutlinedButton(
                 onClick = {
@@ -126,9 +126,9 @@ internal fun ColumnScope.PhotoCropInspector(
                         it.copy(width = base, height = base * 1.25f)
                     }
                 },
-                border = BorderStroke(1.dp, PixelCraftColors.Border)
+                border = BorderStroke(1.dp, EditorColors.Border)
             ) {
-                Text("4:5 Portrait", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
+                Text("4:5 Portrait", color = EditorColors.TextPrimary, fontSize = 11.sp)
             }
             OutlinedButton(
                 onClick = {
@@ -137,9 +137,9 @@ internal fun ColumnScope.PhotoCropInspector(
                         it.copy(width = base, height = base * (9f / 16f))
                     }
                 },
-                border = BorderStroke(1.dp, PixelCraftColors.Border)
+                border = BorderStroke(1.dp, EditorColors.Border)
             ) {
-                Text("16:9 Wide", color = PixelCraftColors.TextPrimary, fontSize = 11.sp)
+                Text("16:9 Wide", color = EditorColors.TextPrimary, fontSize = 11.sp)
             }
         }
 
@@ -219,15 +219,15 @@ internal fun ColumnScope.PhotoAdjustInspector(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.ui_filter_presets), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_filter_presets), color = EditorColors.TextSecondary, fontSize = 12.sp)
             if (!adj.isDefault) {
                 OutlinedButton(
                     onClick = {
                         onUpdate(false) { it.copy(imageAdjustments = ImageAdjustments()) }
                     },
-                    border = BorderStroke(1.dp, PixelCraftColors.Border)
+                    border = BorderStroke(1.dp, EditorColors.Border)
                 ) {
-                    Text(stringResource(R.string.ui_reset_all), color = PixelCraftColors.Accent, fontSize = 11.sp)
+                    Text(stringResource(R.string.ui_reset_all), color = EditorColors.Accent, fontSize = 11.sp)
                 }
             }
         }
@@ -319,7 +319,7 @@ internal fun ColumnScope.PhotoMaskInspector(
     onStartEyedropper: (EyedropperTarget) -> Unit
 ) {
     if (layer.type == LayerType.IMAGE) {
-        Text(stringResource(R.string.ui_clip_photo_into_shape), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
+        Text(stringResource(R.string.ui_clip_photo_into_shape), color = EditorColors.TextSecondary, fontSize = 12.sp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()

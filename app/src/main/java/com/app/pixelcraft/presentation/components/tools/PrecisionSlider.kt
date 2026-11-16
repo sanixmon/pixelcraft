@@ -1,7 +1,7 @@
 package com.app.pixelcraft.presentation.components.tools
 
 import com.app.pixelcraft.R
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -82,7 +82,7 @@ fun PrecisionSlider(
         ) {
             Text(
                 text = label,
-                color = PixelCraftColors.TextSecondary,
+                color = EditorColors.TextSecondary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -96,7 +96,7 @@ fun PrecisionSlider(
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(R.string.ui_reset_named, label),
-                            tint = PixelCraftColors.Accent,
+                            tint = EditorColors.Accent,
                             modifier = Modifier.size(15.dp)
                         )
                     }
@@ -106,14 +106,14 @@ fun PrecisionSlider(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(PixelCraftColors.SurfaceElevated)
-                        .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(6.dp))
+                        .background(EditorColors.SurfaceElevated)
+                        .border(1.dp, EditorColors.Border, RoundedCornerShape(6.dp))
                         .clickable { showNumberDialog = true }
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = if (unitSuffix.isNotEmpty()) "$displayValue $unitSuffix" else displayValue,
-                        color = PixelCraftColors.Accent,
+                        color = EditorColors.Accent,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -137,7 +137,7 @@ fun PrecisionSlider(
                 Icon(
                     imageVector = Icons.Default.Remove,
                     contentDescription = stringResource(R.string.ui_decrease_named, label),
-                    tint = PixelCraftColors.TextPrimary,
+                    tint = EditorColors.TextPrimary,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -148,9 +148,9 @@ fun PrecisionSlider(
                 onValueChangeFinished = onValueChangeFinished,
                 valueRange = valueRange,
                 colors = SliderDefaults.colors(
-                    thumbColor = PixelCraftColors.Accent,
-                    activeTrackColor = PixelCraftColors.Accent,
-                    inactiveTrackColor = PixelCraftColors.Border
+                    thumbColor = EditorColors.Accent,
+                    activeTrackColor = EditorColors.Accent,
+                    inactiveTrackColor = EditorColors.Border
                 ),
                 modifier = Modifier
                     .weight(1f)
@@ -171,7 +171,7 @@ fun PrecisionSlider(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.ui_increase_named, label),
-                    tint = PixelCraftColors.TextPrimary,
+                    tint = EditorColors.TextPrimary,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -186,12 +186,12 @@ fun PrecisionSlider(
         }
         AlertDialog(
             onDismissRequest = { showNumberDialog = false },
-            containerColor = PixelCraftColors.DialogSurface,
+            containerColor = EditorColors.DialogSurface,
             shape = RoundedCornerShape(20.dp),
             title = {
                 Text(
                     text = label,
-                    color = PixelCraftColors.TextPrimary,
+                    color = EditorColors.TextPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -200,7 +200,7 @@ fun PrecisionSlider(
                 Column {
                     Text(
                         text = stringResource(R.string.ui_range, valueFormatter(valueRange.start), valueFormatter(valueRange.endInclusive), unitSuffix),
-                        color = PixelCraftColors.TextSecondary,
+                        color = EditorColors.TextSecondary,
                         fontSize = 12.sp
                     )
                     OutlinedTextField(
@@ -222,7 +222,7 @@ fun PrecisionSlider(
                         showNumberDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PixelCraftColors.Accent,
+                        containerColor = EditorColors.Accent,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp)
@@ -232,7 +232,7 @@ fun PrecisionSlider(
             },
             dismissButton = {
                 TextButton(onClick = { showNumberDialog = false }) {
-                    Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = EditorColors.TextSecondary)
                 }
             }
         )

@@ -1,7 +1,7 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
 import com.app.pixelcraft.presentation.i18n.localizedLabel
-import com.app.pixelcraft.ui.theme.PixelCraftColors
+import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.BorderStroke
@@ -94,13 +94,13 @@ fun PixelCraftExportDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isExporting) onDismiss() },
-        containerColor = PixelCraftColors.DialogSurface,
+        containerColor = EditorColors.DialogSurface,
         shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = stringResource(R.string.ui_export_share_image),
                 fontWeight = FontWeight.Bold,
-                color = PixelCraftColors.TextPrimary,
+                color = EditorColors.TextPrimary,
                 fontSize = 18.sp
             )
         },
@@ -110,7 +110,7 @@ fun PixelCraftExportDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text(stringResource(R.string.ui_format), color = PixelCraftColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_format), color = EditorColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier
@@ -133,23 +133,23 @@ fun PixelCraftExportDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(stringResource(R.string.ui_compression_quality), color = PixelCraftColors.TextSecondary, fontSize = 12.sp)
-                        Text("${compressionQuality.roundToInt()}%", color = PixelCraftColors.Accent, fontSize = 12.sp)
+                        Text(stringResource(R.string.ui_compression_quality), color = EditorColors.TextSecondary, fontSize = 12.sp)
+                        Text("${compressionQuality.roundToInt()}%", color = EditorColors.Accent, fontSize = 12.sp)
                     }
                     Slider(
                         value = compressionQuality,
                         onValueChange = { compressionQuality = it },
                         valueRange = 20f..100f,
                         colors = SliderDefaults.colors(
-                            thumbColor = PixelCraftColors.Accent,
-                            activeTrackColor = PixelCraftColors.Accent,
-                            inactiveTrackColor = PixelCraftColors.Border
+                            thumbColor = EditorColors.Accent,
+                            activeTrackColor = EditorColors.Accent,
+                            inactiveTrackColor = EditorColors.Border
                         )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(stringResource(R.string.ui_resolution_scale), color = PixelCraftColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_resolution_scale), color = EditorColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     for (q in ExportQuality.entries) {
@@ -159,10 +159,10 @@ fun PixelCraftExportDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) PixelCraftColors.Accent.copy(alpha = 0.12f) else PixelCraftColors.Background)
+                                .background(if (isSelected) EditorColors.Accent.copy(alpha = 0.12f) else EditorColors.Background)
                                 .border(
                                     1.dp,
-                                    if (isSelected) PixelCraftColors.Accent else PixelCraftColors.Border,
+                                    if (isSelected) EditorColors.Accent else EditorColors.Border,
                                     RoundedCornerShape(8.dp)
                                 )
                                 .clickable { qualityPreset = q }
@@ -173,21 +173,21 @@ fun PixelCraftExportDialog(
                             Column {
                                 Text(
                                     text = q.localizedLabel(),
-                                    color = if (isSelected) PixelCraftColors.Accent else PixelCraftColors.TextPrimary,
+                                    color = if (isSelected) EditorColors.Accent else EditorColors.TextPrimary,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                                 if (est.cappedByMemory) {
                                     Text(
                                         text = stringResource(R.string.ui_optimized_for_device_ram),
-                                        color = PixelCraftColors.Warning,
+                                        color = EditorColors.Warning,
                                         fontSize = 11.sp
                                     )
                                 }
                             }
                             Text(
                                 text = "${est.safeWidth}×${est.safeHeight} (~${"%.1f".format(est.estimatedBitmapMb)} MB)",
-                                color = PixelCraftColors.TextSecondary,
+                                color = EditorColors.TextSecondary,
                                 fontSize = 11.sp
                             )
                         }
@@ -209,7 +209,7 @@ fun PixelCraftExportDialog(
                             )
                             Text(
                                 text = stringResource(R.string.ui_export_selected_layer_only_sticker),
-                                color = PixelCraftColors.TextPrimary,
+                                color = EditorColors.TextPrimary,
                                 fontSize = 12.sp
                             )
                         }
@@ -227,7 +227,7 @@ fun PixelCraftExportDialog(
                             )
                             Text(
                                 text = stringResource(R.string.ui_trim_empty_transparent_margins),
-                                color = PixelCraftColors.TextPrimary,
+                                color = EditorColors.TextPrimary,
                                 fontSize = 12.sp
                             )
                         }
@@ -237,7 +237,7 @@ fun PixelCraftExportDialog(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = stringResource(R.string.ui_export_output, activeEstimate.safeWidth, activeEstimate.safeHeight, format.label),
-                    color = PixelCraftColors.Accent,
+                    color = EditorColors.Accent,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )
@@ -248,16 +248,16 @@ fun PixelCraftExportDialog(
                     enabled = !isExporting,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, PixelCraftColors.Border)
+                    border = BorderStroke(1.dp, EditorColors.Border)
                 ) {
                     Icon(
                         Icons.Default.Share,
                         contentDescription = null,
-                        tint = PixelCraftColors.Accent,
+                        tint = EditorColors.Accent,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.ui_share_without_saving_to_gallery), color = PixelCraftColors.TextPrimary, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_share_without_saving_to_gallery), color = EditorColors.TextPrimary, fontSize = 12.sp)
                 }
             }
         },
@@ -266,7 +266,7 @@ fun PixelCraftExportDialog(
                 onClick = { onExport(currentOptions()) },
                 enabled = !isExporting,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PixelCraftColors.Accent,
+                    containerColor = EditorColors.Accent,
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(12.dp)
@@ -289,11 +289,11 @@ fun PixelCraftExportDialog(
         dismissButton = {
             if (isExporting) {
                 TextButton(onClick = onCancelExport) {
-                    Text(stringResource(R.string.ui_stop), color = PixelCraftColors.Danger, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_stop), color = EditorColors.Danger, fontWeight = FontWeight.Bold)
                 }
             } else {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_cancel), color = PixelCraftColors.TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = EditorColors.TextSecondary)
                 }
             }
         }
