@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.FormatShapes
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Opacity
+import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -103,6 +104,10 @@ fun ObjectToolPanel(
     onSendToBack: () -> Unit,
     onOpenDialog: (ActiveDialog) -> Unit,
     onAddImage: () -> Unit,
+    canvasWidth: Int = 1080,
+    canvasHeight: Int = 1080,
+    onNudge: (Float, Float) -> Unit = { _, _ -> },
+    onAlign: (com.app.pixelcraft.presentation.AlignmentAction) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (
@@ -166,6 +171,10 @@ fun ObjectToolPanel(
                 onUpdate = onUpdateLayer,
                 onFinishContinuousEdit = onFinishContinuousEdit,
                 onStartEyedropper = onStartEyedropper,
+                canvasWidth = canvasWidth,
+                canvasHeight = canvasHeight,
+                onNudge = onNudge,
+                onAlign = onAlign,
                 onClose = { onSubToolSelected(ActiveSubTool.NONE) }
             )
         } else {
@@ -218,6 +227,12 @@ fun ObjectToolPanel(
                     isActive = activeSubTool == ActiveSubTool.IMAGE_MASK,
                     onClick = { onSubToolSelected(ActiveSubTool.IMAGE_MASK) }
                 )
+                ObjectToolItem(
+                    icon = Icons.Default.BorderStyle,
+                    label = stringResource(R.string.ui_stroke),
+                    isActive = activeSubTool == ActiveSubTool.IMAGE_STROKE,
+                    onClick = { onSubToolSelected(ActiveSubTool.IMAGE_STROKE) }
+                )
             }
 
             // Shared across BOTH Shape AND Image layers (Fixes Bug 2.17!)
@@ -249,6 +264,12 @@ fun ObjectToolPanel(
                 onClick = {
                     onUpdateLayer(false) { it.copy(flipVertical = !it.flipVertical) }
                 }
+            )
+            ObjectToolItem(
+                icon = Icons.Default.OpenWith,
+                label = stringResource(R.string.ui_position),
+                isActive = activeSubTool == ActiveSubTool.OBJECT_POSITION,
+                onClick = { onSubToolSelected(ActiveSubTool.OBJECT_POSITION) }
             )
             ObjectToolItem(
                 icon = Icons.Default.AspectRatio,
@@ -360,6 +381,10 @@ private fun ObjectSubToolInspector(
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
     onFinishContinuousEdit: () -> Unit,
     onStartEyedropper: (EyedropperTarget) -> Unit,
+    canvasWidth: Int,
+    canvasHeight: Int,
+    onNudge: (Float, Float) -> Unit,
+    onAlign: (com.app.pixelcraft.presentation.AlignmentAction) -> Unit,
     onClose: () -> Unit
 ) {
     // CapCut-style: back button pinned at the far left, inspector content beside it.
@@ -405,6 +430,13 @@ private fun ObjectSubToolInspector(
         Spacer(modifier = Modifier.height(6.dp))
 
         when (subTool) {
+            ActiveSubTool.OBJECT_POSITION -> {
+                TransformFields(layer = layer, canvasWidth = canvasWidth, canvasHeight = canvasHeight, onUpdate = onUpdate)
+                Spacer(modifier = Modifier.height(8.dp))
+                TextPositionInspector(onNudge = onNudge)
+                TextAlignInspector(onAlign = onAlign)
+            }
+
             ActiveSubTool.OBJECT_SIZE -> ObjectSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
             ActiveSubTool.OBJECT_ROTATE -> ObjectRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
@@ -424,6 +456,8 @@ private fun ObjectSubToolInspector(
             ActiveSubTool.IMAGE_CROP -> PhotoCropInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
             ActiveSubTool.IMAGE_ADJUST -> PhotoAdjustInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+            ActiveSubTool.IMAGE_STROKE -> PhotoStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 
             ActiveSubTool.IMAGE_MASK -> PhotoMaskInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
 

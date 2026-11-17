@@ -2,6 +2,23 @@
 
 All notable changes to **PixelCraft** are documented in this file.
 
+## [0.6.0] - 2026-11-17
+
+### Added
+- **Exact position and size**: X, Y, W, H and rotation number boxes in a new Position tool for shapes and photos (text gets X, Y and rotation), with nudge and align.
+- **Distribute**: space three or more layers evenly, across or down.
+- **Copy and paste layers** (long-press menu, ⋮ menu, Ctrl+C / Ctrl+V); groups stay grouped and it works between projects.
+- **Layer thumbnails** in the layers sheet.
+- **Photo hue, blur and tint**.
+- **Add several photos at once** (up to 10).
+- **Ellipse and Line shapes**.
+- **Stroke tool for photos and merged layers**; on merged layers it follows the shape.
+- **Recent fonts** in the font picker.
+- **12 one-tap text styles**: Sticker, Neon, Gold 3D, Retro, Comic, Highlight, Metal, Ice, Soft shadow, Elegant, Spaced, Outline.
+- **Stretch text** horizontally or vertically, and **wrap long text** at a set width.
+- **Inner shadow and emboss** for text.
+- **Custom export size**, and a choice of background colour when a transparent design is saved as JPG.
+
 ## [0.5.0] - 2026-11-17
 
 ### Added

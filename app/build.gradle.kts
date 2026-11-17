@@ -23,7 +23,7 @@ fun resolveGitVersionCode(): Int {
 
 val resolvedVersionName: String = System.getenv("VERSION_NAME")
     ?.takeIf { it.isNotBlank() }
-    ?: "0.5.0"
+    ?: "0.6.0"
 
 android {
     namespace = "com.app.pixelcraft"

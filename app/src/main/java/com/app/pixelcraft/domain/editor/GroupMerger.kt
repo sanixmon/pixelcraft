@@ -29,7 +29,17 @@ object GroupMerger {
     private const val MAX_SIDE = 4096f
     private const val OVERSAMPLE = 2f
 
-    suspend fun render(context: Context, members: List<Layer>): Merged = withContext(Dispatchers.Default) {
+    /**
+     * Renders [members] onto a transparent picture just big enough to hold them.
+     * [maxSide] caps the output size; thumbnails pass a small one and [fullQuality] = false
+     * to draw photos from their cached previews.
+     */
+    suspend fun render(
+        context: Context,
+        members: List<Layer>,
+        maxSide: Float = MAX_SIDE,
+        fullQuality: Boolean = true
+    ): Merged = withContext(Dispatchers.Default) {
         val visible = members.filter { it.isVisible }
         require(visible.isNotEmpty()) { "Nothing visible to merge" }
 
@@ -38,7 +48,7 @@ object GroupMerger {
         val b = GroupOperations.bounds(visible)
         val w = (b.right - b.left) + pad * 2f
         val h = (b.bottom - b.top) + pad * 2f
-        val scale = min(OVERSAMPLE, MAX_SIDE / max(w, h))
+        val scale = min(OVERSAMPLE, maxSide / max(w, h))
         val outW = ceil(w * scale).toInt().coerceAtLeast(1)
         val outH = ceil(h * scale).toInt().coerceAtLeast(1)
 
@@ -61,7 +71,7 @@ object GroupMerger {
             canvas = canvas,
             config = config,
             layers = local,
-            bitmapLookup = { path -> ImageStore.loadBitmap(path, forExport = true) },
+            bitmapLookup = { path -> ImageStore.loadBitmap(path, forExport = fullQuality) },
             typefaceResolver = { key, bold, italic -> FontCatalog.resolveTypeface(context, key, bold, italic) }
         )
         Merged(bitmap, b.centerX, b.centerY, w, h)

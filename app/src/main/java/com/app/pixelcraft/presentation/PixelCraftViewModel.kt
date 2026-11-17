@@ -190,6 +190,7 @@ class PixelCraftViewModel internal constructor(
                         ),
                         recentColors = snap.recentColors,
                         favoriteFontKeys = snap.favoriteFontKeys,
+                        recentFontKeys = snap.recentFontKeys,
                         savedStyles = snap.savedStyles,
                         onboardingDismissed = snap.onboardingDismissed,
                         availableFontsCount = FontCatalog.allFonts().size
@@ -362,6 +363,64 @@ class PixelCraftViewModel internal constructor(
                 _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_merge_failed, err.message.orEmpty())) }
             }
         }
+    }
+
+    // In-memory layer clipboard; survives switching projects within the session.
+    private var layerClipboard: List<Layer> = emptyList()
+
+    /** Copies the selection (a whole group, a multi-selection, or one layer). */
+    fun copySelectedLayers() {
+        val state = _uiState.value
+        val ids = state.selectedLayerIds.ifEmpty { setOfNotNull(state.selectedLayerId) }
+        val copied = state.layers.filter { it.id in ids }.sortedBy { it.zIndex }
+        if (copied.isEmpty()) return
+        layerClipboard = copied
+        _uiState.update {
+            it.copy(layerClipboardCount = copied.size, userMessage = UiText.Res(R.string.msg_layers_copied, copied.size))
+        }
+    }
+
+    /** Pastes the clipboard on top as new layers (groups stay grouped), slightly offset. */
+    fun pasteLayers() {
+        val source = layerClipboard
+        if (source.isEmpty()) return
+        resetDragTracking()
+        resetGroupEditBase()
+        beginHistoryStep(continuous = false, label = "Paste Layers")
+        val groupIds = source.mapNotNull { it.groupId }.distinct().associateWith { UUID.randomUUID().toString() }
+        var nextZ = (_uiState.value.layers.maxOfOrNull { it.zIndex } ?: -1) + 1
+        val pasted = source.map { layer ->
+            layer.copy(
+                id = UUID.randomUUID().toString(),
+                isLocked = false,
+                groupId = layer.groupId?.let { groupIds[it] },
+                positionX = layer.positionX + 30f,
+                positionY = layer.positionY + 30f,
+                zIndex = nextZ++
+            )
+        }
+        // Paste again lands a further step away instead of stacking exactly.
+        layerClipboard = source.map { it.copy(positionX = it.positionX + 30f, positionY = it.positionY + 30f) }
+        _uiState.update { state ->
+            state.copy(
+                layers = (state.layers + pasted).normalizeZIndices(),
+                selectedLayerId = pasted.last().id,
+                selectedLayerIds = pasted.map { it.id }.toSet(),
+                activeSubTool = ActiveSubTool.NONE
+            )
+        }
+    }
+
+    /** Evenly spaces the selected layers (a group or a multi-selection of 3+). */
+    fun distributeSelected(horizontal: Boolean) {
+        val state = _uiState.value
+        val ids = state.selectedLayerIds
+        val members = state.layers.filter { it.id in ids }
+        if (members.count { !it.isLocked } < 3) return
+        resetDragTracking()
+        beginHistoryStep(continuous = false, label = "Distribute Layers")
+        val replaced = GroupOperations.distribute(members, horizontal).associateBy { it.id }
+        _uiState.update { s -> s.copy(layers = s.layers.map { replaced[it.id] ?: it }) }
     }
 
     /** Narrows the selection from the whole group to just the tapped member, to edit it alone. */
@@ -925,7 +984,12 @@ class PixelCraftViewModel internal constructor(
     }
 
     /** Adds a picked photo as a movable layer, sized to fit within 60% of the canvas. */
-    fun addImageLayer(uri: Uri) {
+    /** Adds several photos as separate layers, each offset a little from the previous one. */
+    fun addImageLayers(uris: List<Uri>) {
+        uris.forEachIndexed { i, uri -> addImageLayer(uri, offset = i * 40f) }
+    }
+
+    fun addImageLayer(uri: Uri, offset: Float = 0f) {
         viewModelScope.launch {
             imageStore.import(uri).onSuccess { image ->
                 beginHistoryStep(continuous = false, label = "Add Photo")
@@ -941,6 +1005,8 @@ class PixelCraftViewModel internal constructor(
                     imageLocalPath = image.path,
                     width = fit.width,
                     height = fit.height,
+                    positionX = offset,
+                    positionY = offset,
                     zIndex = nextZ
                 )
                 _uiState.update { state ->
@@ -978,6 +1044,10 @@ class PixelCraftViewModel internal constructor(
                     }
                 }
             )
+        }
+        val newFont = _uiState.value.selectedLayer?.fontKey
+        if (currentLayer.type == LayerType.TEXT && newFont != null && newFont != currentLayer.fontKey) {
+            viewModelScope.launch { preferencesStore.recordRecentFont(newFont) }
         }
     }
 
@@ -1104,7 +1174,7 @@ class PixelCraftViewModel internal constructor(
                         } else {
                             moved.copy(
                                 width = (layer.width * safeZoom).coerceIn(24f, 4096f),
-                                height = (layer.height * safeZoom).coerceIn(24f, 4096f)
+                                height = (layer.height * safeZoom).coerceIn(if (layer.shapeType == ShapeType.LINE) 4f else 24f, 4096f)
                             )
                         }
                     }

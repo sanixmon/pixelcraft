@@ -39,6 +39,9 @@ enum class ActiveSubTool {
     TEXT_SHADOW,
     TEXT_3D,
     TEXT_REFLECTION,
+    TEXT_PRESETS,
+    TEXT_INNER_SHADOW,
+    TEXT_EMBOSS,
 
     // Object (Shape & Photo) Subtools
     SHAPE_TYPE,
@@ -46,12 +49,14 @@ enum class ActiveSubTool {
     SHAPE_STROKE,
     SHAPE_SHADOW,
     SHAPE_OPACITY,
+    OBJECT_POSITION,
     OBJECT_SIZE,
     OBJECT_ROTATE,
     LAYER_BLEND,
     IMAGE_CROP,
     IMAGE_ADJUST,
-    IMAGE_MASK
+    IMAGE_MASK,
+    IMAGE_STROKE
 }
 
 enum class EyedropperTarget {
@@ -112,9 +117,12 @@ data class PixelCraftUiState(
 
     // Style Clipboard, Saved Styles, Recent Colors, Fonts & Coach Marks
     val copiedStyleLayer: Layer? = null,
+    /** How many layers are on the in-app layer clipboard (0 = nothing to paste). */
+    val layerClipboardCount: Int = 0,
     val savedStyles: List<SavedLayerStyle> = emptyList(),
     val recentColors: List<Long> = emptyList(),
     val favoriteFontKeys: Set<String> = emptySet(),
+    val recentFontKeys: List<String> = emptyList(),
     val availableFontsCount: Int = 16,
     val onboardingDismissed: Boolean = false,
 

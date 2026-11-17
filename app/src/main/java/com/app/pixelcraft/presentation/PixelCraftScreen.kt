@@ -177,8 +177,9 @@ private fun PixelCraftEditorContent(
         handleNavigateBackStep()
     }
 
-    val pickLayerImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let { viewModel.addImageLayer(it) }
+    // Pick up to 10 photos at once; each becomes its own layer, cascaded so none hide the others.
+    val pickLayerImage = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+        if (uris.isNotEmpty()) viewModel.addImageLayers(uris)
     }
     val pickBackgroundImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { viewModel.setBackgroundImage(it) }
@@ -277,6 +278,7 @@ private fun PixelCraftEditorContent(
                         onUngroup = { viewModel.ungroupSelectedLayers() },
                         onEditItem = { viewModel.focusSelectedGroupMember() },
                         onMerge = { viewModel.mergeSelectedGroup() },
+                        onDistribute = { horizontal -> viewModel.distributeSelected(horizontal) },
                         recentColors = state.recentColors
                     )
                 }
@@ -289,6 +291,7 @@ private fun PixelCraftEditorContent(
                         activeSubTool = state.activeSubTool,
                         recentColors = state.recentColors,
                         favoriteFontKeys = state.favoriteFontKeys,
+                        recentFontKeys = state.recentFontKeys,
                         availableFontsCount = state.availableFontsCount,
                         hasCopiedStyle = state.copiedStyleLayer != null,
                         onSubToolSelected = { viewModel.setActiveSubTool(it) },
@@ -320,7 +323,9 @@ private fun PixelCraftEditorContent(
                         onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
                         onAlign = { action -> viewModel.alignSelectedLayer(action) },
                         onOpenEditDialog = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
-                        onAddText = { viewModel.addTextLayer() }
+                        onAddText = { viewModel.addTextLayer() },
+                        canvasWidth = state.canvasConfig.width,
+                        canvasHeight = state.canvasConfig.height
                     )
                 }
             }
@@ -346,7 +351,11 @@ private fun PixelCraftEditorContent(
                         onBringToFront = { viewModel.bringLayerToFront() },
                         onSendToBack = { viewModel.sendLayerToBack() },
                         onOpenDialog = { viewModel.openDialog(it) },
-                        onAddImage = { pickLayerImage.launch(imagesOnly) }
+                        onAddImage = { pickLayerImage.launch(imagesOnly) },
+                        canvasWidth = state.canvasConfig.width,
+                        canvasHeight = state.canvasConfig.height,
+                        onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
+                        onAlign = { action -> viewModel.alignSelectedLayer(action) }
                     )
                 }
             }
@@ -420,6 +429,8 @@ private fun PixelCraftEditorContent(
             onOpenTextEdit = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
             onDeleteSelected = { viewModel.deleteSelectedLayer() },
             onDuplicateSelected = { viewModel.duplicateSelectedLayer() },
+            onCopyLayers = { viewModel.copySelectedLayers() },
+            onPasteLayers = { viewModel.pasteLayers() },
             onCopyStyle = { viewModel.copySelectedStyle() },
             onPasteStyle = { viewModel.pasteStyleToSelected() },
             onBringToFront = { viewModel.bringLayerToFront() },
@@ -451,6 +462,14 @@ private fun PixelCraftEditorContent(
                     }
                     keyEvent.isCtrlPressed && keyEvent.key == Key.Y -> {
                         viewModel.redo()
+                        true
+                    }
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.C -> {
+                        viewModel.copySelectedLayers()
+                        true
+                    }
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.V -> {
+                        viewModel.pasteLayers()
                         true
                     }
                     keyEvent.isCtrlPressed && keyEvent.key == Key.D -> {
@@ -491,7 +510,8 @@ private fun PixelCraftEditorContent(
                 onOpenDialog = { viewModel.openDialog(it) },
                 onToggleGrid = { viewModel.toggleGrid() },
                 onToggleSafeZone = { viewModel.toggleSafeZone() },
-                onToggleLayers = { viewModel.toggleLayersDrawer() }
+                onToggleLayers = { viewModel.toggleLayersDrawer() },
+                onPasteLayers = { viewModel.pasteLayers() }
             )
         }
     ) { innerPadding ->
@@ -600,6 +620,7 @@ private fun PixelCraftEditorContent(
                         onMoveUp = { id -> viewModel.moveLayerUp(id) },
                         onMoveDown = { id -> viewModel.moveLayerDown(id) },
                         onReorder = { ids -> viewModel.reorderLayers(ids) },
+                        onDistribute = { horizontal -> viewModel.distributeSelected(horizontal) },
                         onDelete = { viewModel.deleteLayer(it) },
                         onClose = { viewModel.setLayersDrawerOpen(false) },
                         modifier = Modifier.fillMaxSize()

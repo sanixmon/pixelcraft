@@ -19,6 +19,7 @@ data class UserPreferencesSnapshot(
     val lastExportQuality: String = "MEDIUM",
     val recentColors: List<Long> = emptyList(),
     val favoriteFontKeys: Set<String> = emptySet(),
+    val recentFontKeys: List<String> = emptyList(),
     val savedStyles: List<SavedLayerStyle> = emptyList(),
     val onboardingDismissed: Boolean = false
 )
@@ -45,6 +46,7 @@ class UserPreferencesStore(private val context: Context?) {
             lastExportQuality = prefs[KEY_EXPORT_QUALITY] ?: "MEDIUM",
             recentColors = recentColors,
             favoriteFontKeys = prefs[KEY_FAVORITE_FONTS] ?: emptySet(),
+            recentFontKeys = prefs[KEY_RECENT_FONTS]?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
             savedStyles = savedStyles,
             onboardingDismissed = prefs[KEY_ONBOARDING_DISMISSED] ?: false
         )
@@ -83,6 +85,15 @@ class UserPreferencesStore(private val context: Context?) {
         }
     }
 
+    /** Moves [fontKey] to the front of the recent-fonts list (max [MAX_RECENT_FONTS]). */
+    suspend fun recordRecentFont(fontKey: String) {
+        val ds = context?.pixelCraftDataStore ?: return
+        ds.edit { prefs ->
+            val current = prefs[KEY_RECENT_FONTS]?.split(",")?.filter { it.isNotBlank() && it != fontKey }.orEmpty()
+            prefs[KEY_RECENT_FONTS] = (listOf(fontKey) + current).take(MAX_RECENT_FONTS).joinToString(",")
+        }
+    }
+
     suspend fun saveLayerStyle(style: SavedLayerStyle) {
         val ds = context?.pixelCraftDataStore ?: return
         ds.edit { prefs ->
@@ -113,6 +124,8 @@ class UserPreferencesStore(private val context: Context?) {
 
     companion object {
         private const val MAX_RECENT_COLORS = 12
+        private const val MAX_RECENT_FONTS = 9
+        private val KEY_RECENT_FONTS = stringPreferencesKey("recent_fonts")
         private val KEY_EXPORT_FORMAT = stringPreferencesKey("export_format")
         private val KEY_EXPORT_QUALITY = stringPreferencesKey("export_quality")
         private val KEY_RECENT_COLORS = stringPreferencesKey("recent_colors")

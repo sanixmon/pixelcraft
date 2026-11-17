@@ -61,6 +61,8 @@ fun ShapeType.localizedLabel(): String = stringResource(
         ShapeType.RECTANGLE -> R.string.enum_shape_rectangle
         ShapeType.ROUNDED_RECTANGLE -> R.string.enum_shape_rounded_rectangle
         ShapeType.CIRCLE -> R.string.enum_shape_circle
+        ShapeType.ELLIPSE -> R.string.enum_shape_ellipse
+        ShapeType.LINE -> R.string.enum_shape_line
         ShapeType.TRIANGLE -> R.string.enum_shape_triangle
         ShapeType.DIAMOND -> R.string.enum_shape_diamond
         ShapeType.PENTAGON -> R.string.enum_shape_pentagon
@@ -204,6 +206,8 @@ private val HistoryLabels: Map<String, Int> = mapOf(
     "Canvas Filters" to R.string.hist_canvas_filters,
     "Change Text Case" to R.string.hist_change_text_case,
     "Delete Layer" to R.string.hist_delete_layer,
+    "Paste Layers" to R.string.hist_paste_layers,
+    "Distribute Layers" to R.string.hist_distribute_layers,
     "Merge Group" to R.string.hist_merge_group,
     "Reorder Layers" to R.string.hist_reorder_layers,
     "Resize Group" to R.string.hist_resize_group,

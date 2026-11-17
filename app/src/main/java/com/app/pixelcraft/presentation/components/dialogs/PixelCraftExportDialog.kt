@@ -1,5 +1,13 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -84,13 +92,21 @@ fun PixelCraftExportDialog(
     var trimTransparent by remember(initialOptions.trimTransparent) {
         mutableStateOf(initialOptions.trimTransparent)
     }
+    // Custom output width (px); null = use the scale presets.
+    var customWidthText by remember(initialOptions.customWidth) { mutableStateOf(initialOptions.customWidth?.toString()) }
+    var jpgBackground by remember(initialOptions.backgroundColor) { mutableStateOf(initialOptions.backgroundColor) }
+    val customWidth = customWidthText?.toIntOrNull()?.coerceIn(64, 8192)
+    val outWidth = customWidth ?: (canvasConfig.width * qualityPreset.multiplier).roundToInt()
+    val outHeight = (outWidth.toFloat() * canvasConfig.height / canvasConfig.width.coerceAtLeast(1)).roundToInt()
 
     fun currentOptions(): ExportOptions = ExportOptions(
         format = format,
         qualityPreset = qualityPreset,
         jpegQuality = compressionQuality.roundToInt().coerceIn(10, 100),
         selectedLayerOnly = selectedLayerOnly && hasSelectedLayer,
-        trimTransparent = trimTransparent && format.supportsTransparency
+        trimTransparent = trimTransparent && format.supportsTransparency,
+        customWidth = customWidth,
+        backgroundColor = jpgBackground
     )
 
     val exporting by rememberUpdatedState(isExporting)
@@ -165,12 +181,60 @@ fun PixelCraftExportDialog(
             ) {
                 for (q in ExportQuality.entries) {
                     FilterChip(
-                        selected = qualityPreset == q,
-                        onClick = { qualityPreset = q },
+                        selected = customWidthText == null && qualityPreset == q,
+                        onClick = {
+                            qualityPreset = q
+                            customWidthText = null
+                        },
                         label = { Text(q.localizedLabel(), fontSize = 13.sp) },
                         colors = chipColors,
                         border = null
                     )
+                }
+                FilterChip(
+                    selected = customWidthText != null,
+                    onClick = { if (customWidthText == null) customWidthText = canvasConfig.width.toString() },
+                    label = { Text(stringResource(R.string.ui_custom), fontSize = 13.sp) },
+                    colors = chipColors,
+                    border = null
+                )
+            }
+            if (customWidthText != null) {
+                OutlinedTextField(
+                    value = customWidthText.orEmpty(),
+                    onValueChange = { v -> customWidthText = v.filter { it.isDigit() }.take(5) },
+                    label = { Text(stringResource(R.string.ui_width_px)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                )
+            }
+            Text(
+                text = stringResource(R.string.ui_output_size, outWidth, outHeight),
+                color = EditorColors.TextSecondary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+
+            if (!format.supportsTransparency &&
+                (selectedLayerOnly || canvasConfig.backgroundType == BackgroundType.TRANSPARENT)
+            ) {
+                SectionLabel(stringResource(R.string.ui_jpg_background))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    for (c in listOf(0xFFFFFFFFL, 0xFF000000L, 0xFFF6F1E9L, 0xFF111827L)) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(c))
+                                .border(
+                                    width = if (jpgBackground == c) 3.dp else 1.dp,
+                                    color = if (jpgBackground == c) EditorColors.Accent else EditorColors.Border,
+                                    shape = CircleShape
+                                )
+                                .clickable { jpgBackground = c }
+                        )
+                    }
                 }
             }
 

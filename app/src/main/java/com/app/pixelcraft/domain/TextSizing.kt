@@ -174,6 +174,39 @@ object TextSizing {
         return (units * fontSize * boldFactor * fontFactor + spacingPx).coerceAtLeast(0f)
     }
 
+    /**
+     * Splits [text] into display lines: explicit line breaks always break; with [boxWidth] > 0,
+     * words wrap so no line is wider than the box (a single over-long word is split).
+     */
+    fun wrapLines(text: String, boxWidth: Float, measure: (String) -> Float): List<String> {
+        val hardLines = text.split("\n")
+        if (boxWidth <= 0f) return hardLines
+        val out = ArrayList<String>()
+        for (hard in hardLines) {
+            if (hard.isEmpty()) { out += ""; continue }
+            var line = ""
+            for (word in hard.split(" ")) {
+                val candidate = if (line.isEmpty()) word else "$line $word"
+                if (measure(candidate) <= boxWidth || line.isEmpty() && measure(word) <= boxWidth) {
+                    line = candidate
+                    continue
+                }
+                if (line.isNotEmpty()) out += line
+                // Break a word that's wider than the box on its own.
+                var rest = word
+                while (rest.length > 1 && measure(rest) > boxWidth) {
+                    var cut = rest.length - 1
+                    while (cut > 1 && measure(rest.substring(0, cut)) > boxWidth) cut--
+                    out += rest.substring(0, cut)
+                    rest = rest.substring(cut)
+                }
+                line = rest
+            }
+            out += line
+        }
+        return out
+    }
+
     fun withEstimatedBounds(layer: Layer, measurer: TextMeasurer? = null): Layer {
         return when (layer.type) {
             LayerType.TEXT -> {
@@ -181,7 +214,9 @@ object TextSizing {
                 val (rawW, rawH) = if (measured != null) {
                     measured
                 } else {
-                    val lines = layer.text.split("\n").ifEmpty { listOf("") }
+                    val lines = wrapLines(layer.text, layer.textBoxWidth) {
+                        estimateLineWidth(it, layer.fontSize, layer.isBold, layer.fontKey, layer.letterSpacing)
+                    }.ifEmpty { listOf("") }
                     val maxLineW = lines.maxOfOrNull {
                         estimateLineWidth(it, layer.fontSize, layer.isBold, layer.fontKey, layer.letterSpacing)
                     } ?: 0f
@@ -190,6 +225,8 @@ object TextSizing {
                 }
 
                 val bgPad = if (layer.textBackgroundColor != null) layer.textBackgroundPadding * 2f else 0f
+                val scaledW = rawW * layer.textScaleX.coerceIn(0.2f, 5f)
+                val scaledH = rawH * layer.textScaleY.coerceIn(0.2f, 5f)
                 val strokePad = when {
                     layer.strokeWidth <= 0f -> 0f
                     layer.strokePosition == StrokePosition.OUTSIDE -> layer.strokeWidth * 2f
@@ -200,8 +237,8 @@ object TextSizing {
                 val extrudeX = if (layer.is3D) abs(cos(layer.angle3D * PI / 180.0)).toFloat() * layer.depth3D else 0f
                 val extrudeY = if (layer.is3D) abs(sin(layer.angle3D * PI / 180.0)).toFloat() * layer.depth3D else 0f
 
-                val estW = (rawW + bgPad + strokePad + glowPad + extrudeX + 24f).coerceAtLeast(80f)
-                val estH = (rawH + bgPad + strokePad + glowPad + extrudeY + 20f).coerceAtLeast(48f)
+                val estW = (scaledW + bgPad + strokePad + glowPad + extrudeX + 24f).coerceAtLeast(80f)
+                val estH = (scaledH + bgPad + strokePad + glowPad + extrudeY + 20f).coerceAtLeast(48f)
                 layer.copy(width = estW, height = estH)
             }
             else -> layer
