@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Texture
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -250,22 +249,15 @@ fun BackgroundToolPanel(
         }
 
         if (canvasConfig.backgroundType == BackgroundType.GRADIENT) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (gt in GradientType.entries) {
-                    FilterChip(
-                        selected = canvasConfig.gradientType == gt,
-                        onClick = {
-                            onSetGradient(canvasConfig.gradientColors, canvasConfig.gradientAngle, gt, false)
-                        },
-                        label = { Text(gt.localizedLabel(), fontSize = 12.sp) }
-                    )
+            ToolDropdown(
+                label = stringResource(R.string.ui_gradient),
+                options = GradientType.entries,
+                selected = canvasConfig.gradientType,
+                optionLabel = { it.localizedLabel() },
+                onSelect = { gt ->
+                    onSetGradient(canvasConfig.gradientColors, canvasConfig.gradientAngle, gt, false)
                 }
-            }
+            )
             if (canvasConfig.gradientType != GradientType.RADIAL) {
                 PrecisionSlider(
                     label = stringResource(R.string.ui_gradient_angle),

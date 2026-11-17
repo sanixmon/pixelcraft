@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -106,7 +107,7 @@ import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import kotlin.math.roundToInt
 
 /**
- * CapCut-style font picker: category chips with search/import icons on one line,
+ * CapCut-style font picker: All/Favorites/Imported chips with search/import icons on one line,
  * then a 3-column grid where each tile shows the font's name set in that font.
  */
 @Composable
@@ -116,7 +117,8 @@ internal fun ColumnScope.TextFontInspector(
     availableFontsCount: Int,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
     onToggleFavoriteFont: (String) -> Unit,
-    onImportFont: () -> Unit
+    onImportFont: () -> Unit,
+    onPickDeviceFontsFolder: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
@@ -127,7 +129,7 @@ internal fun ColumnScope.TextFontInspector(
             add("All")
             if (favoriteFontKeys.isNotEmpty()) add("Favorites")
             if (allFonts.any { it.category == "Imported" }) add("Imported")
-            allFonts.map { it.category }.distinct().filter { it != "Imported" }.forEach { add(it) }
+            if (allFonts.any { it.category == FontCatalog.DEVICE_CATEGORY }) add(FontCatalog.DEVICE_CATEGORY)
         }
     }
     val filteredFonts = remember(allFonts, searchQuery, selectedCategory, favoriteFontKeys) {
@@ -135,7 +137,7 @@ internal fun ColumnScope.TextFontInspector(
             val matchesCategory = when (selectedCategory) {
                 "All" -> true
                 "Favorites" -> font.key in favoriteFontKeys
-                else -> font.category.equals(selectedCategory, ignoreCase = true)
+                else -> font.category == selectedCategory
             }
             val matchesSearch = searchQuery.isBlank() ||
                 font.displayName.contains(searchQuery.trim(), ignoreCase = true) ||
@@ -183,12 +185,14 @@ internal fun ColumnScope.TextFontInspector(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                for (cat in categories) {
+                // A lone "All" chip filters nothing, so only show chips when there is a choice.
+                if (categories.size > 1) for (cat in categories) {
                     FontCategoryChip(
                         label = when (cat) {
                             "All" -> stringResource(R.string.ui_tab_all)
                             "Favorites" -> stringResource(R.string.ui_font_cat_favorites)
                             "Imported" -> stringResource(R.string.ui_font_cat_imported)
+                            FontCatalog.DEVICE_CATEGORY -> stringResource(R.string.ui_font_cat_device)
                             else -> cat
                         },
                         selected = selectedCategory == cat,
@@ -207,6 +211,14 @@ internal fun ColumnScope.TextFontInspector(
             Icon(
                 imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
                 contentDescription = stringResource(R.string.ui_search_fonts, allFonts.size),
+                tint = EditorColors.TextPrimary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        IconButton(onClick = onPickDeviceFontsFolder, modifier = Modifier.size(36.dp)) {
+            Icon(
+                imageVector = Icons.Default.Folder,
+                contentDescription = stringResource(R.string.ui_device_fonts_folder),
                 tint = EditorColors.TextPrimary,
                 modifier = Modifier.size(20.dp)
             )

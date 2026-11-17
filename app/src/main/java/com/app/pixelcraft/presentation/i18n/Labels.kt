@@ -128,6 +128,8 @@ fun PresetCategory.localizedLabel(): String = stringResource(
         PresetCategory.QUOTE -> R.string.enum_presetcat_quote
         PresetCategory.YOUTUBE -> R.string.enum_presetcat_youtube
         PresetCategory.PROMO -> R.string.enum_presetcat_promo
+        PresetCategory.BUSINESS -> R.string.enum_presetcat_business
+        PresetCategory.EVENT -> R.string.enum_presetcat_event
         PresetCategory.GREETING -> R.string.enum_presetcat_greeting
         PresetCategory.MEME -> R.string.enum_presetcat_meme
         PresetCategory.STORY -> R.string.enum_presetcat_story
@@ -202,6 +204,15 @@ private val HistoryLabels: Map<String, Int> = mapOf(
     "Canvas Filters" to R.string.hist_canvas_filters,
     "Change Text Case" to R.string.hist_change_text_case,
     "Delete Layer" to R.string.hist_delete_layer,
+    "Reorder Layers" to R.string.hist_reorder_layers,
+    "Resize Group" to R.string.hist_resize_group,
+    "Rotate Group" to R.string.hist_rotate_group,
+    "Flip Group Horizontal" to R.string.hist_flip_group_h,
+    "Flip Group Vertical" to R.string.hist_flip_group_v,
+    "Edit Group" to R.string.hist_edit_group,
+    "Align Group" to R.string.hist_align_group,
+    "Delete Group" to R.string.hist_delete_group,
+    "Duplicate Group" to R.string.hist_duplicate_group,
     "Duplicate Layer" to R.string.hist_duplicate_layer,
     "Edit" to R.string.hist_edit,
     "Edit Layer" to R.string.hist_edit_layer,

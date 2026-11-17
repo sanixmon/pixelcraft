@@ -187,7 +187,7 @@ class LayerModelTest {
     @Test
     fun testDefaultPresetsCoverAllCategoriesAndValidBundledFonts() {
         val validFontKeys = FontCatalog.fonts.map { it.key }.toSet()
-        assertEquals(20, DefaultPresets.presets.size)
+        assertTrue(DefaultPresets.presets.size >= 25)
         assertEquals(20, DefaultPresets.curatedGradients.size)
 
         for (cat in PresetCategory.entries) {

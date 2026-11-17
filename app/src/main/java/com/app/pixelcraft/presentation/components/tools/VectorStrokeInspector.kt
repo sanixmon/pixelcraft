@@ -4,15 +4,12 @@ import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.ui.theme.EditorColors
 import com.app.pixelcraft.R
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -101,38 +98,22 @@ fun VectorStrokeInspector(
             )
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text(stringResource(R.string.ui_stroke_alignment), color = EditorColors.TextSecondary, fontSize = 12.sp)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (pos in StrokePosition.entries) {
-                    FilterChip(
-                        selected = strokePosition == pos,
-                        onClick = { onPositionChange(pos) },
-                        label = { Text(pos.localizedLabel(), fontSize = 12.sp) }
-                    )
-                }
-            }
+            ToolDropdown(
+                label = stringResource(R.string.ui_stroke_alignment),
+                options = StrokePosition.entries,
+                selected = strokePosition,
+                optionLabel = { it.localizedLabel() },
+                onSelect = onPositionChange
+            )
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text(stringResource(R.string.ui_dash_pattern), color = EditorColors.TextSecondary, fontSize = 12.sp)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (pat in StrokePattern.entries) {
-                    FilterChip(
-                        selected = strokePattern == pat,
-                        onClick = { onPatternChange(pat) },
-                        label = { Text(pat.localizedLabel(), fontSize = 12.sp) }
-                    )
-                }
-            }
+            ToolDropdown(
+                label = stringResource(R.string.ui_dash_pattern),
+                options = StrokePattern.entries,
+                selected = strokePattern,
+                optionLabel = { it.localizedLabel() },
+                onSelect = onPatternChange
+            )
 
             if (strokePattern != StrokePattern.SOLID) {
                 if (strokePattern == StrokePattern.DASHED || strokePattern == StrokePattern.DASH_DOT) {
@@ -170,21 +151,13 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text(stringResource(R.string.ui_corner_join), color = EditorColors.TextSecondary, fontSize = 12.sp)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (join in StrokeJoinStyle.entries) {
-                    FilterChip(
-                        selected = strokeJoin == join,
-                        onClick = { onJoinChange(join) },
-                        label = { Text(join.localizedLabel(), fontSize = 12.sp) }
-                    )
-                }
-            }
+            ToolDropdown(
+                label = stringResource(R.string.ui_corner_join),
+                options = StrokeJoinStyle.entries,
+                selected = strokeJoin,
+                optionLabel = { it.localizedLabel() },
+                onSelect = onJoinChange
+            )
             if (strokeJoin == StrokeJoinStyle.MITER) {
                 PrecisionSlider(
                     label = stringResource(R.string.ui_miter_limit),
@@ -199,21 +172,13 @@ fun VectorStrokeInspector(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-            Text(stringResource(R.string.ui_line_cap), color = EditorColors.TextSecondary, fontSize = 12.sp)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (cap in StrokeCapStyle.entries) {
-                    FilterChip(
-                        selected = strokeCap == cap,
-                        onClick = { onCapChange(cap) },
-                        label = { Text(cap.localizedLabel(), fontSize = 12.sp) }
-                    )
-                }
-            }
+            ToolDropdown(
+                label = stringResource(R.string.ui_line_cap),
+                options = StrokeCapStyle.entries,
+                selected = strokeCap,
+                optionLabel = { it.localizedLabel() },
+                onSelect = onCapChange
+            )
         }
     }
 }

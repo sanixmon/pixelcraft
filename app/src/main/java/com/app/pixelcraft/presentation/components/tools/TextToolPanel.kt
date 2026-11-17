@@ -119,6 +119,7 @@ fun TextToolPanel(
     onApplyTextCase: (TextCaseMode) -> Unit = {},
     onToggleFavoriteFont: (String) -> Unit = {},
     onImportFont: () -> Unit = {},
+    onPickDeviceFontsFolder: () -> Unit = {},
     onStartEyedropper: (EyedropperTarget) -> Unit = {},
     onCopyStyle: () -> Unit = {},
     onPasteStyle: () -> Unit = {},
@@ -190,6 +191,7 @@ fun TextToolPanel(
                 onApplyTextCase = onApplyTextCase,
                 onToggleFavoriteFont = onToggleFavoriteFont,
                 onImportFont = onImportFont,
+                onPickDeviceFontsFolder = onPickDeviceFontsFolder,
                 onStartEyedropper = onStartEyedropper,
                 onNudge = onNudge,
                 onAlign = onAlign,
@@ -426,6 +428,7 @@ private fun SubToolInspector(
     onApplyTextCase: (TextCaseMode) -> Unit,
     onToggleFavoriteFont: (String) -> Unit,
     onImportFont: () -> Unit,
+    onPickDeviceFontsFolder: () -> Unit,
     onStartEyedropper: (EyedropperTarget) -> Unit,
     onNudge: (Float, Float) -> Unit,
     onAlign: (AlignmentAction) -> Unit,
@@ -472,7 +475,7 @@ private fun SubToolInspector(
         Spacer(modifier = Modifier.height(6.dp))
 
         when (subTool) {
-            ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont)
+            ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont, onPickDeviceFontsFolder = onPickDeviceFontsFolder)
 
             ActiveSubTool.TEXT_POSITION -> {
                 TextPositionInspector(onNudge = onNudge)

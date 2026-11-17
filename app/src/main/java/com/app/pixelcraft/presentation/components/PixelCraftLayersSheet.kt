@@ -20,6 +20,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -70,11 +81,48 @@ fun PixelCraftLayersSheet(
     onToggleVisibility: (String) -> Unit,
     onMoveUp: (String) -> Unit,
     onMoveDown: (String) -> Unit,
+    onReorder: (List<String>) -> Unit = {},
     onDelete: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sortedLayers = layers.sortedBy { it.zIndex }.asReversed()
+    val sortedFromLayers = layers.sortedBy { it.zIndex }.asReversed()
+
+    // Drag-to-reorder: while a handle is dragged the list is reordered locally (top = front),
+    // and the new order is committed once on release as a single undo step.
+    val listState = rememberLazyListState()
+    var draggingId by remember { mutableStateOf<String?>(null) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+    var localOrder by remember { mutableStateOf<List<String>?>(null) }
+    val byId = layers.associateBy { it.id }
+    val sortedLayers = localOrder?.mapNotNull { byId[it] }?.takeIf { it.size == layers.size } ?: sortedFromLayers
+
+    fun onDrag(dy: Float) {
+        val id = draggingId ?: return
+        val order = (localOrder ?: sortedLayers.map { it.id }).toMutableList()
+        dragOffset += dy
+        val items = listState.layoutInfo.visibleItemsInfo
+        val current = items.firstOrNull { it.key == id } ?: return
+        val center = current.offset + current.size / 2f + dragOffset
+        val target = items.firstOrNull {
+            it.key != id && center > it.offset && center < it.offset + it.size
+        } ?: return
+        val from = order.indexOf(id)
+        val to = order.indexOf(target.key as String)
+        if (from < 0 || to < 0) return
+        order.add(to, order.removeAt(from))
+        // The dragged row now sits where the target was; keep it under the finger.
+        dragOffset -= (target.offset - current.offset)
+        localOrder = order
+    }
+
+    fun endDrag() {
+        val order = localOrder
+        if (order != null && order != sortedFromLayers.map { it.id }) onReorder(order)
+        draggingId = null
+        dragOffset = 0f
+        localOrder = null
+    }
     val hasGroupInSelection = layers.any { it.id in selectedLayerIds && it.groupId != null }
 
     Card(
@@ -142,6 +190,7 @@ fun PixelCraftLayersSheet(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -157,8 +206,15 @@ fun PixelCraftLayersSheet(
                             LayerType.IMAGE -> Icons.Default.Image to stringResource(R.string.ui_photo)
                         }
 
+                        val isDragging = draggingId == layer.id
                         Column(
                             modifier = Modifier
+                                .then(if (isDragging) Modifier else Modifier.animateItem())
+                                .zIndex(if (isDragging) 1f else 0f)
+                                .graphicsLayer {
+                                    translationY = if (isDragging) dragOffset else 0f
+                                    shadowElevation = if (isDragging) 12f else 0f
+                                }
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(if (isPrimary) EditorColors.SurfaceElevated else EditorColors.Background)
@@ -175,6 +231,28 @@ fun PixelCraftLayersSheet(
                                 .padding(horizontal = 8.dp, vertical = 6.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.DragHandle,
+                                    contentDescription = stringResource(R.string.ui_drag_to_reorder),
+                                    tint = if (isDragging) EditorColors.Accent else EditorColors.TextMuted,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .pointerInput(layer.id) {
+                                            detectDragGestures(
+                                                onDragStart = {
+                                                    draggingId = layer.id
+                                                    dragOffset = 0f
+                                                },
+                                                onDragEnd = { endDrag() },
+                                                onDragCancel = { endDrag() },
+                                                onDrag = { change, amount ->
+                                                    change.consume()
+                                                    onDrag(amount.y)
+                                                }
+                                            )
+                                        }
+                                        .padding(6.dp)
+                                )
                                 Checkbox(
                                     checked = isMultiSelected || isPrimary,
                                     onCheckedChange = { onToggleMultiSelect(layer.id) },

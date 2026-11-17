@@ -6,4 +6,7 @@
     <cache-path
         name="shared_projects"
         path="projects_share/" />
+    <cache-path
+        name="app_updates"
+        path="updates/" />
 </paths>

@@ -84,7 +84,8 @@ class EditorBugRegressionTest {
 
     @Test
     fun multiLayerPresetsHaveDistinctAscendingZIndicesAndFittedBounds() {
-        assertEquals("Should provide 20 curated starter templates", 20, DefaultPresets.presets.size)
+        assertTrue("Should provide at least 25 starter templates", DefaultPresets.presets.size >= 25)
+        assertEquals("Template ids must be unique", DefaultPresets.presets.size, DefaultPresets.presets.map { it.id }.toSet().size)
         for (preset in DefaultPresets.presets) {
             val zIndices = preset.initialLayers.map { it.zIndex }
             assertEquals(

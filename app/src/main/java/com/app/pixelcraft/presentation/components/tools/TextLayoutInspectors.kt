@@ -220,20 +220,11 @@ internal fun ColumnScope.TextBlendInspector(
     layer: Layer,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit
 ) {
-    Text(stringResource(R.string.ui_composite_blend_mode), color = EditorColors.TextSecondary, fontSize = 12.sp)
-    Spacer(modifier = Modifier.height(4.dp))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        for (mode in LayerBlendMode.entries) {
-            FilterChip(
-                selected = layer.blendMode == mode,
-                onClick = { onUpdate(false) { it.copy(blendMode = mode) } },
-                label = { Text(mode.localizedLabel(), fontSize = 12.sp) }
-            )
-        }
-    }
+    ToolDropdown(
+        label = stringResource(R.string.ui_composite_blend_mode),
+        options = LayerBlendMode.entries,
+        selected = layer.blendMode,
+        optionLabel = { it.localizedLabel() },
+        onSelect = { mode -> onUpdate(false) { it.copy(blendMode = mode) } }
+    )
 }

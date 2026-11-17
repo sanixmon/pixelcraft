@@ -24,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import com.app.pixelcraft.presentation.HomeScreen
 import com.app.pixelcraft.presentation.PixelCraftScreen
 import com.app.pixelcraft.presentation.PixelCraftViewModel
+import com.app.pixelcraft.presentation.components.dialogs.UpdateHost
 import com.app.pixelcraft.ui.theme.PixelCraftTheme
 
 class MainActivity : ComponentActivity() {
@@ -89,6 +90,8 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
+                    UpdateHost()
                 }
             }
         }
