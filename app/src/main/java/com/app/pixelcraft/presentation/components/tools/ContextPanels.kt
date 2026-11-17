@@ -293,7 +293,7 @@ fun ObjectContextPanel(
  * Only controls that make sense for mixed layers appear.
  */
 @Composable
-fun SelectionContextPanel(
+internal fun SelectionContextPanel(
     selectionKey: Any,
     isGroup: Boolean,
     memberCount: Int,
