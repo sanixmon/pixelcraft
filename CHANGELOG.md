@@ -2,6 +2,21 @@
 
 All notable changes to **PixelCraft** are documented in this file.
 
+## [0.4.0] - 2026-11-17
+
+### Added
+- **29 new starter templates** built at real canvas scale for common formats: quotes, YouTube thumbnails, flash sale, discount code, giveaway, menu, hiring, announcement, customer review, milestone, tips carousel, event poster, webinar, save the date, birthday, holidays, thank you, memes and stories. New **Business** and **Event** categories.
+- **69 bundled open-source fonts** (54 new, including Inter, Montserrat, Playfair Display, Syne, DM Serif Display, Lora, Cinzel and JetBrains Mono). See `THIRD_PARTY_FONTS.md`.
+- **Device fonts**: grant the `/sdcard/Fonts/` folder once and its `.ttf`/`.otf` fonts appear under a "Device" tab, re-scanned on every launch.
+- **Group editing**: a selected group gets its own panel for size, rotate, opacity, blend, flip, align, front/back, duplicate and delete as one object. Pinch and twist gestures transform the whole group.
+- **Drag to reorder layers** in the layers sheet.
+- **In-app updater**: checks GitHub Releases, downloads the new APK with progress, verifies its checksum and signature, and installs it over the current app.
+
+### Changed
+- The canvas keeps its size and position when tools open; the tool panel has a fixed height.
+- Mode choices (fill type, gradient type, blend mode, stroke style, photo filter and mask) are compact dropdowns instead of chip rows.
+- The font picker no longer filters by style category.
+
 ## [0.2.0] - Unreleased
 
 ### Added
