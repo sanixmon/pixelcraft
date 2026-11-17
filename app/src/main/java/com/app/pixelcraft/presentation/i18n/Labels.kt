@@ -204,6 +204,7 @@ private val HistoryLabels: Map<String, Int> = mapOf(
     "Canvas Filters" to R.string.hist_canvas_filters,
     "Change Text Case" to R.string.hist_change_text_case,
     "Delete Layer" to R.string.hist_delete_layer,
+    "Merge Group" to R.string.hist_merge_group,
     "Reorder Layers" to R.string.hist_reorder_layers,
     "Resize Group" to R.string.hist_resize_group,
     "Rotate Group" to R.string.hist_rotate_group,

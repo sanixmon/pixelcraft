@@ -83,36 +83,11 @@ class EditorBugRegressionTest {
     }
 
     @Test
-    fun multiLayerPresetsHaveDistinctAscendingZIndicesAndFittedBounds() {
-        assertTrue("Should provide at least 25 starter templates", DefaultPresets.presets.size >= 25)
-        assertEquals("Template ids must be unique", DefaultPresets.presets.size, DefaultPresets.presets.map { it.id }.toSet().size)
-        for (preset in DefaultPresets.presets) {
-            val zIndices = preset.initialLayers.map { it.zIndex }
-            assertEquals(
-                "Preset '${preset.id}' has duplicate zIndex values: $zIndices",
-                zIndices.size,
-                zIndices.toSet().size
-            )
-            val topRendered = preset.initialLayers.sortedBy { it.zIndex }.last()
-            val topHitTested = preset.initialLayers.sortedBy { it.zIndex }.asReversed().first()
-            assertEquals(
-                "Preset '${preset.id}' top hit-tested layer must match top rendered layer",
-                topRendered.id,
-                topHitTested.id
-            )
-        }
-
-        val ytPreset = DefaultPresets.presets.first { it.id == "preset_youtube" }
-        val subtitle = ytPreset.initialLayers.first { it.id == "layer_yt_sub" }
-        assertTrue(
-            "Long subtitle should have estimated width > 350f, got ${subtitle.width}",
-            subtitle.width > 350f
-        )
-
-        val keepCalm = DefaultPresets.presets.first { it.id == "preset_keep_calm" }
-        val crown = keepCalm.initialLayers.first { it.id == "layer_crown" }
-        assertEquals(LayerType.SHAPE, crown.type)
-        assertEquals(ShapeType.CROWN, crown.shapeType)
+    fun blankStartingCanvasHasOneFittedTextLayer() {
+        val blank = DefaultPresets.blankCanvas
+        val text = blank.initialLayers.single()
+        assertEquals(LayerType.TEXT, text.type)
+        assertTrue("Headline should have estimated bounds, got ${text.width}", text.width > 200f)
     }
 
     @Test
@@ -363,7 +338,7 @@ class EditorBugRegressionTest {
         val posterOneId = vm.uiState.value.currentProjectId!!
         assertFalse("Saving project clears dirty flag", vm.uiState.value.isDirty)
 
-        vm.applyPreset(DefaultPresets.presets[1])
+        vm.applyPreset(DefaultPresets.blankCanvas)
         assertNull(vm.uiState.value.currentProjectId)
         assertTrue("Applying template in editor marks state dirty", vm.uiState.value.isDirty)
 

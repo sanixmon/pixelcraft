@@ -1,12 +1,12 @@
 package com.app.pixelcraft.presentation
 
-import androidx.compose.material.icons.filled.DashboardCustomize
 
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 
 import com.app.pixelcraft.ui.theme.PixelCraftColors
 
-import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.presentation.i18n.asString
 import androidx.compose.ui.platform.LocalContext
 import com.app.pixelcraft.R
@@ -19,7 +19,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,19 +33,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -60,7 +56,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -95,10 +90,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.pixelcraft.data.model.AspectRatioPreset
 import com.app.pixelcraft.data.model.BackgroundType
 import com.app.pixelcraft.data.model.LayerType
-import com.app.pixelcraft.data.model.PresetCategory
 import com.app.pixelcraft.data.model.ProjectSummary
-import com.app.pixelcraft.data.model.StylePreset
-import com.app.pixelcraft.data.presets.DefaultPresets
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftAboutDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftImageSizeDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftRenameDialog
@@ -128,7 +120,6 @@ fun HomeScreen(
     var deletingProject by remember { mutableStateOf<ProjectSummary?>(null) }
     var pendingArchiveProjectId by remember { mutableStateOf<String?>(null) }
     var projectSearchQuery by remember { mutableStateOf("") }
-    var selectedTemplateCategory by remember { mutableStateOf<PresetCategory?>(null) }
 
     val pickPhotoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -171,14 +162,6 @@ fun HomeScreen(
         } else {
             val q = projectSearchQuery.trim()
             state.projectSummaries.filter { it.name.contains(q, ignoreCase = true) }
-        }
-    }
-
-    val filteredPresets = remember(selectedTemplateCategory) {
-        if (selectedTemplateCategory == null) {
-            DefaultPresets.presets
-        } else {
-            DefaultPresets.presets.filter { it.category == selectedTemplateCategory }
         }
     }
 
@@ -241,64 +224,11 @@ fun HomeScreen(
                                 )
                             }
                         )
-                        HomeShortcut(
-                            icon = Icons.Default.DashboardCustomize,
-                            label = stringResource(R.string.nav_templates),
-                            onClick = {
-                                val templatesIndex = if (state.hasRecoverableDraft) 2 else 1
-                                scope.launch { gridState.animateScrollToItem(templatesIndex) }
-                            }
-                        )
                     }
                 }
             }
 
-            // 3. Curated Starter Templates (20 templates across 6 categories, § 6.3)
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Column {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.nav_templates),
-                        color = PixelCraftColors.TextPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        FilterChip(
-                            selected = selectedTemplateCategory == null,
-                            onClick = { selectedTemplateCategory = null },
-                            label = { Text(stringResource(R.string.ui_all), fontSize = 12.sp) }
-                        )
-                        for (cat in PresetCategory.entries) {
-                            FilterChip(
-                                selected = selectedTemplateCategory == cat,
-                                onClick = { selectedTemplateCategory = cat },
-                                label = { Text(cat.localizedLabel(), fontSize = 12.sp) }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(filteredPresets, key = { it.id }) { preset ->
-                            HomeTemplateCard(
-                                preset = preset,
-                                onClick = {
-                                    viewModel.applyPreset(preset, recordHistory = false, markDirty = false)
-                                    onNavigateToEditor()
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 4. My Saved Projects Header & Search
+            // 3. My Saved Projects Header & Search
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -339,7 +269,7 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
+                            imageVector = Icons.Default.FolderOpen,
                             contentDescription = null,
                             tint = PixelCraftColors.Accent,
                             modifier = Modifier.size(36.dp)
@@ -355,6 +285,15 @@ fun HomeScreen(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp
                         )
+                        if (state.projectSummaries.isEmpty()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = stringResource(R.string.ui_no_saved_projects_hint),
+                                color = PixelCraftColors.TextSecondary,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             } else {

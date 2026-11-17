@@ -1,5 +1,7 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
+import com.app.pixelcraft.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,7 +47,7 @@ import com.app.pixelcraft.ui.theme.PixelCraftColors
 fun ChangelogView(markdown: String, modifier: Modifier = Modifier) {
     val sections = remember(markdown) { parseChangelog(markdown) }
     if (sections.isEmpty()) {
-        Text("No changelog for this release.", color = PixelCraftColors.TextSecondary, fontSize = 12.sp, modifier = modifier)
+        Text(stringResource(R.string.ui_changelog_empty), color = PixelCraftColors.TextSecondary, fontSize = 12.sp, modifier = modifier)
         return
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {

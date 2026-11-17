@@ -53,7 +53,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -102,7 +105,6 @@ import com.app.pixelcraft.presentation.components.tools.BackgroundToolPanel
 import com.app.pixelcraft.presentation.components.tools.FilterToolPanel
 import com.app.pixelcraft.presentation.components.tools.GroupToolPanel
 import com.app.pixelcraft.presentation.components.tools.ObjectToolPanel
-import com.app.pixelcraft.presentation.components.tools.PresetsToolPanel
 import com.app.pixelcraft.presentation.components.tools.TextToolPanel
 
 
@@ -152,7 +154,6 @@ private fun PixelCraftEditorContent(
     var layerPendingRename by remember { mutableStateOf<Layer?>(null) }
     var exitAfterSave by remember { mutableStateOf(false) }
     var openTool by rememberSaveable { mutableStateOf<EditorTool?>(null) }
-    var showTemplatesSheet by rememberSaveable { mutableStateOf(false) }
 
     // Selecting a layer jumps straight to its sub-tools; deselecting returns to the top-level row.
     LaunchedEffect(state.selectedLayerId) {
@@ -165,7 +166,6 @@ private fun PixelCraftEditorContent(
             state.isEyedropperActive -> viewModel.cancelEyedropper()
             state.activeSubTool != ActiveSubTool.NONE -> viewModel.setActiveSubTool(ActiveSubTool.NONE)
             state.isLayersDrawerOpen -> viewModel.setLayersDrawerOpen(false)
-            showTemplatesSheet -> showTemplatesSheet = false
             state.selectedLayerId != null -> viewModel.selectLayer(null)
             openTool != null -> openTool = null
             state.isDirty -> viewModel.openDialog(ActiveDialog.UNSAVED_CHANGES)
@@ -186,21 +186,14 @@ private fun PixelCraftEditorContent(
     val pickCustomFont = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.importCustomFont(it) }
     }
-    // One-time grant of the device fonts folder (/sdcard/Fonts/); re-scanned on every launch after.
+    // Optional: the user can grant a fonts folder (opens at /sdcard/Fonts/) from the font picker's
+    // folder button; once granted it's re-scanned on every launch. Never prompted automatically.
     val pickDeviceFontsFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let { viewModel.setDeviceFontsFolder(it) }
     }
     val launchDeviceFontsPicker = {
         runCatching { pickDeviceFontsFolder.launch(FontCatalog.deviceFontsInitialUri) }
         Unit
-    }
-    LaunchedEffect(state.activeSubTool) {
-        if (state.activeSubTool == ActiveSubTool.TEXT_FONT &&
-            FontCatalog.shouldAskForDeviceFontsFolder(context)
-        ) {
-            FontCatalog.markDeviceFontsFolderAsked(context)
-            launchDeviceFontsPicker()
-        }
     }
     val imagesOnly = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 
@@ -240,7 +233,8 @@ private fun PixelCraftEditorContent(
             val result = snackbarHostState.showSnackbar(
                 message = msg,
                 actionLabel = if (exportedUri != null) shareActionLabel else null,
-                withDismissAction = exportedUri != null
+                withDismissAction = exportedUri != null,
+                duration = if (exportedUri != null) SnackbarDuration.Long else SnackbarDuration.Short
             )
             if (result == SnackbarResult.ActionPerformed && exportedUri != null) {
                 val send = Intent(Intent.ACTION_SEND).apply {
@@ -281,7 +275,9 @@ private fun PixelCraftEditorContent(
                         onDuplicate = { viewModel.duplicateSelectedLayer() },
                         onDelete = { viewModel.deleteSelectedLayer() },
                         onUngroup = { viewModel.ungroupSelectedLayers() },
-                        onEditItem = { viewModel.focusSelectedGroupMember() }
+                        onEditItem = { viewModel.focusSelectedGroupMember() },
+                        onMerge = { viewModel.mergeSelectedGroup() },
+                        recentColors = state.recentColors
                     )
                 }
             }
@@ -393,7 +389,6 @@ private fun PixelCraftEditorContent(
                 EditorToolRow(
                     onToolSelected = { tool ->
                         when (tool) {
-                            EditorTool.TEMPLATES -> showTemplatesSheet = true
                             EditorTool.TEXT -> viewModel.addTextLayer()
                             EditorTool.DATE -> viewModel.openDialog(ActiveDialog.DATE_FORMAT)
                             EditorTool.SHAPES -> viewModel.openDialog(ActiveDialog.ADD_SHAPE)
@@ -405,23 +400,6 @@ private fun PixelCraftEditorContent(
                 )
             }
         }
-    }
-
-    @Composable
-    fun TemplatesSheetContent() {
-        PresetsToolPanel(
-            savedProjects = state.savedProjects,
-            onApplyPreset = {
-                viewModel.applyPreset(it)
-                showTemplatesSheet = false
-            },
-            onLoadProject = {
-                viewModel.loadProject(it)
-                showTemplatesSheet = false
-            },
-            onDeleteProject = { viewModel.deleteProject(it) },
-            onOpenDialog = { viewModel.openDialog(it) }
-        )
     }
 
     @Composable
@@ -503,7 +481,6 @@ private fun PixelCraftEditorContent(
                 }
             },
         containerColor = EditorColors.Background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             PixelCraftTopBar(
                 state = state,
@@ -582,6 +559,15 @@ private fun PixelCraftEditorContent(
                 }
             }
 
+            // Toasts ("Copied", "Saved"...) float at the top of the canvas so they never
+            // cover the tool panel at the bottom.
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 10.dp, start = 16.dp, end = 16.dp)
+            ) { data -> EditorToast(data) }
+
             // First-run Coach Marks card (§ 5.4)
             if (!state.onboardingDismissed) {
                 CoachMarksOverlay(
@@ -590,15 +576,6 @@ private fun PixelCraftEditorContent(
                         .align(Alignment.TopCenter)
                         .padding(top = 48.dp, start = 16.dp, end = 16.dp)
                 )
-            }
-
-            if (showTemplatesSheet) {
-                EditorHalfSheet(
-                    title = null,
-                    onDismiss = { showTemplatesSheet = false }
-                ) {
-                    TemplatesSheetContent()
-                }
             }
 
             if (state.isLayersDrawerOpen) {
@@ -829,6 +806,31 @@ private fun CoachMarksOverlay(
         }
         IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_dismiss_tips), tint = EditorColors.TextSecondary, modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+/** Compact pill toast; shows the action (e.g. Share) only when there is one. */
+@Composable
+private fun EditorToast(data: SnackbarData) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(EditorColors.SurfaceElevated.copy(alpha = 0.96f))
+            .border(1.dp, EditorColors.Border, RoundedCornerShape(20.dp))
+            .padding(start = 16.dp, end = if (data.visuals.actionLabel != null) 6.dp else 16.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = data.visuals.message,
+            color = EditorColors.TextPrimary,
+            fontSize = 13.sp,
+            maxLines = 2
+        )
+        data.visuals.actionLabel?.let { label ->
+            TextButton(onClick = { data.performAction() }) {
+                Text(label, color = EditorColors.Accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

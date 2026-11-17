@@ -83,124 +83,57 @@ internal fun ColumnScope.PhotoCropInspector(
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
     onFinishContinuousEdit: () -> Unit
 ) {
-    if (layer.type == LayerType.IMAGE) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+    if (layer.type != LayerType.IMAGE) return
+    // The full-screen crop editor opens straight away; this row lets you reopen or reset it.
+    var showEditor by remember(layer.id) { mutableStateOf(true) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = { showEditor = true },
+            colors = ButtonDefaults.buttonColors(containerColor = EditorColors.Accent, contentColor = Color.White),
+            shape = RoundedCornerShape(10.dp)
         ) {
-            OutlinedButton(
-                onClick = {
-                    onUpdate(false) {
-                        it.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
-                    }
-                },
-                border = BorderStroke(1.dp, EditorColors.Border)
-            ) {
-                Text(stringResource(R.string.ui_full_reset), color = EditorColors.Accent, fontSize = 11.sp)
-            }
-            OutlinedButton(
-                onClick = {
-                    onUpdate(false) {
-                        val minSide = minOf(it.width, it.height)
-                        it.copy(
-                            cropLeft = 0.08f,
-                            cropTop = 0.08f,
-                            cropRight = 0.92f,
-                            cropBottom = 0.92f,
-                            width = minSide,
-                            height = minSide
-                        )
-                    }
-                },
-                border = BorderStroke(1.dp, EditorColors.Border)
-            ) {
-                Text("1:1 Square", color = EditorColors.TextPrimary, fontSize = 11.sp)
-            }
-            OutlinedButton(
-                onClick = {
-                    onUpdate(false) {
-                        val base = minOf(it.width, it.height)
-                        it.copy(width = base, height = base * 1.25f)
-                    }
-                },
-                border = BorderStroke(1.dp, EditorColors.Border)
-            ) {
-                Text("4:5 Portrait", color = EditorColors.TextPrimary, fontSize = 11.sp)
-            }
-            OutlinedButton(
-                onClick = {
-                    onUpdate(false) {
-                        val base = maxOf(it.width, it.height)
-                        it.copy(width = base, height = base * (9f / 16f))
-                    }
-                },
-                border = BorderStroke(1.dp, EditorColors.Border)
-            ) {
-                Text("16:9 Wide", color = EditorColors.TextPrimary, fontSize = 11.sp)
-            }
+            Icon(Icons.Default.Crop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(stringResource(R.string.ui_crop_adjust), fontSize = 13.sp, color = Color.White)
         }
-
-        PrecisionSlider(
-            label = stringResource(R.string.ui_crop_left),
-            value = layer.cropLeft * 100f,
-            valueRange = 0f..80f,
-            defaultValue = 0f,
-            fineStep = 2f,
-            unitSuffix = "%",
-            onValueChange = { pct, cont ->
-                onUpdate(cont) {
-                    val cl = (pct / 100f).coerceAtMost(it.cropRight - 0.08f).coerceAtLeast(0f)
-                    it.copy(cropLeft = cl)
+        OutlinedButton(
+            onClick = {
+                onUpdate(false) { l ->
+                    // Restore the full photo at its natural aspect, keeping the on-canvas area.
+                    val full = l.copy(cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f)
+                    val cw = (l.cropRight - l.cropLeft).coerceAtLeast(0.01f)
+                    val ch = (l.cropBottom - l.cropTop).coerceAtLeast(0.01f)
+                    val pxRatioNow = l.width / l.height
+                    val naturalRatio = pxRatioNow * ch / cw
+                    val area = l.width * l.height
+                    full.copy(
+                        width = kotlin.math.sqrt(area * naturalRatio),
+                        height = kotlin.math.sqrt(area / naturalRatio)
+                    )
                 }
             },
-            onValueChangeFinished = onFinishContinuousEdit
-        )
-        PrecisionSlider(
-            label = stringResource(R.string.ui_crop_right),
-            value = layer.cropRight * 100f,
-            valueRange = 20f..100f,
-            defaultValue = 100f,
-            fineStep = 2f,
-            unitSuffix = "%",
-            onValueChange = { pct, cont ->
-                onUpdate(cont) {
-                    val cr = (pct / 100f).coerceAtLeast(it.cropLeft + 0.08f).coerceAtMost(1f)
-                    it.copy(cropRight = cr)
+            border = BorderStroke(1.dp, EditorColors.Border),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Text(stringResource(R.string.ui_full_reset), color = EditorColors.TextPrimary, fontSize = 13.sp)
+        }
+    }
+    if (showEditor) {
+        CropEditorDialog(
+            layer = layer,
+            onApply = { crop, w, h ->
+                onUpdate(false) {
+                    it.copy(
+                        cropLeft = crop.left, cropTop = crop.top, cropRight = crop.right, cropBottom = crop.bottom,
+                        width = w, height = h
+                    )
                 }
+                showEditor = false
             },
-            onValueChangeFinished = onFinishContinuousEdit
-        )
-        PrecisionSlider(
-            label = stringResource(R.string.ui_crop_top),
-            value = layer.cropTop * 100f,
-            valueRange = 0f..80f,
-            defaultValue = 0f,
-            fineStep = 2f,
-            unitSuffix = "%",
-            onValueChange = { pct, cont ->
-                onUpdate(cont) {
-                    val ct = (pct / 100f).coerceAtMost(it.cropBottom - 0.08f).coerceAtLeast(0f)
-                    it.copy(cropTop = ct)
-                }
-            },
-            onValueChangeFinished = onFinishContinuousEdit
-        )
-        PrecisionSlider(
-            label = stringResource(R.string.ui_crop_bottom),
-            value = layer.cropBottom * 100f,
-            valueRange = 20f..100f,
-            defaultValue = 100f,
-            fineStep = 2f,
-            unitSuffix = "%",
-            onValueChange = { pct, cont ->
-                onUpdate(cont) {
-                    val cb = (pct / 100f).coerceAtLeast(it.cropTop + 0.08f).coerceAtMost(1f)
-                    it.copy(cropBottom = cb)
-                }
-            },
-            onValueChangeFinished = onFinishContinuousEdit
+            onDismiss = { showEditor = false }
         )
     }
 }

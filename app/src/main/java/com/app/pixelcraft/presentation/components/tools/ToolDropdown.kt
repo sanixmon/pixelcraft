@@ -1,5 +1,6 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -50,7 +51,7 @@ internal fun <T> ToolDropdown(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(36.dp),
+            .height(48.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (label != null) {
@@ -68,7 +69,8 @@ internal fun <T> ToolDropdown(
             Row(
                 modifier = Modifier
                     .then(if (label == null) Modifier.fillMaxWidth() else Modifier)
-                    .height(32.dp)
+                    .minimumInteractiveComponentSize()
+                    .height(36.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(EditorColors.SurfaceElevated)
                     .clickable { expanded = true }

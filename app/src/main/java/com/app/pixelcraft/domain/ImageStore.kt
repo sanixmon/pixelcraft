@@ -122,6 +122,24 @@ class ImageStore(private val imagesDirProvider: () -> File, private val context:
         }
     }
 
+    /** Stores a generated picture (e.g. a merged group) as PNG, keeping transparency. */
+    suspend fun importBitmap(bitmap: Bitmap): Result<ImportedImage> = withContext(Dispatchers.IO) {
+        runCatching {
+            val fileName = "${UUID.randomUUID()}.png"
+            val bytes = java.io.ByteArrayOutputStream()
+            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)) { "Could not encode picture" }
+            DraftStore.writeAtomically(File(imagesDir, fileName), bytes.toByteArray())
+            val proxy = if (bitmap.width > PROXY_MAX_DIMENSION || bitmap.height > PROXY_MAX_DIMENSION) {
+                val fit = ImageFit.fitWithin(bitmap.width, bitmap.height, PROXY_MAX_DIMENSION.toFloat(), PROXY_MAX_DIMENSION.toFloat())
+                Bitmap.createScaledBitmap(bitmap, fit.width.toInt().coerceAtLeast(1), fit.height.toInt().coerceAtLeast(1), true)
+            } else {
+                bitmap
+            }
+            previewCache.put(fileName, proxy)
+            ImportedImage(fileName, bitmap.width, bitmap.height)
+        }
+    }
+
     /** Loads downsampled preview proxy (~1536px) cached in [LruCache] for smooth 60fps canvas rendering. */
     fun loadPreviewBitmap(pathOrName: String): Bitmap? {
         val key = toRelativeFileName(pathOrName)

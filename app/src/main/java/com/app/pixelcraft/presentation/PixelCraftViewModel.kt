@@ -166,8 +166,7 @@ class PixelCraftViewModel internal constructor(
         get() = projectStorage.thumbnailsDir
 
     init {
-        val defaultPreset = DefaultPresets.presets.first()
-        applyPreset(defaultPreset, recordHistory = false, markDirty = false)
+        applyPreset(DefaultPresets.blankCanvas, recordHistory = false, markDirty = false)
         _uiState.update { it.copy(isReady = true) }
         refreshSavedProjects()
         observeUserPreferences()
@@ -310,6 +309,58 @@ class PixelCraftViewModel internal constructor(
     fun updateSelectedGroupMembers(continuous: Boolean, label: String = "Edit Group", transform: (Layer) -> Layer) {
         updateSelectedGroup(continuous, label) { members ->
             members.map { if (it.isLocked) it else TextSizing.withEstimatedBounds(transform(it)) }
+        }
+    }
+
+    /**
+     * Flattens the selected group into one transparent picture layer (a cut-out) at the group's
+     * place in the stack, so it can be cropped, adjusted, outlined and transformed as one object.
+     */
+    fun mergeSelectedGroup() {
+        val members = selectedGroupMembers()
+        if (members.size < 2) return
+        if (members.any { it.isLocked }) {
+            _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_merge_locked)) }
+            return
+        }
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            runCatching {
+                val merged = com.app.pixelcraft.domain.editor.GroupMerger.render(ctx, members)
+                merged to imageStore.importBitmap(merged.bitmap).getOrThrow()
+            }.onSuccess { (merged, image) ->
+                val ids = members.map { it.id }.toSet()
+                // Still the same group? (The user may have edited while it rendered.)
+                if (selectedGroupMembers().map { it.id }.toSet() != ids) return@onSuccess
+                beginHistoryStep(continuous = false, label = "Merge Group")
+                resetDragTracking()
+                resetGroupEditBase()
+                val topZ = members.maxOf { it.zIndex }
+                val layer = Layer(
+                    id = UUID.randomUUID().toString(),
+                    name = text(R.string.default_merged_layer_name, "Merged layers"),
+                    type = LayerType.IMAGE,
+                    imageLocalPath = image.path,
+                    width = merged.width,
+                    height = merged.height,
+                    positionX = merged.centerX,
+                    positionY = merged.centerY,
+                    zIndex = topZ,
+                    isCutout = true
+                )
+                _uiState.update { state ->
+                    state.copy(
+                        layers = (state.layers.filter { it.id !in ids } + layer).normalizeZIndices(),
+                        selectedLayerId = layer.id,
+                        selectedLayerIds = setOf(layer.id),
+                        activeTab = BottomNavTab.OBJECTS,
+                        activeSubTool = ActiveSubTool.NONE,
+                        userMessage = UiText.Res(R.string.msg_merged_layers, members.size)
+                    )
+                }
+            }.onFailure { err ->
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_merge_failed, err.message.orEmpty())) }
+            }
         }
     }
 

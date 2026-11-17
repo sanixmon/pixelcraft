@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MoreVert
@@ -150,6 +151,14 @@ fun PixelCraftTopBar(
                     onClick = {
                         moreMenuExpanded = false
                         onToggleSafeZone()
+                    }
+                )
+                DropdownMenuItem(
+                    leadingIcon = { Icon(Icons.Default.Save, contentDescription = null, tint = EditorColors.TextSecondary) },
+                    text = { Text(stringResource(R.string.ui_save_project)) },
+                    onClick = {
+                        moreMenuExpanded = false
+                        onOpenDialog(ActiveDialog.SAVE_PROJECT)
                     }
                 )
                 DropdownMenuItem(

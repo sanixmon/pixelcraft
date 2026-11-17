@@ -461,4 +461,16 @@
     <string name="msg_update_up_to_date">You’re on the latest version (%1$s).</string>
     <string name="hist_reorder_layers">Reorder Layers</string>
     <string name="ui_drag_to_reorder">Drag to reorder</string>
+    <string name="ui_cancel">Cancel</string>
+    <string name="ui_crop_free">Free</string>
+    <string name="ui_crop_original">Original</string>
+    <string name="ui_crop_adjust">Adjust crop</string>
+    <string name="ui_merge">Merge</string>
+    <string name="default_merged_layer_name">Merged layers</string>
+    <string name="msg_merged_layers">Merged %1$d layers into one object</string>
+    <string name="msg_merge_failed">Couldn’t merge: %1$s</string>
+    <string name="msg_merge_locked">Unlock all layers in the group to merge them</string>
+    <string name="hist_merge_group">Merge Group</string>
+    <string name="ui_changelog_empty">No changelog for this release.</string>
+    <string name="ui_no_saved_projects_hint">Start a new project or open a photo. Projects you save from the editor appear here.</string>
 </resources>

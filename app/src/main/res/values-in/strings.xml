@@ -460,4 +460,16 @@
     <string name="msg_update_up_to_date">Anda sudah memakai versi terbaru (%1$s).</string>
     <string name="hist_reorder_layers">Urutkan Ulang Layer</string>
     <string name="ui_drag_to_reorder">Seret untuk mengurutkan</string>
+    <string name="ui_cancel">Batal</string>
+    <string name="ui_crop_free">Bebas</string>
+    <string name="ui_crop_original">Asli</string>
+    <string name="ui_crop_adjust">Atur potongan</string>
+    <string name="ui_merge">Gabungkan</string>
+    <string name="default_merged_layer_name">Layer gabungan</string>
+    <string name="msg_merged_layers">%1$d layer digabung menjadi satu objek</string>
+    <string name="msg_merge_failed">Gagal menggabungkan: %1$s</string>
+    <string name="msg_merge_locked">Buka kunci semua layer di grup untuk menggabungkannya</string>
+    <string name="hist_merge_group">Gabungkan Grup</string>
+    <string name="ui_changelog_empty">Tidak ada catatan perubahan untuk rilis ini.</string>
+    <string name="ui_no_saved_projects_hint">Mulai proyek baru atau buka foto. Proyek yang Anda simpan dari editor muncul di sini.</string>
 </resources>

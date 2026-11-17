@@ -2,6 +2,23 @@
 
 All notable changes to **PixelCraft** are documented in this file.
 
+## [0.5.0] - 2026-11-17
+
+### Added
+- **Merge group**: flatten a group into one picture that edits like any photo (crop, adjust, mask, outline, shadow, size, rotate).
+- **Group stroke**: one outline width and colour for every layer in a group.
+- **Shape-following outline and shadow** for merged pictures, like a sticker.
+- **New crop editor**: full screen, drag corners or edges, move the box, rule-of-thirds guides and aspect presets (Free, Original, 1:1, 4:5, 3:4, 9:16, 4:3, 16:9). Photos are never stretched.
+- **Save project** in the editor's ⋮ menu.
+
+### Changed
+- Messages like "Copied" and "Saved" appear at the top of the canvas instead of covering the tools.
+- Loading fonts from a device folder is optional: tap the folder icon in the font picker to choose one.
+- Larger touch targets for dropdowns and chips.
+
+### Removed
+- Built-in starter templates. The editor starts on a blank canvas.
+
 ## [0.4.0] - 2026-11-17
 
 ### Added
