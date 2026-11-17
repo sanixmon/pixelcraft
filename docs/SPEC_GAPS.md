@@ -109,17 +109,17 @@ contextual panel, portrait-first) shared on 2026-11-17.
 ## Gaps
 | Gap | Spec | Size |
 |---|---|---|
-| **Category toolbar stays visible while a property panel is open.** Today the inspector replaces the tool row, so switching Style → Effects means closing and reopening. | §3, §14 final note | M |
-| **Group tools into a few categories** instead of one long row: Text `Edit · Font · Style · Effects · Arrange`; Image `Replace · Crop · Adjust · Filter · Effects · Arrange`; Shape `Geometry · Fill · Stroke · Effects · Arrange`; Multi-select `Arrange · Align · Distribute · Group`. | §3.2–3.5 | M |
+| ✅ **Category toolbar stays visible while a property panel is open.** Today the inspector replaces the tool row, so switching Style → Effects means closing and reopening. | §3, §14 final note | M |
+| ✅ **Group tools into a few categories** instead of one long row: Text `Edit · Font · Style · Effects · Arrange`; Image `Replace · Crop · Adjust · Filter · Effects · Arrange`; Shape `Geometry · Fill · Stroke · Effects · Arrange`; Multi-select `Arrange · Align · Distribute · Group`. | §3.2–3.5 | M |
 | No-selection toolbar should be `Text · Image · Shape · Sticker · Background · Layers` (today also Date and Effects, no Sticker). | §3.1 | S (Sticker needs the asset library) |
-| Multi-selection (not grouped) gets its own panel with only shared properties. Today it shows the primary layer's panel. | §3.5 | M |
+| ✅ Multi-selection (not grouped) gets its own panel with only shared properties. Today it shows the primary layer's panel. | §3.5 | M |
 | Panel states Compact / Expanded / Full with a drag handle. **Conflicts with the owner's request for a fixed canvas**; if added, resizing must keep zoom and pan, and the default should stay fixed. | §4 | M |
 | Rotation handle separate from resize handles; corner resize handles drawn at a constant screen size. | §5 | M |
-| Replace image action. | §3.3 | S |
+| ✅ Replace image action. | §3.3 | S |
 | Layer sheet: search, long-press to enter multi-select, thumbnails. | §6 | S–M |
 | Inline text editor above the keyboard with Apply / Cancel (today: a dialog). | §7 Text editing | M |
 | Back order should also dismiss the keyboard and close pickers first. | §7 | S |
-| Purposeful animation: `AnimatedContent` for category changes (120–180 ms), panel expansion (200–250 ms). Today there is none. | §11 | S |
+| ✅ Purposeful animation: `AnimatedContent` for category changes (120–180 ms), panel expansion (200–250 ms). Today there is none. | §11 | S |
 | `EditorAction` / reducer structure and a separate interaction controller. Useful when the toolbar is rebuilt; not worth a standalone rewrite. | §8 | L |
 
 ## Suggested order (UX)

@@ -138,6 +138,24 @@ internal fun ColumnScope.PhotoCropInspector(
     }
 }
 
+/** Photo filter looks (B&W, Vintage, Noir...), shown as their own tool next to Adjust. */
+@Composable
+internal fun ColumnScope.PhotoFilterInspector(
+    layer: Layer,
+    onUpdate: (Boolean, (Layer) -> Layer) -> Unit
+) {
+    if (layer.type != LayerType.IMAGE) return
+    ToolDropdown(
+        label = stringResource(R.string.ui_filter),
+        options = PhotoFilterPreset.entries,
+        selected = layer.imageAdjustments.filterPreset,
+        optionLabel = { it.localizedLabel() },
+        onSelect = { preset ->
+            onUpdate(false) { it.copy(imageAdjustments = it.imageAdjustments.copy(filterPreset = preset)) }
+        }
+    )
+}
+
 @Composable
 internal fun ColumnScope.PhotoAdjustInspector(
     layer: Layer,
@@ -164,17 +182,6 @@ internal fun ColumnScope.PhotoAdjustInspector(
             }
         }
 
-        ToolDropdown(
-            label = null,
-            options = PhotoFilterPreset.entries,
-            selected = adj.filterPreset,
-            optionLabel = { it.localizedLabel() },
-            onSelect = { preset ->
-                onUpdate(false) {
-                    it.copy(imageAdjustments = it.imageAdjustments.copy(filterPreset = preset))
-                }
-            }
-        )
 
         PrecisionSlider(
             label = stringResource(R.string.ui_brightness),

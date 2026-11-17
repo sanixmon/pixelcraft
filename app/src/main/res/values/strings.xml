@@ -513,4 +513,15 @@
     <string name="ui_width_px">Width (px)</string>
     <string name="ui_output_size">Output: %1$d × %2$d px</string>
     <string name="ui_jpg_background">Background for transparent areas</string>
+    <string name="ui_filter">Filter</string>
+    <string name="ui_effects">Effects</string>
+    <string name="ui_arrange">Arrange</string>
+    <string name="ui_replace">Replace</string>
+    <string name="ui_geometry">Geometry</string>
+    <string name="ui_distribute">Distribute</string>
+    <string name="ui_group">Group</string>
+    <string name="ui_across">Across</string>
+    <string name="ui_down">Down</string>
+    <string name="hist_replace_photo">Replace Photo</string>
+    <string name="ui_select_to_edit_hint">Tap an object on the canvas to edit it</string>
 </resources>

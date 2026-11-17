@@ -2,6 +2,17 @@
 
 All notable changes to **PixelCraft** are documented in this file.
 
+## [0.7.0] - 2026-11-17
+
+### Changed
+- **New editor toolbar**: while something is selected, a category bar stays at the bottom (text: Edit, Font, Style, Effects, Arrange; photo: Replace, Crop, Adjust, Filter, Effects, Arrange; shape: Geometry, Fill, Stroke, Effects, Arrange). Pick a category, then a tool; switching categories is one tap.
+- The tool area keeps one fixed height, so the canvas never moves.
+- Selecting several layers gives them a shared panel (Arrange, Align, Distribute, Style, Group); they move, scale, rotate, align, duplicate and delete together.
+- Photo filters have their own tab.
+
+### Added
+- **Replace photo**: swap the picture and keep its place, size and effects.
+
 ## [0.6.0] - 2026-11-17
 
 ### Added
