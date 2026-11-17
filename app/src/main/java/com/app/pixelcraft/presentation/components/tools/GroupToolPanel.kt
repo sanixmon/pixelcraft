@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,98 +57,10 @@ import com.app.pixelcraft.presentation.AlignmentAction
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.ui.theme.EditorColors
 
-private enum class GroupSubTool { NONE, SIZE, ROTATE, OPACITY, BLEND, ALIGN, STROKE }
-
-/**
- * Tool row for a selected group: the same object manipulations (size, rotate, opacity,
- * blend, flip, align, order, duplicate, delete) applied to the whole group as one object.
- */
-@Composable
-fun GroupToolPanel(
-    groupId: String,
-    memberCount: Int,
-    primaryLayer: Layer,
-    onScale: (percent: Float, continuous: Boolean) -> Unit,
-    onRotate: (degrees: Float, continuous: Boolean) -> Unit,
-    onUpdateMembers: (continuous: Boolean, transform: (Layer) -> Layer) -> Unit,
-    onFinishContinuousEdit: () -> Unit,
-    onEndRelativeSession: () -> Unit,
-    onFlip: (horizontal: Boolean) -> Unit,
-    onAlign: (AlignmentAction) -> Unit,
-    onBringToFront: () -> Unit,
-    onSendToBack: () -> Unit,
-    onDuplicate: () -> Unit,
-    onDelete: () -> Unit,
-    onUngroup: () -> Unit,
-    onEditItem: () -> Unit,
-    onMerge: () -> Unit,
-    onDistribute: (horizontal: Boolean) -> Unit = {},
-    recentColors: List<Long> = emptyList(),
-    modifier: Modifier = Modifier
-) {
-    var subTool by remember(groupId) { mutableStateOf(GroupSubTool.NONE) }
-    val toolRowScroll = rememberScrollState()
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(EditorColors.Surface)
-    ) {
-        if (subTool != GroupSubTool.NONE) {
-            GroupSubToolInspector(
-                subTool = subTool,
-                primaryLayer = primaryLayer,
-                onScale = onScale,
-                onRotate = onRotate,
-                onUpdateMembers = onUpdateMembers,
-                onFinishContinuousEdit = onFinishContinuousEdit,
-                onAlign = onAlign,
-                recentColors = recentColors,
-                memberCount = memberCount,
-                onDistribute = onDistribute,
-                onClose = {
-                    onEndRelativeSession()
-                    subTool = GroupSubTool.NONE
-                }
-            )
-            return@Column
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(66.dp)
-                .horizontalScroll(toolRowScroll)
-                .padding(horizontal = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ObjectToolItem(Icons.Default.GroupWork, stringResource(R.string.ui_ungroup), false, onClick = onUngroup)
-            ObjectToolItem(Icons.Default.Layers, stringResource(R.string.ui_merge), false, onClick = onMerge)
-            ObjectToolItem(Icons.Default.Edit, stringResource(R.string.ui_edit_item), false, onClick = onEditItem)
-            ObjectToolItem(Icons.Default.BorderStyle, stringResource(R.string.ui_stroke), false) { subTool = GroupSubTool.STROKE }
-            ObjectToolItem(Icons.Default.AspectRatio, stringResource(R.string.ui_size), false) { subTool = GroupSubTool.SIZE }
-            ObjectToolItem(Icons.Default.Rotate90DegreesCcw, stringResource(R.string.ui_rotate), false) { subTool = GroupSubTool.ROTATE }
-            ObjectToolItem(Icons.Default.Opacity, stringResource(R.string.ui_opacity), false) { subTool = GroupSubTool.OPACITY }
-            ObjectToolItem(Icons.Default.BlurOn, stringResource(R.string.ui_blend), false) { subTool = GroupSubTool.BLEND }
-            ObjectToolItem(Icons.Default.AlignHorizontalCenter, stringResource(R.string.ui_align), false) { subTool = GroupSubTool.ALIGN }
-            ObjectToolItem(Icons.Default.Flip, stringResource(R.string.ui_flip_h), false) { onFlip(true) }
-            ObjectToolItem(Icons.Default.Flip, stringResource(R.string.ui_flip_v), false, iconRotation = 90f) { onFlip(false) }
-            ObjectToolItem(Icons.Default.Layers, stringResource(R.string.ui_to_front), false, onClick = onBringToFront)
-            ObjectToolItem(Icons.Default.Layers, stringResource(R.string.ui_to_back), false, onClick = onSendToBack)
-            ObjectToolItem(Icons.Default.ContentCopy, stringResource(R.string.action_duplicate), false, onClick = onDuplicate)
-            ObjectToolItem(Icons.Default.Delete, stringResource(R.string.action_delete), false, onClick = onDelete)
-        }
-        Text(
-            text = stringResource(R.string.ui_group_count, memberCount),
-            color = EditorColors.TextMuted,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(start = 12.dp, bottom = 4.dp)
-        )
-    }
-}
+internal enum class GroupSubTool { NONE, SIZE, ROTATE, OPACITY, BLEND, ALIGN, STROKE }
 
 @Composable
-private fun GroupSubToolInspector(
+internal fun ColumnScope.GroupSubToolContent(
     subTool: GroupSubTool,
     primaryLayer: Layer,
     onScale: (Float, Boolean) -> Unit,
@@ -157,162 +70,137 @@ private fun GroupSubToolInspector(
     onAlign: (AlignmentAction) -> Unit,
     recentColors: List<Long>,
     memberCount: Int,
-    onDistribute: (Boolean) -> Unit,
-    onClose: () -> Unit
+    onDistribute: (Boolean) -> Unit
 ) {
     // Size and rotation are relative to the group as it was when this inspector opened.
     var scalePercent by remember(subTool) { mutableFloatStateOf(100f) }
     var rotationDeg by remember(subTool) { mutableFloatStateOf(0f) }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 240.dp)
-            .background(EditorColors.PanelElevated),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier
-                .padding(start = 6.dp)
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(EditorColors.Surface)
-        ) {
-            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.ui_done), tint = EditorColors.TextPrimary)
+    when (subTool) {
+        GroupSubTool.SIZE -> PrecisionSlider(
+            label = stringResource(R.string.ui_group_size),
+            value = scalePercent,
+            valueRange = 10f..400f,
+            defaultValue = 100f,
+            fineStep = 5f,
+            unitSuffix = "%",
+            onValueChange = { v, cont ->
+                scalePercent = v
+                onScale(v, cont)
+            },
+            onValueChangeFinished = onFinishContinuousEdit
+        )
+
+        GroupSubTool.ROTATE -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf(-90f, -45f, 45f, 90f).forEach { step ->
+                    Text(
+                        text = (if (step > 0) "+" else "") + "${step.toInt()}°",
+                        color = EditorColors.TextPrimary,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .minimumInteractiveComponentSize()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(EditorColors.SurfaceElevated)
+                            .clickable {
+                                rotationDeg += step
+                                onRotate(rotationDeg, false)
+                            }
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            PrecisionSlider(
+                label = stringResource(R.string.ui_rotation_angle),
+                value = rotationDeg,
+                valueRange = -180f..180f,
+                defaultValue = 0f,
+                fineStep = 1f,
+                unitSuffix = "°",
+                onValueChange = { v, cont ->
+                    rotationDeg = v
+                    onRotate(v, cont)
+                },
+                onValueChangeFinished = onFinishContinuousEdit
+            )
         }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(start = 8.dp, top = 10.dp, end = 12.dp, bottom = 10.dp)
-        ) {
-            when (subTool) {
-                GroupSubTool.SIZE -> PrecisionSlider(
-                    label = stringResource(R.string.ui_group_size),
-                    value = scalePercent,
-                    valueRange = 10f..400f,
-                    defaultValue = 100f,
-                    fineStep = 5f,
-                    unitSuffix = "%",
-                    onValueChange = { v, cont ->
-                        scalePercent = v
-                        onScale(v, cont)
-                    },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
 
-                GroupSubTool.ROTATE -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        listOf(-90f, -45f, 45f, 90f).forEach { step ->
-                            Text(
-                                text = (if (step > 0) "+" else "") + "${step.toInt()}°",
-                                color = EditorColors.TextPrimary,
-                                fontSize = 12.sp,
-                                modifier = Modifier
-                                    .minimumInteractiveComponentSize()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(EditorColors.SurfaceElevated)
-                                    .clickable {
-                                        rotationDeg += step
-                                        onRotate(rotationDeg, false)
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 10.dp)
-                            )
-                        }
+        GroupSubTool.OPACITY -> PrecisionSlider(
+            label = stringResource(R.string.ui_opacity),
+            value = primaryLayer.opacity * 100f,
+            valueRange = 0f..100f,
+            defaultValue = 100f,
+            fineStep = 2f,
+            unitSuffix = "%",
+            onValueChange = { op, cont ->
+                onUpdateMembers(cont) { it.copy(opacity = (op / 100f).coerceIn(0f, 1f)) }
+            },
+            onValueChangeFinished = onFinishContinuousEdit
+        )
+
+        GroupSubTool.BLEND -> ToolDropdown(
+            label = stringResource(R.string.ui_composite_blend_mode),
+            options = LayerBlendMode.entries,
+            selected = primaryLayer.blendMode,
+            optionLabel = { it.localizedLabel() },
+            onSelect = { mode -> onUpdateMembers(false) { it.copy(blendMode = mode) } }
+        )
+
+        GroupSubTool.ALIGN -> {
+            TextAlignInspector(onAlign = onAlign)
+            if (memberCount >= 3) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                    IconButton(onClick = { onDistribute(true) }) {
+                        Icon(Icons.Default.HorizontalDistribute, contentDescription = stringResource(R.string.ui_distribute_h), tint = EditorColors.TextPrimary)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    PrecisionSlider(
-                        label = stringResource(R.string.ui_rotation_angle),
-                        value = rotationDeg,
-                        valueRange = -180f..180f,
-                        defaultValue = 0f,
-                        fineStep = 1f,
-                        unitSuffix = "°",
-                        onValueChange = { v, cont ->
-                            rotationDeg = v
-                            onRotate(v, cont)
-                        },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                }
-
-                GroupSubTool.OPACITY -> PrecisionSlider(
-                    label = stringResource(R.string.ui_opacity),
-                    value = primaryLayer.opacity * 100f,
-                    valueRange = 0f..100f,
-                    defaultValue = 100f,
-                    fineStep = 2f,
-                    unitSuffix = "%",
-                    onValueChange = { op, cont ->
-                        onUpdateMembers(cont) { it.copy(opacity = (op / 100f).coerceIn(0f, 1f)) }
-                    },
-                    onValueChangeFinished = onFinishContinuousEdit
-                )
-
-                GroupSubTool.BLEND -> ToolDropdown(
-                    label = stringResource(R.string.ui_composite_blend_mode),
-                    options = LayerBlendMode.entries,
-                    selected = primaryLayer.blendMode,
-                    optionLabel = { it.localizedLabel() },
-                    onSelect = { mode -> onUpdateMembers(false) { it.copy(blendMode = mode) } }
-                )
-
-                GroupSubTool.ALIGN -> {
-                    TextAlignInspector(onAlign = onAlign)
-                    if (memberCount >= 3) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                            IconButton(onClick = { onDistribute(true) }) {
-                                Icon(Icons.Default.HorizontalDistribute, contentDescription = stringResource(R.string.ui_distribute_h), tint = EditorColors.TextPrimary)
-                            }
-                            IconButton(onClick = { onDistribute(false) }) {
-                                Icon(Icons.Default.VerticalDistribute, contentDescription = stringResource(R.string.ui_distribute_v), tint = EditorColors.TextPrimary)
-                            }
-                        }
+                    IconButton(onClick = { onDistribute(false) }) {
+                        Icon(Icons.Default.VerticalDistribute, contentDescription = stringResource(R.string.ui_distribute_v), tint = EditorColors.TextPrimary)
                     }
                 }
-
-                GroupSubTool.STROKE -> {
-                    // One stroke for every member: text outline, shape stroke, photo border.
-                    val width = when (primaryLayer.type) {
-                        LayerType.TEXT -> primaryLayer.strokeWidth
-                        LayerType.SHAPE -> primaryLayer.shapeStrokeWidth
-                        LayerType.IMAGE -> primaryLayer.imageBorderWidth
-                    }
-                    val color = when (primaryLayer.type) {
-                        LayerType.TEXT -> primaryLayer.strokeColor
-                        LayerType.SHAPE -> primaryLayer.shapeStrokeColor
-                        LayerType.IMAGE -> primaryLayer.imageBorderColor
-                    }
-                    PrecisionSlider(
-                        label = stringResource(R.string.ui_stroke_width),
-                        value = width,
-                        valueRange = 0f..40f,
-                        defaultValue = 0f,
-                        fineStep = 1f,
-                        unitSuffix = "px",
-                        onValueChange = { w, cont -> onUpdateMembers(cont) { it.withGroupStroke(width = w) } },
-                        onValueChangeFinished = onFinishContinuousEdit
-                    )
-                    ColorPaletteRow(
-                        colors = ObjectPalette,
-                        recentColors = recentColors,
-                        selectedColor = color,
-                        onSelectColor = { c ->
-                            onUpdateMembers(false) { it.withGroupStroke(color = c, width = if (width < 1f) 6f else null) }
-                        },
-                        pickerTitle = stringResource(R.string.ui_stroke_color)
-                    )
-                }
-
-                GroupSubTool.NONE -> Unit
             }
         }
+
+        GroupSubTool.STROKE -> {
+            // One stroke for every member: text outline, shape stroke, photo border.
+            val width = when (primaryLayer.type) {
+                LayerType.TEXT -> primaryLayer.strokeWidth
+                LayerType.SHAPE -> primaryLayer.shapeStrokeWidth
+                LayerType.IMAGE -> primaryLayer.imageBorderWidth
+            }
+            val color = when (primaryLayer.type) {
+                LayerType.TEXT -> primaryLayer.strokeColor
+                LayerType.SHAPE -> primaryLayer.shapeStrokeColor
+                LayerType.IMAGE -> primaryLayer.imageBorderColor
+            }
+            PrecisionSlider(
+                label = stringResource(R.string.ui_stroke_width),
+                value = width,
+                valueRange = 0f..40f,
+                defaultValue = 0f,
+                fineStep = 1f,
+                unitSuffix = "px",
+                onValueChange = { w, cont -> onUpdateMembers(cont) { it.withGroupStroke(width = w) } },
+                onValueChangeFinished = onFinishContinuousEdit
+            )
+            ColorPaletteRow(
+                colors = ObjectPalette,
+                recentColors = recentColors,
+                selectedColor = color,
+                onSelectColor = { c ->
+                    onUpdateMembers(false) { it.withGroupStroke(color = c, width = if (width < 1f) 6f else null) }
+                },
+                pickerTitle = stringResource(R.string.ui_stroke_color)
+            )
+        }
+
+        GroupSubTool.NONE -> Unit
     }
 }
+
 
 /** Applies a stroke width and/or colour using whichever stroke this layer type has. */
 private fun Layer.withGroupStroke(width: Float? = null, color: Long? = null): Layer = when (type) {

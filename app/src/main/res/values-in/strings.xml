@@ -512,4 +512,15 @@
     <string name="ui_width_px">Lebar (px)</string>
     <string name="ui_output_size">Hasil: %1$d × %2$d px</string>
     <string name="ui_jpg_background">Latar untuk area transparan</string>
+    <string name="ui_filter">Filter</string>
+    <string name="ui_effects">Efek</string>
+    <string name="ui_arrange">Atur</string>
+    <string name="ui_replace">Ganti</string>
+    <string name="ui_geometry">Bentuk</string>
+    <string name="ui_distribute">Ratakan jarak</string>
+    <string name="ui_group">Grup</string>
+    <string name="ui_across">Mendatar</string>
+    <string name="ui_down">Menurun</string>
+    <string name="hist_replace_photo">Ganti Foto</string>
+    <string name="ui_select_to_edit_hint">Ketuk objek di kanvas untuk mengeditnya</string>
 </resources>

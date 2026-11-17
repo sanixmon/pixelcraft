@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -86,259 +87,6 @@ internal val ObjectPalette = listOf(
 )
 
 @Composable
-fun ObjectToolPanel(
-    selectedLayer: Layer?,
-    activeSubTool: ActiveSubTool,
-    recentColors: List<Long> = emptyList(),
-    hasCopiedStyle: Boolean = false,
-    onSubToolSelected: (ActiveSubTool) -> Unit,
-    onUpdateLayer: (Boolean, (Layer) -> Layer) -> Unit,
-    onFinishContinuousEdit: () -> Unit,
-    onStartEyedropper: (EyedropperTarget) -> Unit = {},
-    onCopyStyle: () -> Unit = {},
-    onPasteStyle: () -> Unit = {},
-    onOpenSavedStyles: () -> Unit = {},
-    onDeleteLayer: () -> Unit,
-    onDuplicateLayer: () -> Unit,
-    onBringToFront: () -> Unit,
-    onSendToBack: () -> Unit,
-    onOpenDialog: (ActiveDialog) -> Unit,
-    onAddImage: () -> Unit,
-    canvasWidth: Int = 1080,
-    canvasHeight: Int = 1080,
-    onNudge: (Float, Float) -> Unit = { _, _ -> },
-    onAlign: (com.app.pixelcraft.presentation.AlignmentAction) -> Unit = {},
-    modifier: Modifier = Modifier
-) {
-    if (
-        selectedLayer == null || (
-            selectedLayer.type != LayerType.SHAPE &&
-                selectedLayer.type != LayerType.IMAGE
-            )
-    ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(EditorColors.Surface)
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = { onOpenDialog(ActiveDialog.ADD_SHAPE) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EditorColors.Accent,
-                    contentColor = Color.White
-                )
-            ) {
-                Icon(Icons.Default.FormatShapes, contentDescription = null, tint = Color.White)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_shapes_balloons), color = Color.White, fontWeight = FontWeight.Bold)
-            }
-
-            Button(
-                onClick = onAddImage,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EditorColors.Success,
-                    contentColor = Color.White
-                )
-            ) {
-                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_photo_layer), color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        }
-        return
-    }
-
-    // Hoisted so the tool row keeps its scroll position while an inspector replaces it.
-    val toolRowScroll = rememberScrollState()
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(EditorColors.Surface)
-    ) {
-        // The inspector replaces the tool rows in place instead of stacking above them,
-        // so an open sub-tool does not cover more of the canvas.
-        if (activeSubTool != ActiveSubTool.NONE) {
-            ObjectSubToolInspector(
-                subTool = activeSubTool,
-                layer = selectedLayer,
-                recentColors = recentColors,
-                onUpdate = onUpdateLayer,
-                onFinishContinuousEdit = onFinishContinuousEdit,
-                onStartEyedropper = onStartEyedropper,
-                canvasWidth = canvasWidth,
-                canvasHeight = canvasHeight,
-                onNudge = onNudge,
-                onAlign = onAlign,
-                onClose = { onSubToolSelected(ActiveSubTool.NONE) }
-            )
-        } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(66.dp)
-                .horizontalScroll(toolRowScroll)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            if (selectedLayer.type == LayerType.SHAPE) {
-                ObjectToolItem(
-                    icon = Icons.Default.Category,
-                    label = stringResource(R.string.ui_shape),
-                    isActive = activeSubTool == ActiveSubTool.SHAPE_TYPE,
-                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_TYPE) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.FormatColorFill,
-                    label = stringResource(R.string.ui_fill),
-                    isActive = activeSubTool == ActiveSubTool.SHAPE_COLOR,
-                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_COLOR) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.BorderStyle,
-                    label = stringResource(R.string.ui_stroke),
-                    isActive = activeSubTool == ActiveSubTool.SHAPE_STROKE,
-                    onClick = { onSubToolSelected(ActiveSubTool.SHAPE_STROKE) }
-                )
-            }
-
-            if (selectedLayer.type == LayerType.IMAGE) {
-                ObjectToolItem(
-                    icon = Icons.Default.Crop,
-                    label = stringResource(R.string.ui_crop),
-                    isActive = activeSubTool == ActiveSubTool.IMAGE_CROP,
-                    onClick = { onSubToolSelected(ActiveSubTool.IMAGE_CROP) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.Tune,
-                    label = stringResource(R.string.ui_adjust),
-                    isActive = activeSubTool == ActiveSubTool.IMAGE_ADJUST,
-                    onClick = { onSubToolSelected(ActiveSubTool.IMAGE_ADJUST) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.FilterVintage,
-                    label = stringResource(R.string.ui_mask),
-                    isActive = activeSubTool == ActiveSubTool.IMAGE_MASK,
-                    onClick = { onSubToolSelected(ActiveSubTool.IMAGE_MASK) }
-                )
-                ObjectToolItem(
-                    icon = Icons.Default.BorderStyle,
-                    label = stringResource(R.string.ui_stroke),
-                    isActive = activeSubTool == ActiveSubTool.IMAGE_STROKE,
-                    onClick = { onSubToolSelected(ActiveSubTool.IMAGE_STROKE) }
-                )
-            }
-
-            // Shared across BOTH Shape AND Image layers (Fixes Bug 2.17!)
-            ObjectToolItem(
-                icon = Icons.Default.Lightbulb,
-                label = stringResource(R.string.ui_shadow),
-                isActive = activeSubTool == ActiveSubTool.SHAPE_SHADOW,
-                onClick = { onSubToolSelected(ActiveSubTool.SHAPE_SHADOW) }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.BlurOn,
-                label = stringResource(R.string.ui_blend),
-                isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
-                onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Flip,
-                label = stringResource(R.string.ui_flip_h),
-                isActive = selectedLayer.flipHorizontal,
-                onClick = {
-                    onUpdateLayer(false) { it.copy(flipHorizontal = !it.flipHorizontal) }
-                }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Flip,
-                label = stringResource(R.string.ui_flip_v),
-                isActive = selectedLayer.flipVertical,
-                iconRotation = 90f,
-                onClick = {
-                    onUpdateLayer(false) { it.copy(flipVertical = !it.flipVertical) }
-                }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.OpenWith,
-                label = stringResource(R.string.ui_position),
-                isActive = activeSubTool == ActiveSubTool.OBJECT_POSITION,
-                onClick = { onSubToolSelected(ActiveSubTool.OBJECT_POSITION) }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.AspectRatio,
-                label = stringResource(R.string.ui_size),
-                isActive = activeSubTool == ActiveSubTool.OBJECT_SIZE,
-                onClick = { onSubToolSelected(ActiveSubTool.OBJECT_SIZE) }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Rotate90DegreesCcw,
-                label = stringResource(R.string.ui_rotate),
-                isActive = activeSubTool == ActiveSubTool.OBJECT_ROTATE,
-                onClick = { onSubToolSelected(ActiveSubTool.OBJECT_ROTATE) }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Opacity,
-                label = stringResource(R.string.ui_opacity),
-                isActive = activeSubTool == ActiveSubTool.SHAPE_OPACITY,
-                onClick = { onSubToolSelected(ActiveSubTool.SHAPE_OPACITY) }
-            )
-            ObjectToolItem(
-                icon = Icons.Default.ContentCopy,
-                label = stringResource(R.string.ui_copy_style),
-                isActive = false,
-                onClick = onCopyStyle
-            )
-            if (hasCopiedStyle) {
-                ObjectToolItem(
-                    icon = Icons.Default.ContentPaste,
-                    label = stringResource(R.string.ui_paste_style),
-                    isActive = false,
-                    onClick = onPasteStyle
-                )
-            }
-            ObjectToolItem(
-                icon = Icons.Default.Bookmarks,
-                label = stringResource(R.string.ui_styles),
-                isActive = false,
-                onClick = onOpenSavedStyles
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Layers,
-                label = stringResource(R.string.ui_to_front),
-                isActive = false,
-                onClick = onBringToFront
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Layers,
-                label = stringResource(R.string.ui_to_back),
-                isActive = false,
-                onClick = onSendToBack
-            )
-            ObjectToolItem(
-                icon = Icons.Default.ContentCopy,
-                label = stringResource(R.string.action_duplicate),
-                isActive = false,
-                onClick = onDuplicateLayer
-            )
-            ObjectToolItem(
-                icon = Icons.Default.Delete,
-                label = stringResource(R.string.action_delete),
-                isActive = false,
-                onClick = onDeleteLayer
-            )
-        }
-        }
-    }
-}
-
-@Composable
 internal fun ObjectToolItem(
     icon: ImageVector,
     label: String,
@@ -372,9 +120,8 @@ internal fun ObjectToolItem(
         )
     }
 }
-
 @Composable
-private fun ObjectSubToolInspector(
+internal fun ColumnScope.ObjectSubToolContent(
     subTool: ActiveSubTool,
     layer: Layer,
     recentColors: List<Long>,
@@ -384,85 +131,42 @@ private fun ObjectSubToolInspector(
     canvasWidth: Int,
     canvasHeight: Int,
     onNudge: (Float, Float) -> Unit,
-    onAlign: (com.app.pixelcraft.presentation.AlignmentAction) -> Unit,
-    onClose: () -> Unit
+    onAlign: (com.app.pixelcraft.presentation.AlignmentAction) -> Unit
 ) {
-    // CapCut-style: back button pinned at the far left, inspector content beside it.
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 240.dp)
-            .background(EditorColors.PanelElevated),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-    IconButton(
-        onClick = onClose,
-        modifier = Modifier
-            .padding(start = 6.dp)
-            .size(40.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(EditorColors.Surface)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Check,
-            contentDescription = stringResource(R.string.ui_done),
-            tint = EditorColors.TextPrimary
-        )
-    }
-    Column(
-        modifier = Modifier
-            .weight(1f)
-            .verticalScroll(rememberScrollState())
-            .padding(start = 8.dp, top = 10.dp, end = 12.dp, bottom = 10.dp)
-    ) {
-        Text(
-            text = subTool.name
-                .removePrefix("SHAPE_")
-                .removePrefix("OBJECT_")
-                .removePrefix("IMAGE_")
-                .removePrefix("LAYER_")
-                .replace("_", " "),
-            fontWeight = FontWeight.Bold,
-            color = EditorColors.Accent,
-            fontSize = 13.sp
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        when (subTool) {
-            ActiveSubTool.OBJECT_POSITION -> {
-                TransformFields(layer = layer, canvasWidth = canvasWidth, canvasHeight = canvasHeight, onUpdate = onUpdate)
-                Spacer(modifier = Modifier.height(8.dp))
-                TextPositionInspector(onNudge = onNudge)
-                TextAlignInspector(onAlign = onAlign)
-            }
-
-            ActiveSubTool.OBJECT_SIZE -> ObjectSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.OBJECT_ROTATE -> ObjectRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.SHAPE_TYPE -> ShapeTypeInspector(layer = layer, onUpdate = onUpdate)
-
-            ActiveSubTool.SHAPE_COLOR -> ShapeColorInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.SHAPE_STROKE -> ShapeStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.SHAPE_SHADOW -> ShapeShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.SHAPE_OPACITY -> ObjectOpacityInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.LAYER_BLEND -> ObjectBlendInspector(layer = layer, onUpdate = onUpdate)
-
-            ActiveSubTool.IMAGE_CROP -> PhotoCropInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.IMAGE_ADJUST -> PhotoAdjustInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.IMAGE_STROKE -> PhotoStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.IMAGE_MASK -> PhotoMaskInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            else -> {}
+    when (subTool) {
+        ActiveSubTool.OBJECT_POSITION -> {
+            TransformFields(layer = layer, canvasWidth = canvasWidth, canvasHeight = canvasHeight, onUpdate = onUpdate)
+            Spacer(modifier = Modifier.height(8.dp))
+            TextPositionInspector(onNudge = onNudge)
+            TextAlignInspector(onAlign = onAlign)
         }
-    }
+
+        ActiveSubTool.OBJECT_SIZE -> ObjectSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.OBJECT_ROTATE -> ObjectRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.SHAPE_TYPE -> ShapeTypeInspector(layer = layer, onUpdate = onUpdate)
+
+        ActiveSubTool.SHAPE_COLOR -> ShapeColorInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.SHAPE_STROKE -> ShapeStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.SHAPE_SHADOW -> ShapeShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.SHAPE_OPACITY -> ObjectOpacityInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.LAYER_BLEND -> ObjectBlendInspector(layer = layer, onUpdate = onUpdate)
+
+        ActiveSubTool.IMAGE_CROP -> PhotoCropInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.IMAGE_FILTER -> PhotoFilterInspector(layer = layer, onUpdate = onUpdate)
+
+        ActiveSubTool.IMAGE_ADJUST -> PhotoAdjustInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.IMAGE_STROKE -> PhotoStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.IMAGE_MASK -> PhotoMaskInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        else -> {}
     }
 }

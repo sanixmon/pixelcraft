@@ -13,6 +13,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -109,342 +110,7 @@ internal val TextColorPalette = listOf(
 )
 
 @Composable
-fun TextToolPanel(
-    selectedLayer: Layer?,
-    activeSubTool: ActiveSubTool,
-    recentColors: List<Long> = emptyList(),
-    favoriteFontKeys: Set<String> = emptySet(),
-    recentFontKeys: List<String> = emptyList(),
-    availableFontsCount: Int = 16,
-    hasCopiedStyle: Boolean = false,
-    onSubToolSelected: (ActiveSubTool) -> Unit,
-    onUpdateLayer: (Boolean, (Layer) -> Layer) -> Unit,
-    onFinishContinuousEdit: () -> Unit,
-    onApplyTextCase: (TextCaseMode) -> Unit = {},
-    onToggleFavoriteFont: (String) -> Unit = {},
-    onImportFont: () -> Unit = {},
-    onPickDeviceFontsFolder: () -> Unit = {},
-    onStartEyedropper: (EyedropperTarget) -> Unit = {},
-    onCopyStyle: () -> Unit = {},
-    onPasteStyle: () -> Unit = {},
-    onOpenSavedStyles: () -> Unit = {},
-    onDeleteLayer: () -> Unit,
-    onDuplicateLayer: () -> Unit,
-    onBringToFront: () -> Unit,
-    onSendToBack: () -> Unit,
-    onNudge: (Float, Float) -> Unit,
-    onAlign: (AlignmentAction) -> Unit,
-    onOpenEditDialog: () -> Unit,
-    onAddText: () -> Unit,
-    canvasWidth: Int = 1080,
-    canvasHeight: Int = 1080,
-    modifier: Modifier = Modifier
-) {
-    if (selectedLayer == null || selectedLayer.type != LayerType.TEXT) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(62.dp)
-                .background(EditorColors.Surface)
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = onAddText,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EditorColors.Accent,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("+ New Text", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-            OutlinedButton(
-                onClick = onOpenSavedStyles,
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, EditorColors.Border)
-            ) {
-                Icon(Icons.Default.Bookmarks, contentDescription = null, tint = EditorColors.Accent, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_saved_styles), color = EditorColors.TextPrimary, fontSize = 12.sp)
-            }
-        }
-        return
-    }
-
-    // Hoisted so the tool row keeps its scroll position while an inspector replaces it.
-    val toolRowScroll = rememberScrollState()
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(EditorColors.Surface)
-    ) {
-        // The inspector replaces the tool rows in place instead of stacking above them,
-        // so an open sub-tool does not cover more of the canvas.
-        if (activeSubTool != ActiveSubTool.NONE) {
-            SubToolInspector(
-                subTool = activeSubTool,
-                layer = selectedLayer,
-                recentColors = recentColors,
-                favoriteFontKeys = favoriteFontKeys,
-                recentFontKeys = recentFontKeys,
-                availableFontsCount = availableFontsCount,
-                onUpdate = onUpdateLayer,
-                onFinishContinuousEdit = onFinishContinuousEdit,
-                onApplyTextCase = onApplyTextCase,
-                onToggleFavoriteFont = onToggleFavoriteFont,
-                onImportFont = onImportFont,
-                onPickDeviceFontsFolder = onPickDeviceFontsFolder,
-                onStartEyedropper = onStartEyedropper,
-                onNudge = onNudge,
-                onAlign = onAlign,
-                canvasWidth = canvasWidth,
-                canvasHeight = canvasHeight,
-                onClose = { onSubToolSelected(ActiveSubTool.NONE) }
-            )
-        } else {
-        // One flat CapCut-style sub-tool row, most-used first.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(66.dp)
-                .horizontalScroll(toolRowScroll)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            ToolButton(
-                icon = Icons.Default.Edit,
-                label = stringResource(R.string.ui_edit),
-                isActive = false,
-                onClick = onOpenEditDialog
-            )
-            ToolButton(
-                icon = Icons.Default.FontDownload,
-                label = stringResource(R.string.ui_font),
-                isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
-            )
-            ToolButton(
-                icon = Icons.Default.Style,
-                label = stringResource(R.string.ui_presets),
-                isActive = activeSubTool == ActiveSubTool.TEXT_PRESETS,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_PRESETS) }
-            )
-            ToolButton(
-                icon = Icons.Default.ColorLens,
-                label = stringResource(R.string.ui_color),
-                isActive = activeSubTool == ActiveSubTool.TEXT_COLOR,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_COLOR) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatSize,
-                label = stringResource(R.string.ui_size),
-                isActive = activeSubTool == ActiveSubTool.TEXT_SIZE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SIZE) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatBold,
-                label = stringResource(R.string.ui_style),
-                isActive = activeSubTool == ActiveSubTool.TEXT_STYLE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STYLE) }
-            )
-            ToolButton(
-                icon = Icons.Default.BorderStyle,
-                label = stringResource(R.string.ui_stroke),
-                isActive = activeSubTool == ActiveSubTool.TEXT_STROKE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_STROKE) }
-            )
-            ToolButton(
-                icon = Icons.Default.Lightbulb,
-                label = stringResource(R.string.ui_shadow),
-                isActive = activeSubTool == ActiveSubTool.TEXT_SHADOW,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SHADOW) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatColorFill,
-                label = stringResource(R.string.ui_bg_pill),
-                isActive = activeSubTool == ActiveSubTool.TEXT_BACKGROUND,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_BACKGROUND) }
-            )
-            ToolButton(
-                icon = Icons.Default.Opacity,
-                label = stringResource(R.string.ui_opacity),
-                isActive = activeSubTool == ActiveSubTool.TEXT_OPACITY,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_OPACITY) }
-            )
-            ToolButton(
-                icon = Icons.Default.FormatLineSpacing,
-                label = stringResource(R.string.ui_spacing),
-                isActive = activeSubTool == ActiveSubTool.TEXT_SPACING,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_SPACING) }
-            )
-            ToolButton(
-                icon = Icons.Default.Looks,
-                label = stringResource(R.string.ui_curve),
-                isActive = activeSubTool == ActiveSubTool.TEXT_CURVE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_CURVE) }
-            )
-            ToolButton(
-                icon = Icons.Default.Rotate90DegreesCcw,
-                label = stringResource(R.string.ui_rotate),
-                isActive = activeSubTool == ActiveSubTool.TEXT_ROTATE,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_ROTATE) }
-            )
-            ToolButton(
-                icon = Icons.Default.ArrowUpward,
-                label = stringResource(R.string.ui_position),
-                isActive = activeSubTool == ActiveSubTool.TEXT_POSITION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_POSITION) }
-            )
-            ToolButton(
-                icon = Icons.Default.AutoAwesome,
-                label = stringResource(R.string.ui_glow),
-                isActive = activeSubTool == ActiveSubTool.TEXT_GLOW,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_GLOW) }
-            )
-            ToolButton(
-                icon = Icons.Default.ViewInAr,
-                label = "3D",
-                isActive = activeSubTool == ActiveSubTool.TEXT_3D,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_3D) }
-            )
-            ToolButton(
-                icon = Icons.Default.SettingsBackupRestore,
-                label = stringResource(R.string.ui_reflect),
-                isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
-            )
-            ToolButton(
-                icon = Icons.Default.Gradient,
-                label = stringResource(R.string.ui_inner_shadow),
-                isActive = activeSubTool == ActiveSubTool.TEXT_INNER_SHADOW,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_INNER_SHADOW) }
-            )
-            ToolButton(
-                icon = Icons.Default.Texture,
-                label = stringResource(R.string.ui_emboss),
-                isActive = activeSubTool == ActiveSubTool.TEXT_EMBOSS,
-                onClick = { onSubToolSelected(ActiveSubTool.TEXT_EMBOSS) }
-            )
-            ToolButton(
-                icon = Icons.Default.BlurOn,
-                label = stringResource(R.string.ui_blend),
-                isActive = activeSubTool == ActiveSubTool.LAYER_BLEND,
-                onClick = { onSubToolSelected(ActiveSubTool.LAYER_BLEND) }
-            )
-            ToolButton(
-                icon = Icons.Default.ContentCopy,
-                label = stringResource(R.string.ui_copy_style),
-                isActive = false,
-                onClick = onCopyStyle
-            )
-            if (hasCopiedStyle) {
-                ToolButton(
-                    icon = Icons.Default.ContentPaste,
-                    label = stringResource(R.string.ui_paste_style),
-                    isActive = false,
-                    onClick = onPasteStyle
-                )
-            }
-            ToolButton(
-                icon = Icons.Default.Bookmarks,
-                label = stringResource(R.string.ui_styles),
-                isActive = false,
-                onClick = onOpenSavedStyles
-            )
-            ToolButton(
-                icon = Icons.Default.Layers,
-                label = stringResource(R.string.ui_to_front),
-                isActive = false,
-                onClick = onBringToFront
-            )
-            ToolButton(
-                icon = Icons.Default.Layers,
-                label = stringResource(R.string.ui_to_back),
-                isActive = false,
-                onClick = onSendToBack
-            )
-            ToolButton(
-                icon = Icons.Default.ContentCopy,
-                label = stringResource(R.string.action_duplicate),
-                isActive = false,
-                onClick = onDuplicateLayer
-            )
-            ToolButton(
-                icon = Icons.Default.Delete,
-                label = stringResource(R.string.action_delete),
-                isActive = false,
-                onClick = onDeleteLayer
-            )
-        }
-        }
-    }
-}
-
-@Composable
-internal fun MiniActionPill(
-    icon: ImageVector,
-    label: String,
-    accent: Boolean = false,
-    onClick: () -> Unit
-) {
-    val fg = if (accent) EditorColors.Accent else EditorColors.TextPrimary
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(EditorColors.Surface)
-            .border(1.dp, EditorColors.Border, RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(13.dp))
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(label, color = fg, fontSize = 11.sp)
-    }
-}
-
-@Composable
-private fun ToolButton(
-    icon: ImageVector,
-    label: String,
-    isActive: Boolean,
-    onClick: () -> Unit
-) {
-    val activeColor = EditorColors.Accent
-    val inactiveColor = EditorColors.TextPrimary
-
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .background(if (isActive) activeColor.copy(alpha = 0.12f) else Color.Transparent)
-            .padding(horizontal = 9.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = if (isActive) activeColor else inactiveColor,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = if (isActive) activeColor else EditorColors.TextSecondary
-        )
-    }
-}
-
-@Composable
-private fun SubToolInspector(
+internal fun ColumnScope.TextSubToolContent(
     subTool: ActiveSubTool,
     layer: Layer,
     recentColors: List<Long>,
@@ -461,98 +127,55 @@ private fun SubToolInspector(
     onNudge: (Float, Float) -> Unit,
     onAlign: (AlignmentAction) -> Unit,
     canvasWidth: Int,
-    canvasHeight: Int,
-    onClose: () -> Unit
+    canvasHeight: Int
 ) {
-    // CapCut-style: back button pinned at the far left, inspector content beside it.
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 240.dp)
-            .background(EditorColors.PanelElevated),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-    IconButton(
-        onClick = onClose,
-        modifier = Modifier
-            .padding(start = 6.dp)
-            .size(40.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(EditorColors.Surface)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Check,
-            contentDescription = stringResource(R.string.ui_done),
-            tint = EditorColors.TextPrimary
-        )
-    }
-    Column(
-        modifier = Modifier
-            .weight(1f)
-            .verticalScroll(rememberScrollState())
-            .padding(start = 8.dp, top = 10.dp, end = 12.dp, bottom = 10.dp)
-    ) {
-        Text(
-            text = subTool.name
-                .removePrefix("TEXT_")
-                .removePrefix("LAYER_")
-                .replace("_", " "),
-            fontWeight = FontWeight.Bold,
-            color = EditorColors.Accent,
-            fontSize = 13.sp
-        )
+    when (subTool) {
+        ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, recentFontKeys = recentFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont, onPickDeviceFontsFolder = onPickDeviceFontsFolder)
 
-        Spacer(modifier = Modifier.height(6.dp))
-
-        when (subTool) {
-            ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, recentFontKeys = recentFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont, onPickDeviceFontsFolder = onPickDeviceFontsFolder)
-
-            ActiveSubTool.TEXT_POSITION -> {
-                TransformFields(layer = layer, canvasWidth = canvasWidth, canvasHeight = canvasHeight, onUpdate = onUpdate)
-                Spacer(modifier = Modifier.height(8.dp))
-                TextPositionInspector(onNudge = onNudge)
-                Spacer(modifier = Modifier.height(8.dp))
-                TextAlignInspector(onAlign = onAlign)
-            }
-
-            ActiveSubTool.TEXT_RELATIVE_POSITION -> TextAlignInspector(onAlign = onAlign)
-
-            ActiveSubTool.TEXT_SIZE -> TextSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_SPACING -> TextSpacingInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_CURVE -> TextCurveInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_COLOR -> TextColorInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.TEXT_OPACITY -> TextOpacityInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_ROTATE -> TextRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_STYLE -> TextStyleInspector(layer = layer, onUpdate = onUpdate, onApplyTextCase = onApplyTextCase)
-
-            ActiveSubTool.TEXT_BACKGROUND -> TextBackgroundInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.TEXT_STROKE -> TextStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.TEXT_GLOW -> TextGlowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.TEXT_SHADOW -> TextShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
-
-            ActiveSubTool.TEXT_3D -> Text3dInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_REFLECTION -> TextReflectionInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_PRESETS -> TextPresetsInspector(layer = layer, onUpdate = onUpdate)
-
-            ActiveSubTool.TEXT_INNER_SHADOW -> TextInnerShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.TEXT_EMBOSS -> TextEmbossInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
-
-            ActiveSubTool.LAYER_BLEND -> TextBlendInspector(layer = layer, onUpdate = onUpdate)
-
-            else -> {}
+        ActiveSubTool.TEXT_POSITION -> {
+            TransformFields(layer = layer, canvasWidth = canvasWidth, canvasHeight = canvasHeight, onUpdate = onUpdate)
+            Spacer(modifier = Modifier.height(8.dp))
+            TextPositionInspector(onNudge = onNudge)
+            Spacer(modifier = Modifier.height(8.dp))
+            TextAlignInspector(onAlign = onAlign)
         }
-    }
+
+        ActiveSubTool.TEXT_RELATIVE_POSITION -> TextAlignInspector(onAlign = onAlign)
+
+        ActiveSubTool.TEXT_SIZE -> TextSizeInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_SPACING -> TextSpacingInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_CURVE -> TextCurveInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_COLOR -> TextColorInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.TEXT_OPACITY -> TextOpacityInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_ROTATE -> TextRotateInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_STYLE -> TextStyleInspector(layer = layer, onUpdate = onUpdate, onApplyTextCase = onApplyTextCase)
+
+        ActiveSubTool.TEXT_BACKGROUND -> TextBackgroundInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.TEXT_STROKE -> TextStrokeInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.TEXT_GLOW -> TextGlowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.TEXT_SHADOW -> TextShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit, onStartEyedropper = onStartEyedropper)
+
+        ActiveSubTool.TEXT_3D -> Text3dInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_REFLECTION -> TextReflectionInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_PRESETS -> TextPresetsInspector(layer = layer, onUpdate = onUpdate)
+
+        ActiveSubTool.TEXT_INNER_SHADOW -> TextInnerShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.TEXT_EMBOSS -> TextEmbossInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+        ActiveSubTool.LAYER_BLEND -> TextBlendInspector(layer = layer, onUpdate = onUpdate)
+
+        else -> {}
     }
 }

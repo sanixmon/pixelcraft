@@ -55,6 +55,7 @@ enum class ActiveSubTool {
     LAYER_BLEND,
     IMAGE_CROP,
     IMAGE_ADJUST,
+    IMAGE_FILTER,
     IMAGE_MASK,
     IMAGE_STROKE
 }

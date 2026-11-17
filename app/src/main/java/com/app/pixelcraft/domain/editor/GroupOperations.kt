@@ -167,7 +167,8 @@ object GroupOperations {
                 id = UUID.randomUUID().toString(),
                 name = "${src.name} Copy",
                 isLocked = false,
-                groupId = newGroupId,
+                // Grouped layers stay grouped (as a new group); loose ones stay loose.
+                groupId = if (src.groupId != null) newGroupId else null,
                 positionX = src.positionX + offsetPx,
                 positionY = src.positionY + offsetPx,
                 zIndex = nextZ++

@@ -241,10 +241,15 @@ class PixelCraftViewModel internal constructor(
 
     // --- Group as one object ---
 
-    /** Members of the selected layer's group, or empty when the selection is not a group. */
+    /**
+     * The layers edited as one object: the selected layer's group, or a multi-selection
+     * of 2+ layers from the layers sheet. Empty for a single, ungrouped layer.
+     */
     private fun selectedGroupMembers(state: PixelCraftUiState = _uiState.value): List<Layer> {
-        val groupId = state.selectedLayer?.groupId ?: return emptyList()
-        return state.layers.filter { it.groupId == groupId }
+        val groupId = state.selectedLayer?.groupId
+        if (groupId != null && state.selectedLayerIds.size > 1) return state.layers.filter { it.groupId == groupId }
+        if (state.selectedLayerIds.size > 1) return state.layers.filter { it.id in state.selectedLayerIds }
+        return emptyList()
     }
 
     /** The selection for [layerId]: the layer plus its group mates, if it is grouped. */
@@ -984,6 +989,29 @@ class PixelCraftViewModel internal constructor(
     }
 
     /** Adds a picked photo as a movable layer, sized to fit within 60% of the canvas. */
+    /** Swaps the selected photo's picture, keeping its place, width, rotation and effects. */
+    fun replaceSelectedImage(uri: Uri) {
+        val target = _uiState.value.selectedLayer?.takeIf { it.type == LayerType.IMAGE && !it.isLocked } ?: return
+        viewModelScope.launch {
+            imageStore.import(uri).onSuccess { image ->
+                val aspect = image.height.toFloat() / image.width.coerceAtLeast(1)
+                beginHistoryStep(continuous = false, label = "Replace Photo")
+                _uiState.update { state ->
+                    state.copy(layers = state.layers.map {
+                        if (it.id != target.id) it else it.copy(
+                            imageLocalPath = image.path,
+                            cropLeft = 0f, cropTop = 0f, cropRight = 1f, cropBottom = 1f,
+                            height = it.width * aspect,
+                            isCutout = false
+                        )
+                    })
+                }
+            }.onFailure { err ->
+                _uiState.update { it.copy(userMessage = UiText.Res(R.string.msg_open_picture_failed, err.message.orEmpty())) }
+            }
+        }
+    }
+
     /** Adds several photos as separate layers, each offset a little from the previous one. */
     fun addImageLayers(uris: List<Uri>) {
         uris.forEachIndexed { i, uri -> addImageLayer(uri, offset = i * 40f) }
@@ -1066,6 +1094,8 @@ class PixelCraftViewModel internal constructor(
 
         val stateSnapshot = _uiState.value
         val activeGroupId = currentLayer.groupId
+        // Everything that moves together: the group, or a multi-selection.
+        val unitIds = selectedGroupMembers().map { it.id }.toSet()
         val targetX: Float
         val targetY: Float
         val vGuide: Float?
@@ -1078,7 +1108,7 @@ class PixelCraftViewModel internal constructor(
             hGuide = null
         } else {
             val others = stateSnapshot.layers.filter { layer ->
-                layer.id != selectedId && (activeGroupId == null || layer.groupId != activeGroupId)
+                layer.id != selectedId && layer.id !in unitIds && (activeGroupId == null || layer.groupId != activeGroupId)
             }
             val snapResult = SnappingEngine.calculateSnap(
                 rawPosition = nextRaw,
@@ -1105,7 +1135,7 @@ class PixelCraftViewModel internal constructor(
                 layers = s.layers.map { layer ->
                     when {
                         layer.id == selectedId -> layer.copy(positionX = targetX, positionY = targetY)
-                        activeGroupId != null && layer.groupId == activeGroupId && !layer.isLocked -> {
+                        (layer.id in unitIds || activeGroupId != null && layer.groupId == activeGroupId) && !layer.isLocked -> {
                             layer.copy(
                                 positionX = layer.positionX + appliedDx,
                                 positionY = layer.positionY + appliedDy
@@ -1199,10 +1229,11 @@ class PixelCraftViewModel internal constructor(
         beginHistoryStep(continuous = false, label = "Nudge Layer", coalesceTag = "nudge_${currentLayer.id}")
         val selectedId = currentLayer.id
         val groupId = currentLayer.groupId
+        val unitIds = selectedGroupMembers().map { it.id }.toSet()
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map { layer ->
-                    if (layer.id == selectedId || (groupId != null && layer.groupId == groupId && !layer.isLocked)) {
+                    if (layer.id == selectedId || ((layer.id in unitIds || groupId != null && layer.groupId == groupId) && !layer.isLocked)) {
                         layer.copy(positionX = layer.positionX + dx, positionY = layer.positionY + dy)
                     } else {
                         layer

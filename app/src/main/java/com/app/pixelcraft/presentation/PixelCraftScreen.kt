@@ -103,9 +103,10 @@ import com.app.pixelcraft.presentation.components.dialogs.PixelCraftTextEditDial
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftUnsavedChangesDialog
 import com.app.pixelcraft.presentation.components.tools.BackgroundToolPanel
 import com.app.pixelcraft.presentation.components.tools.FilterToolPanel
-import com.app.pixelcraft.presentation.components.tools.GroupToolPanel
-import com.app.pixelcraft.presentation.components.tools.ObjectToolPanel
-import com.app.pixelcraft.presentation.components.tools.TextToolPanel
+import com.app.pixelcraft.presentation.components.tools.GroupSubTool
+import com.app.pixelcraft.presentation.components.tools.SelectionContextPanel
+import com.app.pixelcraft.presentation.components.tools.ObjectContextPanel
+import com.app.pixelcraft.presentation.components.tools.TextContextPanel
 
 
 @Composable
@@ -181,6 +182,11 @@ private fun PixelCraftEditorContent(
     val pickLayerImage = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
         if (uris.isNotEmpty()) viewModel.addImageLayers(uris)
     }
+    val pickReplacementImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { viewModel.replaceSelectedImage(it) }
+    }
+    // Open tool of the group / multi-selection panel (those tools aren't layer properties).
+    var selectionTool by remember(state.selectedLayerIds) { mutableStateOf(GroupSubTool.NONE) }
     val pickBackgroundImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { viewModel.setBackgroundImage(it) }
     }
@@ -254,110 +260,108 @@ private fun PixelCraftEditorContent(
     @Composable
     fun ToolArea() {
         val selected = state.selectedLayer
-        val inspectorOpen = state.activeSubTool != ActiveSubTool.NONE
-        val groupMembers = selected?.groupId?.let { gid -> state.layers.count { it.groupId == gid } } ?: 0
+        val multi = selected != null && state.selectedLayerIds.size > 1
         when {
-            // A whole group is selected: manipulate it as one object.
-            selected != null && selected.groupId != null && groupMembers > 1 && state.selectedLayerIds.size > 1 -> {
-                EditorToolLevel(onBack = { viewModel.selectLayer(null) }) {
-                    GroupToolPanel(
-                        groupId = selected.groupId,
-                        memberCount = groupMembers,
-                        primaryLayer = selected,
-                        onScale = { p, cont -> viewModel.scaleSelectedGroup(p, cont) },
-                        onRotate = { d, cont -> viewModel.rotateSelectedGroup(d, cont) },
-                        onUpdateMembers = { cont, tf -> viewModel.updateSelectedGroupMembers(cont, transform = tf) },
-                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
-                        onEndRelativeSession = { viewModel.resetGroupEditBase() },
-                        onFlip = { viewModel.flipSelectedGroup(it) },
-                        onAlign = { viewModel.alignSelectedLayer(it) },
-                        onBringToFront = { viewModel.bringLayerToFront() },
-                        onSendToBack = { viewModel.sendLayerToBack() },
-                        onDuplicate = { viewModel.duplicateSelectedLayer() },
-                        onDelete = { viewModel.deleteSelectedLayer() },
-                        onUngroup = { viewModel.ungroupSelectedLayers() },
-                        onEditItem = { viewModel.focusSelectedGroupMember() },
-                        onMerge = { viewModel.mergeSelectedGroup() },
-                        onDistribute = { horizontal -> viewModel.distributeSelected(horizontal) },
-                        recentColors = state.recentColors
-                    )
-                }
+            // A group or a multi-selection: edited as one object.
+            multi && selected != null -> {
+                val isGroup = selected.groupId != null &&
+                    state.layers.filter { it.id in state.selectedLayerIds }.all { it.groupId == selected.groupId }
+                SelectionContextPanel(
+                    selectionKey = state.selectedLayerIds,
+                    isGroup = isGroup,
+                    memberCount = state.selectedLayerIds.size,
+                    primaryLayer = selected,
+                    recentColors = state.recentColors,
+                    activeTool = selectionTool,
+                    onToolSelected = {
+                        // Size/rotate sliders restart from the current group each time a tool opens.
+                        viewModel.resetGroupEditBase()
+                        selectionTool = it
+                    },
+                    onScale = { p, cont -> viewModel.scaleSelectedGroup(p, cont) },
+                    onRotate = { d, cont -> viewModel.rotateSelectedGroup(d, cont) },
+                    onUpdateMembers = { cont, tf -> viewModel.updateSelectedGroupMembers(cont, transform = tf) },
+                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                    onFlip = { viewModel.flipSelectedGroup(it) },
+                    onAlign = { viewModel.alignSelectedLayer(it) },
+                    onDistribute = { horizontal -> viewModel.distributeSelected(horizontal) },
+                    onBringToFront = { viewModel.bringLayerToFront() },
+                    onSendToBack = { viewModel.sendLayerToBack() },
+                    onDuplicate = { viewModel.duplicateSelectedLayer() },
+                    onDelete = { viewModel.deleteSelectedLayer() },
+                    onGroup = { viewModel.groupSelectedLayers() },
+                    onUngroup = { viewModel.ungroupSelectedLayers() },
+                    onMerge = { viewModel.mergeSelectedGroup() },
+                    onEditItem = { viewModel.focusSelectedGroupMember() },
+                    onDone = { viewModel.selectLayer(null) }
+                )
             }
 
             selected != null && selected.type == LayerType.TEXT -> {
-                EditorToolLevel(onBack = { viewModel.selectLayer(null) }, showBack = !inspectorOpen) {
-                    TextToolPanel(
-                        selectedLayer = state.selectedLayer,
-                        activeSubTool = state.activeSubTool,
-                        recentColors = state.recentColors,
-                        favoriteFontKeys = state.favoriteFontKeys,
-                        recentFontKeys = state.recentFontKeys,
-                        availableFontsCount = state.availableFontsCount,
-                        hasCopiedStyle = state.copiedStyleLayer != null,
-                        onSubToolSelected = { viewModel.setActiveSubTool(it) },
-                        onUpdateLayer = { continuous, transform ->
-                            viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
-                        },
-                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
-                        onApplyTextCase = { mode -> viewModel.applyTextCase(mode) },
-                        onToggleFavoriteFont = { key -> viewModel.toggleFavoriteFont(key) },
-                        onImportFont = {
-                            pickCustomFont.launch(
-                                arrayOf(
-                                    "font/*",
-                                    "application/x-font-ttf",
-                                    "application/x-font-otf",
-                                    "application/octet-stream"
-                                )
-                            )
-                        },
-                        onPickDeviceFontsFolder = launchDeviceFontsPicker,
-                        onStartEyedropper = { target -> viewModel.startEyedropper(target) },
-                        onCopyStyle = { viewModel.copySelectedStyle() },
-                        onPasteStyle = { viewModel.pasteStyleToSelected() },
-                        onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
-                        onDeleteLayer = { viewModel.deleteSelectedLayer() },
-                        onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
-                        onBringToFront = { viewModel.bringLayerToFront() },
-                        onSendToBack = { viewModel.sendLayerToBack() },
-                        onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
-                        onAlign = { action -> viewModel.alignSelectedLayer(action) },
-                        onOpenEditDialog = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
-                        onAddText = { viewModel.addTextLayer() },
-                        canvasWidth = state.canvasConfig.width,
-                        canvasHeight = state.canvasConfig.height
-                    )
-                }
+                TextContextPanel(
+                    layer = selected,
+                    activeSubTool = state.activeSubTool,
+                    recentColors = state.recentColors,
+                    favoriteFontKeys = state.favoriteFontKeys,
+                    recentFontKeys = state.recentFontKeys,
+                    availableFontsCount = state.availableFontsCount,
+                    hasCopiedStyle = state.copiedStyleLayer != null,
+                    canvasWidth = state.canvasConfig.width,
+                    canvasHeight = state.canvasConfig.height,
+                    onSubToolSelected = { viewModel.setActiveSubTool(it) },
+                    onUpdateLayer = { continuous, transform ->
+                        viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
+                    },
+                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                    onApplyTextCase = { mode -> viewModel.applyTextCase(mode) },
+                    onToggleFavoriteFont = { key -> viewModel.toggleFavoriteFont(key) },
+                    onImportFont = {
+                        pickCustomFont.launch(
+                            arrayOf("font/*", "application/x-font-ttf", "application/x-font-otf", "application/octet-stream")
+                        )
+                    },
+                    onPickDeviceFontsFolder = launchDeviceFontsPicker,
+                    onStartEyedropper = { target -> viewModel.startEyedropper(target) },
+                    onCopyStyle = { viewModel.copySelectedStyle() },
+                    onPasteStyle = { viewModel.pasteStyleToSelected() },
+                    onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
+                    onDeleteLayer = { viewModel.deleteSelectedLayer() },
+                    onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
+                    onBringToFront = { viewModel.bringLayerToFront() },
+                    onSendToBack = { viewModel.sendLayerToBack() },
+                    onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
+                    onAlign = { action -> viewModel.alignSelectedLayer(action) },
+                    onOpenEditDialog = { viewModel.openDialog(ActiveDialog.TEXT_EDIT) },
+                    onDone = { viewModel.selectLayer(null) }
+                )
             }
 
             selected != null -> {
-                EditorToolLevel(onBack = { viewModel.selectLayer(null) }, showBack = !inspectorOpen) {
-                    ObjectToolPanel(
-                        selectedLayer = state.selectedLayer,
-                        activeSubTool = state.activeSubTool,
-                        recentColors = state.recentColors,
-                        hasCopiedStyle = state.copiedStyleLayer != null,
-                        onSubToolSelected = { viewModel.setActiveSubTool(it) },
-                        onUpdateLayer = { continuous, transform ->
-                            viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
-                        },
-                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
-                        onStartEyedropper = { target -> viewModel.startEyedropper(target) },
-                        onCopyStyle = { viewModel.copySelectedStyle() },
-                        onPasteStyle = { viewModel.pasteStyleToSelected() },
-                        onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
-                        onDeleteLayer = { viewModel.deleteSelectedLayer() },
-                        onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
-                        onBringToFront = { viewModel.bringLayerToFront() },
-                        onSendToBack = { viewModel.sendLayerToBack() },
-                        onOpenDialog = { viewModel.openDialog(it) },
-                        onAddImage = { pickLayerImage.launch(imagesOnly) },
-                        canvasWidth = state.canvasConfig.width,
-                        canvasHeight = state.canvasConfig.height,
-                        onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
-                        onAlign = { action -> viewModel.alignSelectedLayer(action) }
-                    )
-                }
+                ObjectContextPanel(
+                    layer = selected,
+                    activeSubTool = state.activeSubTool,
+                    recentColors = state.recentColors,
+                    hasCopiedStyle = state.copiedStyleLayer != null,
+                    canvasWidth = state.canvasConfig.width,
+                    canvasHeight = state.canvasConfig.height,
+                    onSubToolSelected = { viewModel.setActiveSubTool(it) },
+                    onUpdateLayer = { continuous, transform ->
+                        viewModel.updateSelectedLayer(continuous = continuous, transform = transform)
+                    },
+                    onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                    onStartEyedropper = { target -> viewModel.startEyedropper(target) },
+                    onCopyStyle = { viewModel.copySelectedStyle() },
+                    onPasteStyle = { viewModel.pasteStyleToSelected() },
+                    onOpenSavedStyles = { viewModel.openDialog(ActiveDialog.SAVED_STYLES) },
+                    onDeleteLayer = { viewModel.deleteSelectedLayer() },
+                    onDuplicateLayer = { viewModel.duplicateSelectedLayer() },
+                    onBringToFront = { viewModel.bringLayerToFront() },
+                    onSendToBack = { viewModel.sendLayerToBack() },
+                    onNudge = { dx, dy -> viewModel.nudgeSelectedLayer(dx, dy) },
+                    onAlign = { action -> viewModel.alignSelectedLayer(action) },
+                    onReplaceImage = { pickReplacementImage.launch(imagesOnly) },
+                    onDone = { viewModel.selectLayer(null) }
+                )
             }
 
             openTool == EditorTool.CANVAS -> {
@@ -394,7 +398,14 @@ private fun PixelCraftEditorContent(
                 }
             }
 
-            else -> {
+            else -> Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = stringResource(R.string.ui_select_to_edit_hint),
+                        color = EditorColors.TextSecondary,
+                        fontSize = 13.sp
+                    )
+                }
                 EditorToolRow(
                     onToolSelected = { tool ->
                         when (tool) {
@@ -522,9 +533,9 @@ private fun PixelCraftEditorContent(
                 .background(EditorColors.CanvasStage)
         ) {
             val isLandscapeWide = maxWidth > 640.dp && maxWidth > maxHeight
-            // Compact settings panel has a fixed height (~30% of the editor) so the canvas
-            // above it keeps the same size and position no matter which tool is open.
-            val toolAreaHeight = maxOf(maxHeight * 0.3f, 120.dp)
+            // The tool area (category bar + tools + controls) has one fixed height, so the
+            // canvas above keeps the same size and position whatever is selected or open.
+            val toolAreaHeight = maxOf(maxHeight * 0.4f, 220.dp).coerceAtMost(maxHeight * 0.5f)
 
             if (isLandscapeWide) {
                 Row(modifier = Modifier.fillMaxSize()) {
