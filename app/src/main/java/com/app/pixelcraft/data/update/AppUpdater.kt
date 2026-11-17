@@ -3,6 +3,8 @@ package com.app.pixelcraft.data.update
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -257,7 +259,44 @@ object AppUpdater {
         }
         if (target.exists()) target.delete()
         check(part.renameTo(target)) { "Couldn't save the update" }
+        checkInstallsInPlace(context, target)
         target
+    }
+
+    /**
+     * Android only updates an app in place when the new APK has the same package name, the
+     * same signing certificate and a higher versionCode. Check all three up front so a bad
+     * release fails here with a clear message instead of "App not installed".
+     */
+    private fun checkInstallsInPlace(context: Context, apk: File) {
+        val pm = context.packageManager
+        val flags = PackageManager.GET_SIGNING_CERTIFICATES
+        val archive = pm.getPackageArchiveInfo(apk.path, flags)
+        if (archive == null) {
+            apk.delete()
+            error("The downloaded file isn't a valid app package")
+        }
+        val installed = pm.getPackageInfo(context.packageName, flags)
+        val problem = when {
+            archive.packageName != context.packageName -> "it is a different app (${archive.packageName})"
+            // Sharing a signer is enough: that also covers a future key rotation.
+            signerDigests(archive).intersect(signerDigests(installed)).isEmpty() ->
+                "it is signed with a different key"
+            archive.longVersionCode <= installed.longVersionCode -> "it isn't newer than the installed version"
+            else -> null
+        }
+        if (problem != null) {
+            apk.delete()
+            error("This update can't replace the installed app: $problem")
+        }
+    }
+
+    private fun signerDigests(info: PackageInfo): Set<String> {
+        val signing = info.signingInfo ?: return emptySet()
+        val signers = if (signing.hasMultipleSigners()) signing.apkContentsSigners else signing.signingCertificateHistory
+        return signers.orEmpty().map { sig ->
+            MessageDigest.getInstance("SHA-256").digest(sig.toByteArray()).joinToString("") { "%02x".format(it) }
+        }.toSet()
     }
 
     /** Reads the `sha256sum` line for [fileName] from the release's checksums asset. */

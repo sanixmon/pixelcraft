@@ -1,12 +1,10 @@
 package com.app.pixelcraft.presentation.components.dialogs
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -153,18 +150,12 @@ private fun UpdateDialog(
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = plainChangelog(release.notes).ifBlank { release.title },
-                    color = PixelCraftColors.TextSecondary,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
+                ChangelogView(
+                    markdown = release.notes.ifBlank { release.title },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 260.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(PixelCraftColors.Border.copy(alpha = 0.35f))
+                        .heightIn(max = 320.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(12.dp)
                 )
                 if (progress != null) {
                     Spacer(modifier = Modifier.height(14.dp))
@@ -207,21 +198,6 @@ private fun UpdateDialog(
         }
     )
 }
-
-/** Release notes are Markdown; show them as readable plain text. */
-private fun plainChangelog(markdown: String): String =
-    markdown.lineSequence()
-        .map { line ->
-            line.trim()
-                .replace(Regex("^#{1,6}\\s*"), "")
-                .replace(Regex("^[-*]\\s+"), "• ")
-                .replace("**", "")
-                .replace("`", "")
-                .replace(Regex("\\[([^\\]]+)]\\([^)]*\\)"), "$1")
-        }
-        .joinToString("\n")
-        .replace(Regex("\n{3,}"), "\n\n")
-        .trim()
 
 private fun formatSize(bytes: Long): String =
     if (bytes >= 1024 * 1024) String.format(Locale.US, "%.1f MB", bytes / 1048576f)
