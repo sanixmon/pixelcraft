@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -232,24 +231,17 @@ internal fun ColumnScope.PhotoAdjustInspector(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            for (preset in PhotoFilterPreset.entries) {
-                FilterChip(
-                    selected = adj.filterPreset == preset,
-                    onClick = {
-                        onUpdate(false) {
-                            it.copy(imageAdjustments = it.imageAdjustments.copy(filterPreset = preset))
-                        }
-                    },
-                    label = { Text(preset.localizedLabel(), fontSize = 12.sp) }
-                )
+        ToolDropdown(
+            label = null,
+            options = PhotoFilterPreset.entries,
+            selected = adj.filterPreset,
+            optionLabel = { it.localizedLabel() },
+            onSelect = { preset ->
+                onUpdate(false) {
+                    it.copy(imageAdjustments = it.imageAdjustments.copy(filterPreset = preset))
+                }
             }
-        }
+        )
 
         PrecisionSlider(
             label = stringResource(R.string.ui_brightness),
@@ -319,37 +311,25 @@ internal fun ColumnScope.PhotoMaskInspector(
     onStartEyedropper: (EyedropperTarget) -> Unit
 ) {
     if (layer.type == LayerType.IMAGE) {
-        Text(stringResource(R.string.ui_clip_photo_into_shape), color = EditorColors.TextSecondary, fontSize = 12.sp)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(
-                selected = layer.imageMaskShape == null,
-                onClick = { onUpdate(false) { it.copy(imageMaskShape = null) } },
-                label = { Text(stringResource(R.string.ui_none), fontSize = 12.sp) }
-            )
-            val featuredMasks = listOf(
-                ShapeType.CIRCLE,
-                ShapeType.ROUNDED_RECTANGLE,
-                ShapeType.HEART,
-                ShapeType.STAR,
-                ShapeType.HEXAGON,
-                ShapeType.DIAMOND,
-                ShapeType.OCTAGON,
-                ShapeType.SHIELD,
-                ShapeType.STARBURST
-            )
-            for (mask in featuredMasks) {
-                FilterChip(
-                    selected = layer.imageMaskShape == mask,
-                    onClick = { onUpdate(false) { it.copy(imageMaskShape = mask) } },
-                    label = { Text(mask.localizedLabel(), fontSize = 12.sp) }
-                )
-            }
-        }
+        val featuredMasks = listOf(
+            null,
+            ShapeType.CIRCLE,
+            ShapeType.ROUNDED_RECTANGLE,
+            ShapeType.HEART,
+            ShapeType.STAR,
+            ShapeType.HEXAGON,
+            ShapeType.DIAMOND,
+            ShapeType.OCTAGON,
+            ShapeType.SHIELD,
+            ShapeType.STARBURST
+        )
+        ToolDropdown(
+            label = stringResource(R.string.ui_clip_photo_into_shape),
+            options = featuredMasks,
+            selected = layer.imageMaskShape,
+            optionLabel = { it?.localizedLabel() ?: stringResource(R.string.ui_none) },
+            onSelect = { mask -> onUpdate(false) { it.copy(imageMaskShape = mask) } }
+        )
 
         if (layer.imageMaskShape == null) {
             PrecisionSlider(

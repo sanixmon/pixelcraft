@@ -53,6 +53,9 @@ import com.app.pixelcraft.domain.editor.LayerOperations
 import com.app.pixelcraft.domain.editor.LayerOperations.bringToFront
 import com.app.pixelcraft.domain.editor.LayerOperations.deleteUnlocked
 import com.app.pixelcraft.domain.editor.LayerOperations.duplicate
+import com.app.pixelcraft.domain.editor.GroupOperations
+import com.app.pixelcraft.domain.editor.GroupOperations.duplicateGroup
+import com.app.pixelcraft.domain.editor.GroupOperations.moveBlock
 import com.app.pixelcraft.domain.editor.LayerOperations.groupLayers
 import com.app.pixelcraft.domain.editor.LayerOperations.moveDown
 import com.app.pixelcraft.domain.editor.LayerOperations.moveUp
@@ -168,6 +171,7 @@ class PixelCraftViewModel internal constructor(
         _uiState.update { it.copy(isReady = true) }
         refreshSavedProjects()
         observeUserPreferences()
+        refreshDeviceFonts()
         drafts.checkRecoverableDraft()
     }
 
@@ -235,6 +239,87 @@ class PixelCraftViewModel internal constructor(
         gestureTracker.endRotation()
     }
 
+    // --- Group as one object ---
+
+    /** Members of the selected layer's group, or empty when the selection is not a group. */
+    private fun selectedGroupMembers(state: PixelCraftUiState = _uiState.value): List<Layer> {
+        val groupId = state.selectedLayer?.groupId ?: return emptyList()
+        return state.layers.filter { it.groupId == groupId }
+    }
+
+    /** The selection for [layerId]: the layer plus its group mates, if it is grouped. */
+    private fun selectionWithGroup(layers: List<Layer>, layerId: String?): Set<String> {
+        val groupId = layers.find { it.id == layerId }?.groupId ?: return setOfNotNull(layerId)
+        return layers.filter { it.groupId == groupId }.map { it.id }.toSet()
+    }
+
+    /** True while a whole group (not one focused member) is the selection. */
+    private fun isGroupSelected(state: PixelCraftUiState = _uiState.value): Boolean =
+        selectedGroupMembers(state).size > 1 && state.selectedLayerIds.size > 1
+
+    /** Replaces group members with [transform]'s result in one history step. */
+    private fun updateSelectedGroup(
+        continuous: Boolean,
+        label: String,
+        transform: (List<Layer>) -> List<Layer>
+    ) {
+        val members = selectedGroupMembers()
+        if (members.isEmpty()) return
+        beginHistoryStep(continuous = continuous, label = label)
+        val replaced = transform(members).associateBy { it.id }
+        _uiState.update { state ->
+            state.copy(layers = state.layers.map { replaced[it.id] ?: it })
+        }
+    }
+
+    // Size/rotate sliders are relative to the group as it was when the slider session began,
+    // so dragging back and forth doesn't compound.
+    private var groupEditBase: List<Layer>? = null
+
+    fun resetGroupEditBase() {
+        groupEditBase = null
+    }
+
+    /** Scales the selected group to [percent] of its size at the start of the slider session. */
+    fun scaleSelectedGroup(percent: Float, continuous: Boolean) {
+        val base = groupEditBase ?: selectedGroupMembers().also { groupEditBase = it }
+        if (base.isEmpty()) return
+        val b = GroupOperations.bounds(base)
+        updateSelectedGroup(continuous, "Resize Group") {
+            GroupOperations.scale(base, percent / 100f, b.centerX, b.centerY)
+        }
+    }
+
+    /** Rotates the selected group by [degrees] relative to the start of the slider session. */
+    fun rotateSelectedGroup(degrees: Float, continuous: Boolean) {
+        val base = groupEditBase ?: selectedGroupMembers().also { groupEditBase = it }
+        if (base.isEmpty()) return
+        val b = GroupOperations.bounds(base)
+        updateSelectedGroup(continuous, "Rotate Group") {
+            GroupOperations.rotate(base, degrees, b.centerX, b.centerY)
+        }
+    }
+
+    fun flipSelectedGroup(horizontal: Boolean) {
+        updateSelectedGroup(false, if (horizontal) "Flip Group Horizontal" else "Flip Group Vertical") {
+            GroupOperations.flip(it, horizontal)
+        }
+    }
+
+    /** Applies the same per-layer edit (opacity, blend mode...) to every unlocked member. */
+    fun updateSelectedGroupMembers(continuous: Boolean, label: String = "Edit Group", transform: (Layer) -> Layer) {
+        updateSelectedGroup(continuous, label) { members ->
+            members.map { if (it.isLocked) it else TextSizing.withEstimatedBounds(transform(it)) }
+        }
+    }
+
+    /** Narrows the selection from the whole group to just the tapped member, to edit it alone. */
+    fun focusSelectedGroupMember() {
+        val id = _uiState.value.selectedLayerId ?: return
+        resetGroupEditBase()
+        _uiState.update { it.copy(selectedLayerIds = setOf(id), activeSubTool = ActiveSubTool.NONE) }
+    }
+
     private fun syncHistoryFlags(markDirty: Boolean? = null) {
         _uiState.update { state ->
             state.copy(
@@ -250,13 +335,14 @@ class PixelCraftViewModel internal constructor(
 
     fun undo() {
         resetDragTracking()
+        resetGroupEditBase()
         val previousState = history.undo(takeSnapshot()) ?: return
         _uiState.update {
             it.copy(
                 layers = previousState.layers,
                 canvasConfig = previousState.canvasConfig,
                 selectedLayerId = previousState.selectedLayerId,
-                selectedLayerIds = setOfNotNull(previousState.selectedLayerId),
+                selectedLayerIds = selectionWithGroup(previousState.layers, previousState.selectedLayerId),
                 activeVerticalGuideX = null,
                 activeHorizontalGuideY = null
             )
@@ -266,6 +352,7 @@ class PixelCraftViewModel internal constructor(
     }
 
     fun redo() {
+        resetGroupEditBase()
         resetDragTracking()
         val nextState = history.redo(takeSnapshot()) ?: return
         _uiState.update {
@@ -273,7 +360,7 @@ class PixelCraftViewModel internal constructor(
                 layers = nextState.layers,
                 canvasConfig = nextState.canvasConfig,
                 selectedLayerId = nextState.selectedLayerId,
-                selectedLayerIds = setOfNotNull(nextState.selectedLayerId),
+                selectedLayerIds = selectionWithGroup(nextState.layers, nextState.selectedLayerId),
                 activeVerticalGuideX = null,
                 activeHorizontalGuideY = null
             )
@@ -290,7 +377,7 @@ class PixelCraftViewModel internal constructor(
                 layers = restored.layers,
                 canvasConfig = restored.canvasConfig,
                 selectedLayerId = restored.selectedLayerId,
-                selectedLayerIds = setOfNotNull(restored.selectedLayerId),
+                selectedLayerIds = selectionWithGroup(restored.layers, restored.selectedLayerId),
                 activeDialog = null,
                 activeVerticalGuideX = null,
                 activeHorizontalGuideY = null
@@ -419,6 +506,36 @@ class PixelCraftViewModel internal constructor(
         }
     }
 
+    /** Re-scans the granted device fonts folder so fonts added since last launch show up. */
+    private fun refreshDeviceFonts() {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            runCatching { FontCatalog.loadDeviceFonts(ctx) }
+            _uiState.update { it.copy(availableFontsCount = FontCatalog.allFonts().size) }
+        }
+    }
+
+    /** Stores the folder the user granted (normally /sdcard/Fonts/) and loads its fonts. */
+    fun setDeviceFontsFolder(treeUri: Uri) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            runCatching { FontCatalog.setDeviceFontsFolder(ctx, treeUri) }
+                .onSuccess { count ->
+                    _uiState.update {
+                        it.copy(
+                            availableFontsCount = FontCatalog.allFonts().size,
+                            userMessage = UiText.Res(R.string.msg_device_fonts_loaded, count)
+                        )
+                    }
+                }
+                .onFailure { err ->
+                    _uiState.update {
+                        it.copy(userMessage = UiText.Res(R.string.msg_device_fonts_failed, err.message.orEmpty()))
+                    }
+                }
+        }
+    }
+
     // --- Grid & Safe Zone ---
 
     fun toggleGrid() {
@@ -441,6 +558,7 @@ class PixelCraftViewModel internal constructor(
 
     fun selectLayer(layerId: String?) {
         history.finishContinuousEdit()
+        resetGroupEditBase()
         resetDragTracking()
         _uiState.update { state ->
             val layer = state.layers.find { it.id == layerId }
@@ -903,6 +1021,20 @@ class PixelCraftViewModel internal constructor(
         val finalRotation = rotation.degrees
 
         val safeZoom = zoomFactor.coerceIn(0.5f, 2.0f)
+        if (isGroupSelected()) {
+            // Pinch/rotate the whole group around its centre, like a single object.
+            val delta = finalRotation - currentLayer.rotation
+            val replaced = selectedGroupMembers().let { members ->
+                val moved = GroupOperations.translate(members, panDeltaX, panDeltaY)
+                val b = GroupOperations.bounds(moved)
+                GroupOperations.rotate(
+                    GroupOperations.scale(moved, safeZoom, b.centerX, b.centerY),
+                    delta, b.centerX, b.centerY
+                )
+            }.associateBy { it.id }
+            _uiState.update { state -> state.copy(layers = state.layers.map { replaced[it.id] ?: it }) }
+            return rotation.snappedJustNow
+        }
         _uiState.update { state ->
             state.copy(
                 layers = state.layers.map { layer ->
@@ -967,6 +1099,12 @@ class PixelCraftViewModel internal constructor(
         val canvasW = state.canvasConfig.width.toFloat()
         val canvasH = state.canvasConfig.height.toFloat()
 
+        if (isGroupSelected(state)) {
+            updateSelectedGroup(continuous = false, label = "Align Group") {
+                GroupOperations.align(it, canvasW, canvasH, action)
+            }
+            return
+        }
         updateSelectedLayer(continuous = false, label = "Align Layer") { layer ->
             LayerOperations.alignSingleLayer(layer, canvasW, canvasH, action)
         }
@@ -997,11 +1135,45 @@ class PixelCraftViewModel internal constructor(
 
     fun deleteSelectedLayer() {
         val selectedId = _uiState.value.selectedLayerId ?: return
+        if (isGroupSelected()) {
+            val ids = selectedGroupMembers().filter { !it.isLocked }.map { it.id }.toSet()
+            if (ids.isEmpty()) return
+            beginHistoryStep(continuous = false, label = "Delete Group")
+            resetDragTracking()
+            _uiState.update { state ->
+                val remaining = state.layers.filter { it.id !in ids }.normalizeZIndices()
+                val nextSelected = remaining.find { it.id == selectedId }?.id
+                state.copy(
+                    layers = remaining,
+                    selectedLayerId = nextSelected,
+                    selectedLayerIds = setOfNotNull(nextSelected),
+                    activeSubTool = ActiveSubTool.NONE,
+                    activeVerticalGuideX = null,
+                    activeHorizontalGuideY = null
+                )
+            }
+            return
+        }
         deleteLayer(selectedId)
     }
 
     fun duplicateSelectedLayer() {
         val selectedId = _uiState.value.selectedLayerId ?: return
+        if (isGroupSelected()) {
+            val ids = selectedGroupMembers().map { it.id }.toSet()
+            val (layers, copies) = _uiState.value.layers.duplicateGroup(ids)
+            val primary = copies.lastOrNull() ?: return
+            beginHistoryStep(continuous = false, label = "Duplicate Group")
+            resetDragTracking()
+            _uiState.update { state ->
+                state.copy(
+                    layers = layers.normalizeZIndices(),
+                    selectedLayerId = primary.id,
+                    selectedLayerIds = copies.map { it.id }.toSet()
+                )
+            }
+            return
+        }
         val duplicated = _uiState.value.layers.duplicate(selectedId) ?: return
         beginHistoryStep(continuous = false, label = "Duplicate Layer")
         resetDragTracking()
@@ -1017,6 +1189,14 @@ class PixelCraftViewModel internal constructor(
     fun bringLayerToFront() {
         val current = _uiState.value.selectedLayer ?: return
         if (current.isLocked) return
+        if (isGroupSelected()) {
+            val ids = selectedGroupMembers().map { it.id }.toSet()
+            val updated = _uiState.value.layers.moveBlock(ids, front = true)
+            if (updated == _uiState.value.layers) return
+            beginHistoryStep(continuous = false, label = "Bring to Front")
+            _uiState.update { it.copy(layers = updated) }
+            return
+        }
         val updated = _uiState.value.layers.bringToFront(current.id)
         if (updated == _uiState.value.layers) return
         beginHistoryStep(continuous = false, label = "Bring to Front")
@@ -1026,6 +1206,14 @@ class PixelCraftViewModel internal constructor(
     fun sendLayerToBack() {
         val current = _uiState.value.selectedLayer ?: return
         if (current.isLocked) return
+        if (isGroupSelected()) {
+            val ids = selectedGroupMembers().map { it.id }.toSet()
+            val updated = _uiState.value.layers.moveBlock(ids, front = false)
+            if (updated == _uiState.value.layers) return
+            beginHistoryStep(continuous = false, label = "Send to Back")
+            _uiState.update { it.copy(layers = updated) }
+            return
+        }
         val updated = _uiState.value.layers.sendToBack(current.id)
         if (updated == _uiState.value.layers) return
         beginHistoryStep(continuous = false, label = "Send to Back")
@@ -1037,6 +1225,21 @@ class PixelCraftViewModel internal constructor(
         val updated = _uiState.value.layers.moveUp(layerId)
         if (updated == _uiState.value.layers) return
         beginHistoryStep(continuous = false, label = "Move Layer Up")
+        _uiState.update { it.copy(layers = updated) }
+    }
+
+    /** Applies a drag-and-drop order from the layers sheet; [topFirstIds] lists front to back. */
+    fun reorderLayers(topFirstIds: List<String>) {
+        val layers = _uiState.value.layers
+        if (topFirstIds.toSet() != layers.map { it.id }.toSet()) return
+        val zFor = topFirstIds.withIndex().associate { (i, id) -> id to (topFirstIds.size - 1 - i) }
+        val updated = layers.map { layer ->
+            val z = zFor.getValue(layer.id)
+            if (layer.zIndex == z) layer else layer.copy(zIndex = z)
+        }
+        if (updated == layers) return
+        resetDragTracking()
+        beginHistoryStep(continuous = false, label = "Reorder Layers")
         _uiState.update { it.copy(layers = updated) }
     }
 

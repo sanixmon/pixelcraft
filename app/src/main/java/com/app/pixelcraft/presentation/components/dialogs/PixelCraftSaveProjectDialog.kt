@@ -454,6 +454,17 @@ fun PixelCraftAboutDialog(onDismiss: () -> Unit) {
                 )
             }
         },
+        dismissButton = {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            if (com.app.pixelcraft.data.update.AppUpdater.isSupported(context)) {
+                TextButton(onClick = {
+                    com.app.pixelcraft.data.update.AppUpdater.check(context, manual = true)
+                    onDismiss()
+                }) {
+                    Text(stringResource(R.string.ui_check_for_updates), color = PixelCraftColors.Accent)
+                }
+            }
+        },
         confirmButton = {
             Button(
                 onClick = onDismiss,

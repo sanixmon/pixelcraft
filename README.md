@@ -15,7 +15,7 @@
   - 48dp accessible corner & side handles (*Delete*, *Edit/Duplicate*, *Scale+Rotate*, *Width/Height Stretch*)
   - Screen-space magnetic grid & inter-layer Smart Guides + Social Safe Zone overlay
 - **Rich Typography**
-  - 15 bundled open-source fonts (SIL OFL 1.1 & Apache 2.0) + custom `.ttf`/`.otf` font import, search & favorites
+  - 69 bundled open-source fonts (SIL OFL 1.1 & Apache 2.0, see [THIRD_PARTY_FONTS.md](THIRD_PARTY_FONTS.md)) + custom `.ttf`/`.otf` font import, search & favorites
   - Circular arc curved text (`-180°..180°`), letter & line spacing, and case transforms (`UPPER`, `lower`, `Title`)
   - Solid, linear, and radial text gradients, vector path contour strokes (*Outside / Center / Inside*, dash patterns, joins & caps), neon outer glow, drop shadows, 3D extrusion, and mirror reflection
   - Style Copy/Paste clipboard & persistent Saved Styles library

@@ -53,6 +53,8 @@
     <string name="enum_presetcat_greeting">Greeting</string>
     <string name="enum_presetcat_meme">Meme</string>
     <string name="enum_presetcat_promo">Promo</string>
+    <string name="enum_presetcat_business">Business</string>
+    <string name="enum_presetcat_event">Event</string>
     <string name="enum_presetcat_quote">Quote</string>
     <string name="enum_presetcat_story">Story</string>
     <string name="enum_presetcat_youtube">YouTube</string>
@@ -153,6 +155,8 @@
     <string name="msg_export_failed">Export failed: %1$s</string>
     <string name="msg_font_import_failed">Font import failed: %1$s</string>
     <string name="msg_font_imported">Imported font “%1$s”</string>
+    <string name="msg_device_fonts_loaded">Loaded %1$d fonts from your Fonts folder</string>
+    <string name="msg_device_fonts_failed">Could not read the Fonts folder: %1$s</string>
     <string name="msg_grouped_layers">Grouped %1$d layers</string>
     <string name="msg_open_picture_failed">Couldn’t open that picture: %1$s</string>
     <string name="msg_project_delete_failed">Couldn’t delete project: %1$s</string>
@@ -169,7 +173,7 @@
     <string name="msg_style_copied">Style copied from “%1$s”</string>
     <string name="msg_style_saved">Saved style “%1$s”</string>
     <string name="msg_ungrouped_layers">Ungrouped layers</string>
-    <string name="ui_about_highlights">Highlights:\n• 15 bundled open-source fonts + custom .ttf/.otf import\n• Curved arc text, letter spacing, gradient fill, neon glow &amp; 3D extrusion\n• Vector path strokes (Outside / Center / Inside, dash patterns, join &amp; cap)\n• 24 vector shapes &amp; word balloons + photo crop, filters &amp; shape masks\n• 2-finger pinch/rotate gestures, Smart Guides, Canvas Eyedropper &amp; autosave\n• PNG, JPEG &amp; WebP (lossy/lossless) export + portable .pixelcraft archives</string>
+    <string name="ui_about_highlights">Highlights:\n• 69 bundled open-source fonts + custom .ttf/.otf import\n• Curved arc text, letter spacing, gradient fill, neon glow &amp; 3D extrusion\n• Vector path strokes (Outside / Center / Inside, dash patterns, join &amp; cap)\n• 24 vector shapes &amp; word balloons + photo crop, filters &amp; shape masks\n• 2-finger pinch/rotate gestures, Smart Guides, Canvas Eyedropper &amp; autosave\n• PNG, JPEG &amp; WebP (lossy/lossless) export + portable .pixelcraft archives</string>
     <string name="ui_about_pixelcraft">About PixelCraft</string>
     <string name="ui_about_version">PixelCraft v%1$s</string>
     <string name="ui_adjust">Adjust</string>
@@ -263,6 +267,8 @@
     <string name="ui_font">Font</string>
     <string name="ui_font_cat_favorites">Favorites</string>
     <string name="ui_font_cat_imported">Imported</string>
+    <string name="ui_font_cat_device">Device</string>
+    <string name="ui_device_fonts_folder">Load fonts from device folder</string>
     <string name="ui_font_size">Font Size</string>
     <string name="ui_format">Format</string>
     <string name="ui_full_reset">Full Reset</string>
@@ -431,4 +437,28 @@
     <string name="default_new_text">New Text</string>
     <string name="default_text_layer_name">Text %1$d</string>
     <string name="default_photo_layer_name">Photo %1$d</string>
+    <string name="hist_resize_group">Resize Group</string>
+    <string name="hist_rotate_group">Rotate Group</string>
+    <string name="hist_flip_group_h">Flip Group Horizontal</string>
+    <string name="hist_flip_group_v">Flip Group Vertical</string>
+    <string name="hist_edit_group">Edit Group</string>
+    <string name="hist_align_group">Align Group</string>
+    <string name="hist_delete_group">Delete Group</string>
+    <string name="hist_duplicate_group">Duplicate Group</string>
+    <string name="ui_align">Align</string>
+    <string name="ui_edit_item">Edit Item</string>
+    <string name="ui_group_size">Group Size</string>
+    <string name="ui_update_available">Update available</string>
+    <string name="ui_update_now">Update</string>
+    <string name="ui_install">Install</string>
+    <string name="ui_retry">Retry</string>
+    <string name="ui_later">Later</string>
+    <string name="ui_whats_new">What’s new</string>
+    <string name="ui_downloading_percent">Downloading… %1$d%%</string>
+    <string name="ui_check_for_updates">Check for updates</string>
+    <string name="msg_update_allow_install">Allow “Install unknown apps” for PixelCraft, then tap Install again.</string>
+    <string name="msg_update_failed">Update failed: %1$s</string>
+    <string name="msg_update_up_to_date">You’re on the latest version (%1$s).</string>
+    <string name="hist_reorder_layers">Reorder Layers</string>
+    <string name="ui_drag_to_reorder">Drag to reorder</string>
 </resources>

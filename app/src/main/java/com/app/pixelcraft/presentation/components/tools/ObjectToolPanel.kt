@@ -318,7 +318,7 @@ fun ObjectToolPanel(
 }
 
 @Composable
-private fun ObjectToolItem(
+internal fun ObjectToolItem(
     icon: ImageVector,
     label: String,
     isActive: Boolean,

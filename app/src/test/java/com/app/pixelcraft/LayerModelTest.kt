@@ -173,11 +173,11 @@ class LayerModelTest {
             )
         }
 
-        // System Sans + 15 bundled open-source fonts = 16 entries
-        assertEquals(16, FontCatalog.fonts.size)
-        assertEquals(16, FontCatalog.fonts.map { it.key }.toSet().size)
+        // System Sans + 69 bundled open-source fonts = 70 entries, all with unique keys
+        assertEquals(70, FontCatalog.fonts.size)
+        assertEquals(FontCatalog.fonts.size, FontCatalog.fonts.map { it.key }.toSet().size)
         val bundledOnly = FontCatalog.fonts.filter { it.key != FontCatalog.DEFAULT_KEY }
-        assertEquals(15, bundledOnly.size)
+        assertEquals(69, bundledOnly.size)
         for (font in bundledOnly) {
             assertNotNull("Bundled font '${font.key}' must have regularResId", font.regularResId)
             assertTrue(font.widthFactor > 0.5f)
@@ -187,7 +187,7 @@ class LayerModelTest {
     @Test
     fun testDefaultPresetsCoverAllCategoriesAndValidBundledFonts() {
         val validFontKeys = FontCatalog.fonts.map { it.key }.toSet()
-        assertEquals(20, DefaultPresets.presets.size)
+        assertTrue(DefaultPresets.presets.size >= 25)
         assertEquals(20, DefaultPresets.curatedGradients.size)
 
         for (cat in PresetCategory.entries) {

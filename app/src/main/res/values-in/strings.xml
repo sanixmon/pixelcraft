@@ -52,6 +52,8 @@
     <string name="enum_presetcat_greeting">Ucapan</string>
     <string name="enum_presetcat_meme">Meme</string>
     <string name="enum_presetcat_promo">Promo</string>
+    <string name="enum_presetcat_business">Bisnis</string>
+    <string name="enum_presetcat_event">Acara</string>
     <string name="enum_presetcat_quote">Kutipan</string>
     <string name="enum_presetcat_story">Story</string>
     <string name="enum_presetcat_youtube">YouTube</string>
@@ -152,6 +154,8 @@
     <string name="msg_export_failed">Ekspor gagal: %1$s</string>
     <string name="msg_font_import_failed">Gagal mengimpor font: %1$s</string>
     <string name="msg_font_imported">Font “%1$s” berhasil diimpor</string>
+    <string name="msg_device_fonts_loaded">%1$d font dimuat dari folder Fonts</string>
+    <string name="msg_device_fonts_failed">Tidak dapat membaca folder Fonts: %1$s</string>
     <string name="msg_grouped_layers">%1$d lapisan dikelompokkan</string>
     <string name="msg_open_picture_failed">Tidak dapat membuka gambar: %1$s</string>
     <string name="msg_project_delete_failed">Tidak dapat menghapus proyek: %1$s</string>
@@ -168,7 +172,7 @@
     <string name="msg_style_copied">Gaya disalin dari “%1$s”</string>
     <string name="msg_style_saved">Gaya “%1$s” disimpan</string>
     <string name="msg_ungrouped_layers">Kelompok lapisan dipisahkan</string>
-    <string name="ui_about_highlights">Fitur utama:\n• 15 font open-source bawaan + impor .ttf/.otf kustom\n• Teks melengkung, jarak huruf, isi gradien, pendar neon &amp; ekstrusi 3D\n• Garis tepi vektor (Luar / Tengah / Dalam, pola putus-putus, sambungan &amp; ujung)\n• 24 bentuk vektor &amp; balon kata + potong foto, filter &amp; masker bentuk\n• Gestur cubit/putar 2 jari, Smart Guides, pipet kanvas &amp; simpan otomatis\n• Ekspor PNG, JPEG &amp; WebP (lossy/lossless) + arsip .pixelcraft portabel</string>
+    <string name="ui_about_highlights">Fitur utama:\n• 69 font open-source bawaan + impor .ttf/.otf kustom\n• Teks melengkung, jarak huruf, isi gradien, pendar neon &amp; ekstrusi 3D\n• Garis tepi vektor (Luar / Tengah / Dalam, pola putus-putus, sambungan &amp; ujung)\n• 24 bentuk vektor &amp; balon kata + potong foto, filter &amp; masker bentuk\n• Gestur cubit/putar 2 jari, Smart Guides, pipet kanvas &amp; simpan otomatis\n• Ekspor PNG, JPEG &amp; WebP (lossy/lossless) + arsip .pixelcraft portabel</string>
     <string name="ui_about_pixelcraft">Tentang PixelCraft</string>
     <string name="ui_about_version">PixelCraft v%1$s</string>
     <string name="ui_adjust">Atur</string>
@@ -262,6 +266,8 @@
     <string name="ui_font">Font</string>
     <string name="ui_font_cat_favorites">Favorit</string>
     <string name="ui_font_cat_imported">Diimpor</string>
+    <string name="ui_font_cat_device">Perangkat</string>
+    <string name="ui_device_fonts_folder">Muat font dari folder perangkat</string>
     <string name="ui_font_size">Ukuran Font</string>
     <string name="ui_format">Format</string>
     <string name="ui_full_reset">Atur Ulang Semua</string>
@@ -430,4 +436,28 @@
     <string name="default_new_text">Teks Baru</string>
     <string name="default_text_layer_name">Teks %1$d</string>
     <string name="default_photo_layer_name">Foto %1$d</string>
+    <string name="hist_resize_group">Ubah Ukuran Grup</string>
+    <string name="hist_rotate_group">Putar Grup</string>
+    <string name="hist_flip_group_h">Balik Grup Horizontal</string>
+    <string name="hist_flip_group_v">Balik Grup Vertikal</string>
+    <string name="hist_edit_group">Edit Grup</string>
+    <string name="hist_align_group">Ratakan Grup</string>
+    <string name="hist_delete_group">Hapus Grup</string>
+    <string name="hist_duplicate_group">Duplikat Grup</string>
+    <string name="ui_align">Ratakan</string>
+    <string name="ui_edit_item">Edit Item</string>
+    <string name="ui_group_size">Ukuran Grup</string>
+    <string name="ui_update_available">Pembaruan tersedia</string>
+    <string name="ui_update_now">Perbarui</string>
+    <string name="ui_install">Pasang</string>
+    <string name="ui_retry">Coba lagi</string>
+    <string name="ui_later">Nanti</string>
+    <string name="ui_whats_new">Yang baru</string>
+    <string name="ui_downloading_percent">Mengunduh… %1$d%%</string>
+    <string name="ui_check_for_updates">Periksa pembaruan</string>
+    <string name="msg_update_allow_install">Izinkan “Instal aplikasi tak dikenal” untuk PixelCraft, lalu ketuk Pasang lagi.</string>
+    <string name="msg_update_failed">Pembaruan gagal: %1$s</string>
+    <string name="msg_update_up_to_date">Anda sudah memakai versi terbaru (%1$s).</string>
+    <string name="hist_reorder_layers">Urutkan Ulang Layer</string>
+    <string name="ui_drag_to_reorder">Seret untuk mengurutkan</string>
 </resources>

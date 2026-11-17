@@ -1,13 +1,14 @@
 package com.app.pixelcraft.presentation
 
 import android.app.Activity
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.app.pixelcraft.presentation.components.EditorHalfSheet
 import com.app.pixelcraft.presentation.components.EditorTool
 import com.app.pixelcraft.presentation.components.EditorToolLevel
+import com.app.pixelcraft.data.presets.FontCatalog
 import com.app.pixelcraft.presentation.components.EditorToolRow
 import com.app.pixelcraft.presentation.components.EditorUndoStrip
 import android.content.Context
@@ -99,6 +100,7 @@ import com.app.pixelcraft.presentation.components.dialogs.PixelCraftTextEditDial
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftUnsavedChangesDialog
 import com.app.pixelcraft.presentation.components.tools.BackgroundToolPanel
 import com.app.pixelcraft.presentation.components.tools.FilterToolPanel
+import com.app.pixelcraft.presentation.components.tools.GroupToolPanel
 import com.app.pixelcraft.presentation.components.tools.ObjectToolPanel
 import com.app.pixelcraft.presentation.components.tools.PresetsToolPanel
 import com.app.pixelcraft.presentation.components.tools.TextToolPanel
@@ -184,6 +186,22 @@ private fun PixelCraftEditorContent(
     val pickCustomFont = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.importCustomFont(it) }
     }
+    // One-time grant of the device fonts folder (/sdcard/Fonts/); re-scanned on every launch after.
+    val pickDeviceFontsFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        uri?.let { viewModel.setDeviceFontsFolder(it) }
+    }
+    val launchDeviceFontsPicker = {
+        runCatching { pickDeviceFontsFolder.launch(FontCatalog.deviceFontsInitialUri) }
+        Unit
+    }
+    LaunchedEffect(state.activeSubTool) {
+        if (state.activeSubTool == ActiveSubTool.TEXT_FONT &&
+            FontCatalog.shouldAskForDeviceFontsFolder(context)
+        ) {
+            FontCatalog.markDeviceFontsFolderAsked(context)
+            launchDeviceFontsPicker()
+        }
+    }
     val imagesOnly = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 
     // Android 9 (API 28) needs WRITE_EXTERNAL_STORAGE to insert into shared Pictures
@@ -242,7 +260,32 @@ private fun PixelCraftEditorContent(
     fun ToolArea() {
         val selected = state.selectedLayer
         val inspectorOpen = state.activeSubTool != ActiveSubTool.NONE
+        val groupMembers = selected?.groupId?.let { gid -> state.layers.count { it.groupId == gid } } ?: 0
         when {
+            // A whole group is selected: manipulate it as one object.
+            selected != null && selected.groupId != null && groupMembers > 1 && state.selectedLayerIds.size > 1 -> {
+                EditorToolLevel(onBack = { viewModel.selectLayer(null) }) {
+                    GroupToolPanel(
+                        groupId = selected.groupId,
+                        memberCount = groupMembers,
+                        primaryLayer = selected,
+                        onScale = { p, cont -> viewModel.scaleSelectedGroup(p, cont) },
+                        onRotate = { d, cont -> viewModel.rotateSelectedGroup(d, cont) },
+                        onUpdateMembers = { cont, tf -> viewModel.updateSelectedGroupMembers(cont, transform = tf) },
+                        onFinishContinuousEdit = { viewModel.finishContinuousEdit() },
+                        onEndRelativeSession = { viewModel.resetGroupEditBase() },
+                        onFlip = { viewModel.flipSelectedGroup(it) },
+                        onAlign = { viewModel.alignSelectedLayer(it) },
+                        onBringToFront = { viewModel.bringLayerToFront() },
+                        onSendToBack = { viewModel.sendLayerToBack() },
+                        onDuplicate = { viewModel.duplicateSelectedLayer() },
+                        onDelete = { viewModel.deleteSelectedLayer() },
+                        onUngroup = { viewModel.ungroupSelectedLayers() },
+                        onEditItem = { viewModel.focusSelectedGroupMember() }
+                    )
+                }
+            }
+
             selected != null && selected.type == LayerType.TEXT -> {
                 EditorToolLevel(onBack = { viewModel.selectLayer(null) }, showBack = !inspectorOpen) {
                     TextToolPanel(
@@ -269,6 +312,7 @@ private fun PixelCraftEditorContent(
                                 )
                             )
                         },
+                        onPickDeviceFontsFolder = launchDeviceFontsPicker,
                         onStartEyedropper = { target -> viewModel.startEyedropper(target) },
                         onCopyStyle = { viewModel.copySelectedStyle() },
                         onPasteStyle = { viewModel.pasteStyleToSelected() },
@@ -481,9 +525,9 @@ private fun PixelCraftEditorContent(
                 .background(EditorColors.CanvasStage)
         ) {
             val isLandscapeWide = maxWidth > 640.dp && maxWidth > maxHeight
-            // Compact settings panel never takes more than ~30% of the editor height;
-            // the canvas resizes above it instead of being covered.
-            val toolAreaMaxHeight = maxOf(maxHeight * 0.3f, 120.dp)
+            // Compact settings panel has a fixed height (~30% of the editor) so the canvas
+            // above it keeps the same size and position no matter which tool is open.
+            val toolAreaHeight = maxOf(maxHeight * 0.3f, 120.dp)
 
             if (isLandscapeWide) {
                 Row(modifier = Modifier.fillMaxSize()) {
@@ -529,8 +573,9 @@ private fun PixelCraftEditorContent(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = toolAreaMaxHeight)
-                            .background(EditorColors.Panel)
+                            .height(toolAreaHeight)
+                            .background(EditorColors.Panel),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
                         ToolArea()
                     }
@@ -577,6 +622,7 @@ private fun PixelCraftEditorContent(
                         onToggleVisibility = { viewModel.toggleLayerVisibility(it) },
                         onMoveUp = { id -> viewModel.moveLayerUp(id) },
                         onMoveDown = { id -> viewModel.moveLayerDown(id) },
+                        onReorder = { ids -> viewModel.reorderLayers(ids) },
                         onDelete = { viewModel.deleteLayer(it) },
                         onClose = { viewModel.setLayersDrawerOpen(false) },
                         modifier = Modifier.fillMaxSize()

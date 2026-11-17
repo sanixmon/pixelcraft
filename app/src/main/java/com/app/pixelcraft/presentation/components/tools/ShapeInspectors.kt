@@ -84,20 +84,13 @@ internal fun ColumnScope.ShapeTypeInspector(
 ) {
     if (layer.type == LayerType.SHAPE) {
         var activeCat by remember(layer.shapeType) { mutableStateOf(layer.shapeType.category) }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            for (cat in ShapeCategory.entries) {
-                FilterChip(
-                    selected = activeCat == cat,
-                    onClick = { activeCat = cat },
-                    label = { Text(cat.localizedLabel(), fontSize = 12.sp) }
-                )
-            }
-        }
+        ToolDropdown(
+            label = null,
+            options = ShapeCategory.entries,
+            selected = activeCat,
+            optionLabel = { it.localizedLabel() },
+            onSelect = { activeCat = it }
+        )
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
@@ -126,42 +119,33 @@ internal fun ColumnScope.ShapeColorInspector(
 ) {
     if (layer.type == LayerType.SHAPE) {
         val isTransparent = !layer.shapeGradientEnabled && (layer.shapeFillColor ushr 24) == 0L
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(
-                selected = !layer.shapeGradientEnabled && !isTransparent,
-                onClick = {
-                    onUpdate(false) {
-                        val fallback = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
-                        it.copy(shapeGradientEnabled = false, shapeFillColor = fallback)
+        // 0 = solid, 1 = gradient, 2 = none (hollow)
+        ToolDropdown(
+            label = null,
+            options = listOf(0, 1, 2),
+            selected = when {
+                layer.shapeGradientEnabled -> 1
+                isTransparent -> 2
+                else -> 0
+            },
+            optionLabel = {
+                when (it) {
+                    0 -> stringResource(R.string.ui_solid)
+                    1 -> stringResource(R.string.ui_gradient)
+                    else -> stringResource(R.string.ui_none_hollow)
+                }
+            },
+            onSelect = { mode ->
+                onUpdate(false) {
+                    val opaque = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
+                    when (mode) {
+                        0 -> it.copy(shapeGradientEnabled = false, shapeFillColor = opaque)
+                        1 -> it.copy(shapeGradientEnabled = true, shapeFillColor = opaque)
+                        else -> it.copy(shapeGradientEnabled = false, shapeFillColor = 0x00000000L)
                     }
-                },
-                label = { Text(stringResource(R.string.ui_solid), fontSize = 12.sp) }
-            )
-            FilterChip(
-                selected = layer.shapeGradientEnabled,
-                onClick = {
-                    onUpdate(false) {
-                        val start = if ((it.shapeFillColor ushr 24) == 0L) 0xFF00B0FF else it.shapeFillColor
-                        it.copy(shapeGradientEnabled = true, shapeFillColor = start)
-                    }
-                },
-                label = { Text(stringResource(R.string.ui_gradient), fontSize = 12.sp) }
-            )
-            FilterChip(
-                selected = isTransparent,
-                onClick = {
-                    onUpdate(false) {
-                        it.copy(shapeGradientEnabled = false, shapeFillColor = 0x00000000L)
-                    }
-                },
-                label = { Text(stringResource(R.string.ui_none_hollow), fontSize = 12.sp) }
-            )
-        }
+                }
+            }
+        )
 
         if (!isTransparent) {
             Spacer(modifier = Modifier.height(6.dp))

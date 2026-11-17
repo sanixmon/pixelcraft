@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -63,7 +61,6 @@ import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -105,32 +102,32 @@ internal fun ColumnScope.TextColorInspector(
     onFinishContinuousEdit: () -> Unit,
     onStartEyedropper: (EyedropperTarget) -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        FilterChip(
-            selected = !layer.textGradientEnabled,
-            onClick = { onUpdate(false) { it.copy(textGradientEnabled = false) } },
-            label = { Text(stringResource(R.string.ui_solid_fill), fontSize = 12.sp) }
-        )
-        FilterChip(
-            selected = layer.textGradientEnabled && !layer.textGradientRadial,
-            onClick = {
-                onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = false) }
-            },
-            label = { Text(stringResource(R.string.ui_linear_gradient), fontSize = 12.sp) }
-        )
-        FilterChip(
-            selected = layer.textGradientEnabled && layer.textGradientRadial,
-            onClick = {
-                onUpdate(false) { it.copy(textGradientEnabled = true, textGradientRadial = true) }
-            },
-            label = { Text(stringResource(R.string.ui_radial_gradient), fontSize = 12.sp) }
-        )
-    }
+    // 0 = solid, 1 = linear gradient, 2 = radial gradient
+    ToolDropdown(
+        label = null,
+        options = listOf(0, 1, 2),
+        selected = when {
+            !layer.textGradientEnabled -> 0
+            !layer.textGradientRadial -> 1
+            else -> 2
+        },
+        optionLabel = {
+            when (it) {
+                0 -> stringResource(R.string.ui_solid_fill)
+                1 -> stringResource(R.string.ui_linear_gradient)
+                else -> stringResource(R.string.ui_radial_gradient)
+            }
+        },
+        onSelect = { mode ->
+            onUpdate(false) {
+                when (mode) {
+                    0 -> it.copy(textGradientEnabled = false)
+                    1 -> it.copy(textGradientEnabled = true, textGradientRadial = false)
+                    else -> it.copy(textGradientEnabled = true, textGradientRadial = true)
+                }
+            }
+        }
+    )
 
     Text(
         text = if (layer.textGradientEnabled) stringResource(R.string.ui_start_color) else stringResource(R.string.ui_text_color),

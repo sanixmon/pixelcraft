@@ -8,6 +8,8 @@ enum class PresetCategory(val label: String) {
     QUOTE("Quote"),
     YOUTUBE("YouTube"),
     PROMO("Promo"),
+    BUSINESS("Business"),
+    EVENT("Event"),
     GREETING("Greeting"),
     MEME("Meme"),
     STORY("Story")
