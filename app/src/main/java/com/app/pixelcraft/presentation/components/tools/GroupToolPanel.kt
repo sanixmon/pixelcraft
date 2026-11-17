@@ -1,5 +1,6 @@
 package com.app.pixelcraft.presentation.components.tools
 
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlignHorizontalCenter
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BlurOn
+import androidx.compose.material.icons.filled.BorderStyle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
@@ -46,11 +48,13 @@ import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.R
 import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerBlendMode
+import com.app.pixelcraft.data.model.LayerType
+import com.app.pixelcraft.presentation.components.dialogs.ColorPaletteRow
 import com.app.pixelcraft.presentation.AlignmentAction
 import com.app.pixelcraft.presentation.i18n.localizedLabel
 import com.app.pixelcraft.ui.theme.EditorColors
 
-private enum class GroupSubTool { NONE, SIZE, ROTATE, OPACITY, BLEND, ALIGN }
+private enum class GroupSubTool { NONE, SIZE, ROTATE, OPACITY, BLEND, ALIGN, STROKE }
 
 /**
  * Tool row for a selected group: the same object manipulations (size, rotate, opacity,
@@ -74,6 +78,8 @@ fun GroupToolPanel(
     onDelete: () -> Unit,
     onUngroup: () -> Unit,
     onEditItem: () -> Unit,
+    onMerge: () -> Unit,
+    recentColors: List<Long> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     var subTool by remember(groupId) { mutableStateOf(GroupSubTool.NONE) }
@@ -93,6 +99,7 @@ fun GroupToolPanel(
                 onUpdateMembers = onUpdateMembers,
                 onFinishContinuousEdit = onFinishContinuousEdit,
                 onAlign = onAlign,
+                recentColors = recentColors,
                 onClose = {
                     onEndRelativeSession()
                     subTool = GroupSubTool.NONE
@@ -110,7 +117,9 @@ fun GroupToolPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             ObjectToolItem(Icons.Default.GroupWork, stringResource(R.string.ui_ungroup), false, onClick = onUngroup)
+            ObjectToolItem(Icons.Default.Layers, stringResource(R.string.ui_merge), false, onClick = onMerge)
             ObjectToolItem(Icons.Default.Edit, stringResource(R.string.ui_edit_item), false, onClick = onEditItem)
+            ObjectToolItem(Icons.Default.BorderStyle, stringResource(R.string.ui_stroke), false) { subTool = GroupSubTool.STROKE }
             ObjectToolItem(Icons.Default.AspectRatio, stringResource(R.string.ui_size), false) { subTool = GroupSubTool.SIZE }
             ObjectToolItem(Icons.Default.Rotate90DegreesCcw, stringResource(R.string.ui_rotate), false) { subTool = GroupSubTool.ROTATE }
             ObjectToolItem(Icons.Default.Opacity, stringResource(R.string.ui_opacity), false) { subTool = GroupSubTool.OPACITY }
@@ -141,6 +150,7 @@ private fun GroupSubToolInspector(
     onUpdateMembers: (Boolean, (Layer) -> Layer) -> Unit,
     onFinishContinuousEdit: () -> Unit,
     onAlign: (AlignmentAction) -> Unit,
+    recentColors: List<Long>,
     onClose: () -> Unit
 ) {
     // Size and rotation are relative to the group as it was when this inspector opened.
@@ -196,13 +206,14 @@ private fun GroupSubToolInspector(
                                 color = EditorColors.TextPrimary,
                                 fontSize = 12.sp,
                                 modifier = Modifier
+                                    .minimumInteractiveComponentSize()
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(EditorColors.SurfaceElevated)
                                     .clickable {
                                         rotationDeg += step
                                         onRotate(rotationDeg, false)
                                     }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
                             )
                         }
                     }
@@ -245,8 +256,48 @@ private fun GroupSubToolInspector(
 
                 GroupSubTool.ALIGN -> TextAlignInspector(onAlign = onAlign)
 
+                GroupSubTool.STROKE -> {
+                    // One stroke for every member: text outline, shape stroke, photo border.
+                    val width = when (primaryLayer.type) {
+                        LayerType.TEXT -> primaryLayer.strokeWidth
+                        LayerType.SHAPE -> primaryLayer.shapeStrokeWidth
+                        LayerType.IMAGE -> primaryLayer.imageBorderWidth
+                    }
+                    val color = when (primaryLayer.type) {
+                        LayerType.TEXT -> primaryLayer.strokeColor
+                        LayerType.SHAPE -> primaryLayer.shapeStrokeColor
+                        LayerType.IMAGE -> primaryLayer.imageBorderColor
+                    }
+                    PrecisionSlider(
+                        label = stringResource(R.string.ui_stroke_width),
+                        value = width,
+                        valueRange = 0f..40f,
+                        defaultValue = 0f,
+                        fineStep = 1f,
+                        unitSuffix = "px",
+                        onValueChange = { w, cont -> onUpdateMembers(cont) { it.withGroupStroke(width = w) } },
+                        onValueChangeFinished = onFinishContinuousEdit
+                    )
+                    ColorPaletteRow(
+                        colors = ObjectPalette,
+                        recentColors = recentColors,
+                        selectedColor = color,
+                        onSelectColor = { c ->
+                            onUpdateMembers(false) { it.withGroupStroke(color = c, width = if (width < 1f) 6f else null) }
+                        },
+                        pickerTitle = stringResource(R.string.ui_stroke_color)
+                    )
+                }
+
                 GroupSubTool.NONE -> Unit
             }
         }
     }
+}
+
+/** Applies a stroke width and/or colour using whichever stroke this layer type has. */
+private fun Layer.withGroupStroke(width: Float? = null, color: Long? = null): Layer = when (type) {
+    LayerType.TEXT -> copy(strokeWidth = width ?: strokeWidth, strokeColor = color ?: strokeColor)
+    LayerType.SHAPE -> copy(shapeStrokeWidth = width ?: shapeStrokeWidth, shapeStrokeColor = color ?: shapeStrokeColor)
+    LayerType.IMAGE -> copy(imageBorderWidth = width ?: imageBorderWidth, imageBorderColor = color ?: imageBorderColor)
 }

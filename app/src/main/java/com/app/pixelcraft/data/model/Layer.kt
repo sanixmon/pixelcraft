@@ -248,7 +248,9 @@ data class Layer(
     val imageMaskShape: ShapeType? = null,
     val imageCornerRadius: Float = 0f,
     val imageBorderWidth: Float = 0f,
-    val imageBorderColor: Long = 0xFFFFFFFF
+    val imageBorderColor: Long = 0xFFFFFFFF,
+    /** A transparent cut-out (e.g. a merged group): its border and shadow follow the shape, not the box. */
+    val isCutout: Boolean = false
 ) {
     /** Copies visual styling (colors, fonts, stroke, shadow, glow, 3D, blend) from [source] onto this layer. */
     fun copyVisualStyleFrom(source: Layer): Layer {

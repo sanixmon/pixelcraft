@@ -1,6 +1,12 @@
 package com.app.pixelcraft.data.presets
 
+import com.app.pixelcraft.data.model.AspectRatioPreset
+import com.app.pixelcraft.data.model.BackgroundType
+import com.app.pixelcraft.data.model.CanvasConfig
 import com.app.pixelcraft.data.model.GradientType
+import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.data.model.LayerType
+import com.app.pixelcraft.domain.TextSizing
 import com.app.pixelcraft.data.model.StylePreset
 
 data class CuratedGradient(
@@ -12,7 +18,7 @@ data class CuratedGradient(
 )
 
 /**
- * Starter templates (defined in [Templates]) plus 20 curated multi-stop background gradients.
+ * The blank starting canvas plus 20 curated multi-stop background gradients.
  */
 object DefaultPresets {
 
@@ -39,6 +45,31 @@ object DefaultPresets {
         CuratedGradient("grad_sweep_prism", "Iridescent Prism", listOf(0xFF00E5FF, 0xFF7C4DFF, 0xFFFF4081, 0xFFFFCA28, 0xFF00E5FF), 0f, GradientType.SWEEP)
     )
 
-    /** Starter templates; see [Templates]. The first one is the editor's starting canvas. */
-    val presets: List<StylePreset> = Templates.all
+    /** The editor's starting canvas: a white square with one text layer to edit. */
+    val blankCanvas: StylePreset = StylePreset(
+        id = "preset_default",
+        title = "Untitled",
+        description = "Blank square canvas",
+        canvasConfig = CanvasConfig(
+            width = 1080,
+            height = 1080,
+            preset = AspectRatioPreset.SQUARE,
+            backgroundType = BackgroundType.SOLID_COLOR,
+            backgroundColor = 0xFFFFFFFFL
+        ),
+        initialLayers = listOf(
+            TextSizing.withEstimatedBounds(
+                Layer(
+                    id = "layer_default_text",
+                    name = "Headline",
+                    type = LayerType.TEXT,
+                    text = "Your headline",
+                    fontKey = "inter",
+                    fontSize = 96f,
+                    textColor = 0xFF111111L,
+                    isBold = true
+                )
+            )
+        )
+    )
 }

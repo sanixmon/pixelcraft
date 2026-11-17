@@ -76,7 +76,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -88,11 +87,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.pixelcraft.data.model.AspectRatioPreset
-import com.app.pixelcraft.data.model.BackgroundType
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PresetCategory
 import com.app.pixelcraft.data.model.ProjectSummary
-import com.app.pixelcraft.data.model.StylePreset
 import com.app.pixelcraft.data.presets.DefaultPresets
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftAboutDialog
 import com.app.pixelcraft.presentation.components.dialogs.PixelCraftImageSizeDialog
@@ -323,65 +320,6 @@ internal fun HomeShortcut(
             fontSize = 12.sp,
             maxLines = 1
         )
-    }
-}
-
-@Composable
-internal fun HomeTemplateCard(
-    preset: StylePreset,
-    onClick: () -> Unit
-) {
-    val bgBrush = remember(preset.id) {
-        when (preset.canvasConfig.backgroundType) {
-            BackgroundType.GRADIENT -> {
-                val cols = preset.canvasConfig.gradientColors.map { Color(it.toInt()) }
-                Brush.linearGradient(if (cols.size >= 2) cols else listOf(PixelCraftColors.SurfaceElevated, PixelCraftColors.Border))
-            }
-            else -> {
-                val c = Color(preset.canvasConfig.backgroundColor.toInt())
-                Brush.linearGradient(listOf(c, c.copy(alpha = 0.85f)))
-            }
-        }
-    }
-    val primaryText = remember(preset.id) {
-        preset.initialLayers.firstOrNull { it.type == LayerType.TEXT }
-    }
-
-    Column(
-        modifier = Modifier
-            .width(160.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(PixelCraftColors.Surface)
-            .border(1.dp, PixelCraftColors.Border, RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .background(bgBrush)
-                .padding(12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = primaryText?.text?.lineSequence()?.firstOrNull()?.take(14) ?: preset.title,
-                color = Color((primaryText?.textColor ?: 0xFFFFFFFFL).toInt()),
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = preset.title,
-                color = PixelCraftColors.TextPrimary,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
     }
 }
 

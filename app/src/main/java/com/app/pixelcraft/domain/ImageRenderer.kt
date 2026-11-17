@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
+import kotlin.math.sin
+import kotlin.math.cos
 import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
@@ -168,10 +170,47 @@ object ImageRenderer {
                         if (layer.flipVertical) -1f else 1f
                     )
                 }
-                if (clipMaskPath != null) {
+                if (layer.isCutout && clipMaskPath == null) {
+                    // Shadow cast by the cut-out's shape, not its bounding box.
+                    canvas.drawBitmap(alphaMask(bitmap), cropSrcRect(layer, bitmap), dstRect, shadowPaint)
+                } else if (clipMaskPath != null) {
                     canvas.drawPath(clipMaskPath, shadowPaint)
                 } else {
                     canvas.drawRect(dstRect, shadowPaint)
+                }
+                canvas.restore()
+            }
+        }
+
+        // Cut-out outline: the shape's silhouette stamped in a ring behind the image.
+        val cutoutOutline = layer.isCutout && clipMaskPath == null && layer.imageBorderWidth > 0.5f
+        if (cutoutOutline) {
+            val borderArgb = ColorMath.scaleAlpha(layer.imageBorderColor, layer.opacity)
+            if ((borderArgb ushr 24) > 0) {
+                canvas.save()
+                if (layer.flipHorizontal || layer.flipVertical) {
+                    canvas.scale(if (layer.flipHorizontal) -1f else 1f, if (layer.flipVertical) -1f else 1f)
+                }
+                val mask = alphaMask(bitmap)
+                val src = cropSrcRect(layer, bitmap)
+                val outlinePaint = borderPaintLocal.get()!!.apply {
+                    reset()
+                    flags = Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG
+                    color = borderArgb
+                }
+                val radius = layer.imageBorderWidth
+                val rings = if (radius > 6f) 3 else 1
+                val steps = 24
+                val shifted = RectF()
+                for (ring in 1..rings) {
+                    val r = radius * ring / rings
+                    for (i in 0 until steps) {
+                        val a = (2.0 * Math.PI * i / steps)
+                        val dx = (cos(a) * r).toFloat()
+                        val dy = (sin(a) * r).toFloat()
+                        shifted.set(dstRect.left + dx, dstRect.top + dy, dstRect.right + dx, dstRect.bottom + dy)
+                        canvas.drawBitmap(mask, src, shifted, outlinePaint)
+                    }
                 }
                 canvas.restore()
             }
@@ -211,8 +250,8 @@ object ImageRenderer {
         canvas.drawBitmap(bitmap, srcRect, dstRect, paint)
         canvas.restore()
 
-        // Optional photo border frame
-        if (layer.imageBorderWidth > 0.5f) {
+        // Optional photo border frame (cut-outs got their silhouette outline above)
+        if (layer.imageBorderWidth > 0.5f && !cutoutOutline) {
             val borderArgb = ColorMath.scaleAlpha(layer.imageBorderColor, layer.opacity)
             if ((borderArgb ushr 24) > 0) {
                 canvas.save()
@@ -239,6 +278,26 @@ object ImageRenderer {
                 canvas.restore()
             }
         }
+    }
+
+    private val alphaMasks = java.util.WeakHashMap<Bitmap, Bitmap>()
+
+    /** Alpha-only copy of [bitmap], cached per bitmap; drawn with a paint colour it gives the silhouette. */
+    private fun alphaMask(bitmap: Bitmap): Bitmap = synchronized(alphaMasks) {
+        alphaMasks.getOrPut(bitmap) { bitmap.extractAlpha() }
+    }
+
+    private fun cropSrcRect(layer: Layer, bitmap: Bitmap): Rect {
+        val cLeft = layer.cropLeft.coerceIn(0f, 0.95f)
+        val cTop = layer.cropTop.coerceIn(0f, 0.95f)
+        val cRight = layer.cropRight.coerceIn(cLeft + 0.05f, 1f)
+        val cBottom = layer.cropBottom.coerceIn(cTop + 0.05f, 1f)
+        return Rect(
+            (cLeft * bitmap.width).roundToInt().coerceIn(0, bitmap.width - 1),
+            (cTop * bitmap.height).roundToInt().coerceIn(0, bitmap.height - 1),
+            (cRight * bitmap.width).roundToInt().coerceIn(1, bitmap.width),
+            (cBottom * bitmap.height).roundToInt().coerceIn(1, bitmap.height)
+        )
     }
 
     fun resolveXfermode(blendMode: LayerBlendMode): PorterDuffXfermode? = when (blendMode) {

@@ -784,15 +784,14 @@ object FontCatalog {
     // --- Device fonts: the user's /sdcard/Fonts/ folder ---
     //
     // Android 11+ won't let an app read .ttf/.otf files in shared storage without
-    // "All files access", which Play rejects. Instead the user grants the folder once
-    // through the system picker (opened at /sdcard/Fonts/); the grant is persisted and
-    // the folder is re-scanned on every launch. Fonts are copied into app storage so
+    // "All files access", which Play rejects. Instead the user can (optionally) grant a
+    // folder through the system picker (opened at /sdcard/Fonts/); the grant is persisted
+    // and the folder is re-scanned on every launch. Fonts are copied into app storage so
     // Typeface.createFromFile and the existing custom-font path work unchanged.
 
     const val DEVICE_CATEGORY = "Device"
     private const val DEVICE_PREFS = "device_fonts"
     private const val PREF_TREE_URI = "tree_uri"
-    private const val PREF_ASKED = "asked"
     private const val DEVICE_KEY_PREFIX = "device_"
 
     /** Where the folder picker opens: /sdcard/Fonts/ on primary storage. */
@@ -812,20 +811,11 @@ object FontCatalog {
         return saved.takeIf { stillGranted }
     }
 
-    /** True once per install until the user has granted (or been offered) the fonts folder. */
-    fun shouldAskForDeviceFontsFolder(context: Context): Boolean =
-        !devicePrefs(context).getBoolean(PREF_ASKED, false) && grantedDeviceFontsTree(context) == null
-
-    fun markDeviceFontsFolderAsked(context: Context) {
-        devicePrefs(context).edit().putBoolean(PREF_ASKED, true).apply()
-    }
-
     /** Persists the folder the user picked and scans it. Returns the number of fonts found. */
     suspend fun setDeviceFontsFolder(context: Context, treeUri: Uri): Int = withContext(Dispatchers.IO) {
         context.contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         devicePrefs(context).edit()
             .putString(PREF_TREE_URI, treeUri.toString())
-            .putBoolean(PREF_ASKED, true)
             .apply()
         loadDeviceFonts(context)
     }

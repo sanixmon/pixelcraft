@@ -8,7 +8,7 @@
   - Project gallery with 256px WebP thumbnails, search, rename, duplicate, and Undo delete
   - Debounced `draft.json` autosave with crash recovery banner and ordered `BackHandler` protection
   - Portable `.pixelcraft` ZIP project archive export & import
-  - 20 categorized starter templates (*Quote*, *YouTube*, *Promo*, *Greeting*, *Meme*, *Story*) and 20 curated gradients
+  - 20 curated background gradients
 - **Direct Canvas Manipulation**
   - Two-finger pinch-scale & twist-rotate on layers with `±4°` cardinal/diagonal snapping and haptic feedback
   - `0.5x–6x` canvas viewport zoom & pan, double-tap text editing, long-press context menu, and overlap tap-cycling

@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ColorLens
-import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Icon
@@ -52,7 +51,7 @@ import com.app.pixelcraft.ui.theme.EditorColors
 
 /** Entries of the top-level CapCut-style tool row, in display order. */
 enum class EditorTool {
-    TEMPLATES, TEXT, DATE, SHAPES, PHOTO, CANVAS, EFFECTS, LAYERS
+    TEXT, DATE, SHAPES, PHOTO, CANVAS, EFFECTS, LAYERS
 }
 
 /** Top-level scrolling icon row: one icon + one-word label per tool. */
@@ -80,7 +79,6 @@ fun EditorToolRow(
 
 @Composable
 private fun toolIconAndLabel(tool: EditorTool): Pair<ImageVector, String> = when (tool) {
-    EditorTool.TEMPLATES -> Icons.Default.DashboardCustomize to stringResource(R.string.nav_templates)
     EditorTool.TEXT -> Icons.Default.TextFields to stringResource(R.string.nav_text)
     EditorTool.DATE -> Icons.Default.CalendarToday to stringResource(R.string.nav_date)
     EditorTool.SHAPES -> Icons.Default.Category to stringResource(R.string.nav_shapes)

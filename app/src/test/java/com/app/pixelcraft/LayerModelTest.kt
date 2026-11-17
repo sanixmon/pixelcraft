@@ -10,7 +10,6 @@ import com.app.pixelcraft.data.model.Layer
 import com.app.pixelcraft.data.model.LayerBlendMode
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.data.model.PhotoFilterPreset
-import com.app.pixelcraft.data.model.PresetCategory
 import com.app.pixelcraft.data.model.ProjectData
 import com.app.pixelcraft.data.model.ShapeCategory
 import com.app.pixelcraft.data.model.ShapeType
@@ -185,29 +184,12 @@ class LayerModelTest {
     }
 
     @Test
-    fun testDefaultPresetsCoverAllCategoriesAndValidBundledFonts() {
+    fun testBlankCanvasAndCuratedGradientsUseValidFonts() {
         val validFontKeys = FontCatalog.fonts.map { it.key }.toSet()
-        assertTrue(DefaultPresets.presets.size >= 25)
         assertEquals(20, DefaultPresets.curatedGradients.size)
-
-        for (cat in PresetCategory.entries) {
-            assertTrue(
-                "PresetCategory $cat should have at least one starter template",
-                DefaultPresets.presets.any { it.category == cat }
-            )
-        }
-
-        for (preset in DefaultPresets.presets) {
-            assertNotNull(preset.id)
-            assertNotNull(preset.title)
-            assertTrue(preset.initialLayers.isNotEmpty())
-            for (layer in preset.initialLayers) {
-                if (layer.type == LayerType.TEXT) {
-                    assertTrue(
-                        "Preset '${preset.id}' uses unregistered fontKey '${layer.fontKey}'",
-                        layer.fontKey in validFontKeys
-                    )
-                }
+        for (layer in DefaultPresets.blankCanvas.initialLayers) {
+            if (layer.type == LayerType.TEXT) {
+                assertTrue("Blank canvas uses unregistered fontKey '${layer.fontKey}'", layer.fontKey in validFontKeys)
             }
         }
     }
