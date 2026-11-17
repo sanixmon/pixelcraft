@@ -25,7 +25,8 @@ data class TextGeometryKey(
     val align: TextAlignment,
     val lineHeightHundredths: Int,
     val letterSpacingHundredths: Int,
-    val curveDegrees: Int
+    val curveDegrees: Int,
+    val boxWidthTenths: Int
 ) {
     companion object {
         fun fromLayer(layer: Layer): TextGeometryKey = TextGeometryKey(
@@ -38,7 +39,8 @@ data class TextGeometryKey(
             align = layer.textAlign,
             lineHeightHundredths = (layer.lineHeightMultiplier * 100f).roundToInt(),
             letterSpacingHundredths = (layer.letterSpacing * 100f).roundToInt(),
-            curveDegrees = layer.curveAngle.roundToInt()
+            curveDegrees = layer.curveAngle.roundToInt(),
+            boxWidthTenths = (layer.textBoxWidth * 10f).roundToInt()
         )
     }
 }
@@ -98,7 +100,7 @@ object TextGeometryCache {
             return buildCurvedTextGeometry(layer, paint, curveDeg)
         }
 
-        val lines = layer.text.split("\n")
+        val lines = TextSizing.wrapLines(layer.text, layer.textBoxWidth) { paint.measureText(it) }
         val fm = paint.fontMetrics
         val rawSpan = (fm.descent - fm.ascent).takeIf { it > 0.5f } ?: (layer.fontSize * 1.2f)
         val lineHeight = rawSpan * layer.lineHeightMultiplier

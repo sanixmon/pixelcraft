@@ -50,8 +50,14 @@ object ShapePathBuilder {
                 addRoundRect(rect, clampedRadius, clampedRadius, Path.Direction.CW)
             }
 
-            ShapeType.CIRCLE -> Path().apply {
+            ShapeType.CIRCLE, ShapeType.ELLIPSE -> Path().apply {
                 addOval(rect, Path.Direction.CW)
+            }
+
+            // A line is a bar as thick as the layer is tall, with round ends.
+            ShapeType.LINE -> Path().apply {
+                val r = rect.height() / 2f
+                addRoundRect(rect, r, r, Path.Direction.CW)
             }
 
             ShapeType.TRIANGLE -> Path().apply {

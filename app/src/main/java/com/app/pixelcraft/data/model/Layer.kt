@@ -40,14 +40,23 @@ data class ImageAdjustments(
     val contrast: Float = 1f,       // 0.5f .. 1.8f
     val saturation: Float = 1f,     // 0f .. 2.0f
     val warmth: Float = 0f,         // -0.4f .. 0.4f
-    val filterPreset: PhotoFilterPreset = PhotoFilterPreset.NONE
+    val filterPreset: PhotoFilterPreset = PhotoFilterPreset.NONE,
+    val hue: Float = 0f,            // -180f .. 180f degrees
+    val blur: Float = 0f,           // 0f .. 25f px
+    val tintColor: Long = 0xFFFF8A00,
+    val tintStrength: Float = 0f    // 0f .. 1f
 ) {
+    /** True when no colour change applies (blur is handled separately, see [hasBlur]). */
     val isDefault: Boolean
         get() = brightness == 0f &&
             contrast == 1f &&
             saturation == 1f &&
             warmth == 0f &&
+            hue == 0f &&
+            tintStrength == 0f &&
             filterPreset == PhotoFilterPreset.NONE
+
+    val hasBlur: Boolean get() = blur >= 0.5f
 }
 
 @Serializable
@@ -69,6 +78,8 @@ enum class ShapeType(
     RECTANGLE("Rectangle", ShapeCategory.BASIC, 340f, 240f),
     ROUNDED_RECTANGLE("Rounded Rect", ShapeCategory.BASIC, 340f, 240f),
     CIRCLE("Circle / Oval", ShapeCategory.BASIC, 300f, 300f),
+    ELLIPSE("Ellipse", ShapeCategory.BASIC, 380f, 240f),
+    LINE("Line", ShapeCategory.BASIC, 420f, 14f),
     TRIANGLE("Triangle", ShapeCategory.BASIC, 300f, 280f),
     DIAMOND("Diamond", ShapeCategory.BASIC, 300f, 300f),
     PENTAGON("Pentagon", ShapeCategory.BASIC, 300f, 300f),
@@ -183,6 +194,21 @@ data class Layer(
     val curveAngle: Float = 0f,
 
     // Text Background
+    /** Horizontal / vertical stretch of the text (1 = natural). */
+    val textScaleX: Float = 1f,
+    val textScaleY: Float = 1f,
+    /** Wrap width in canvas px; 0 = no wrapping (lines break only at line breaks). */
+    val textBoxWidth: Float = 0f,
+    val innerShadowEnabled: Boolean = false,
+    val innerShadowColor: Long = 0x99000000,
+    val innerShadowRadius: Float = 6f,
+    val innerShadowDx: Float = 3f,
+    val innerShadowDy: Float = 3f,
+    /** Bevel: light on the edges facing [embossAngle], shade on the opposite edges. */
+    val embossEnabled: Boolean = false,
+    val embossDepth: Float = 3f,
+    val embossAngle: Float = -45f,
+    val embossIntensity: Float = 0.5f,
     val textBackgroundColor: Long? = null,
     val textBackgroundPadding: Float = 16f,
     val textBackgroundRadius: Float = 8f,

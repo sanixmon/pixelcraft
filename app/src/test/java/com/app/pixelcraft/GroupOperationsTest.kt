@@ -64,4 +64,13 @@ class GroupOperationsTest {
         assertEquals(4, all.size)
         assertTrue(copies.all { it.groupId == "g2" && it.zIndex >= 2 })
     }
+
+    @Test
+    fun distributeHorizontal_equalisesGaps() {
+        val layers = listOf(shape("a", 0f, 0f), shape("b", 130f, 0f), shape("c", 600f, 0f))
+        val out = GroupOperations.distribute(layers, horizontal = true).associateBy { it.id }
+        assertEquals(0f, out.getValue("a").positionX, 0.001f)
+        assertEquals(300f, out.getValue("b").positionX, 0.001f)
+        assertEquals(600f, out.getValue("c").positionX, 0.001f)
+    }
 }

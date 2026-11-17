@@ -48,6 +48,9 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Texture
+import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.FormatBold
@@ -111,6 +114,7 @@ fun TextToolPanel(
     activeSubTool: ActiveSubTool,
     recentColors: List<Long> = emptyList(),
     favoriteFontKeys: Set<String> = emptySet(),
+    recentFontKeys: List<String> = emptyList(),
     availableFontsCount: Int = 16,
     hasCopiedStyle: Boolean = false,
     onSubToolSelected: (ActiveSubTool) -> Unit,
@@ -132,6 +136,8 @@ fun TextToolPanel(
     onAlign: (AlignmentAction) -> Unit,
     onOpenEditDialog: () -> Unit,
     onAddText: () -> Unit,
+    canvasWidth: Int = 1080,
+    canvasHeight: Int = 1080,
     modifier: Modifier = Modifier
 ) {
     if (selectedLayer == null || selectedLayer.type != LayerType.TEXT) {
@@ -185,6 +191,7 @@ fun TextToolPanel(
                 layer = selectedLayer,
                 recentColors = recentColors,
                 favoriteFontKeys = favoriteFontKeys,
+                recentFontKeys = recentFontKeys,
                 availableFontsCount = availableFontsCount,
                 onUpdate = onUpdateLayer,
                 onFinishContinuousEdit = onFinishContinuousEdit,
@@ -195,6 +202,8 @@ fun TextToolPanel(
                 onStartEyedropper = onStartEyedropper,
                 onNudge = onNudge,
                 onAlign = onAlign,
+                canvasWidth = canvasWidth,
+                canvasHeight = canvasHeight,
                 onClose = { onSubToolSelected(ActiveSubTool.NONE) }
             )
         } else {
@@ -219,6 +228,12 @@ fun TextToolPanel(
                 label = stringResource(R.string.ui_font),
                 isActive = activeSubTool == ActiveSubTool.TEXT_FONT,
                 onClick = { onSubToolSelected(ActiveSubTool.TEXT_FONT) }
+            )
+            ToolButton(
+                icon = Icons.Default.Style,
+                label = stringResource(R.string.ui_presets),
+                isActive = activeSubTool == ActiveSubTool.TEXT_PRESETS,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_PRESETS) }
             )
             ToolButton(
                 icon = Icons.Default.ColorLens,
@@ -303,6 +318,18 @@ fun TextToolPanel(
                 label = stringResource(R.string.ui_reflect),
                 isActive = activeSubTool == ActiveSubTool.TEXT_REFLECTION,
                 onClick = { onSubToolSelected(ActiveSubTool.TEXT_REFLECTION) }
+            )
+            ToolButton(
+                icon = Icons.Default.Gradient,
+                label = stringResource(R.string.ui_inner_shadow),
+                isActive = activeSubTool == ActiveSubTool.TEXT_INNER_SHADOW,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_INNER_SHADOW) }
+            )
+            ToolButton(
+                icon = Icons.Default.Texture,
+                label = stringResource(R.string.ui_emboss),
+                isActive = activeSubTool == ActiveSubTool.TEXT_EMBOSS,
+                onClick = { onSubToolSelected(ActiveSubTool.TEXT_EMBOSS) }
             )
             ToolButton(
                 icon = Icons.Default.BlurOn,
@@ -422,6 +449,7 @@ private fun SubToolInspector(
     layer: Layer,
     recentColors: List<Long>,
     favoriteFontKeys: Set<String>,
+    recentFontKeys: List<String>,
     availableFontsCount: Int,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
     onFinishContinuousEdit: () -> Unit,
@@ -432,6 +460,8 @@ private fun SubToolInspector(
     onStartEyedropper: (EyedropperTarget) -> Unit,
     onNudge: (Float, Float) -> Unit,
     onAlign: (AlignmentAction) -> Unit,
+    canvasWidth: Int,
+    canvasHeight: Int,
     onClose: () -> Unit
 ) {
     // CapCut-style: back button pinned at the far left, inspector content beside it.
@@ -475,9 +505,11 @@ private fun SubToolInspector(
         Spacer(modifier = Modifier.height(6.dp))
 
         when (subTool) {
-            ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont, onPickDeviceFontsFolder = onPickDeviceFontsFolder)
+            ActiveSubTool.TEXT_FONT -> TextFontInspector(layer = layer, favoriteFontKeys = favoriteFontKeys, recentFontKeys = recentFontKeys, availableFontsCount = availableFontsCount, onUpdate = onUpdate, onToggleFavoriteFont = onToggleFavoriteFont, onImportFont = onImportFont, onPickDeviceFontsFolder = onPickDeviceFontsFolder)
 
             ActiveSubTool.TEXT_POSITION -> {
+                TransformFields(layer = layer, canvasWidth = canvasWidth, canvasHeight = canvasHeight, onUpdate = onUpdate)
+                Spacer(modifier = Modifier.height(8.dp))
                 TextPositionInspector(onNudge = onNudge)
                 Spacer(modifier = Modifier.height(8.dp))
                 TextAlignInspector(onAlign = onAlign)
@@ -510,6 +542,12 @@ private fun SubToolInspector(
             ActiveSubTool.TEXT_3D -> Text3dInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
             ActiveSubTool.TEXT_REFLECTION -> TextReflectionInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+            ActiveSubTool.TEXT_PRESETS -> TextPresetsInspector(layer = layer, onUpdate = onUpdate)
+
+            ActiveSubTool.TEXT_INNER_SHADOW -> TextInnerShadowInspector(layer = layer, recentColors = recentColors, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
+
+            ActiveSubTool.TEXT_EMBOSS -> TextEmbossInspector(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 
             ActiveSubTool.LAYER_BLEND -> TextBlendInspector(layer = layer, onUpdate = onUpdate)
 

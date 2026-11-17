@@ -116,6 +116,8 @@ fun PixelCraftCanvas(
     onOpenTextEdit: () -> Unit = {},
     onDeleteSelected: () -> Unit = {},
     onDuplicateSelected: () -> Unit = {},
+    onCopyLayers: () -> Unit = {},
+    onPasteLayers: () -> Unit = {},
     onCopyStyle: () -> Unit = {},
     onPasteStyle: () -> Unit = {},
     onBringToFront: () -> Unit = {},
@@ -250,8 +252,8 @@ fun PixelCraftCanvas(
                 layer.strokeWidth > 0f -> layer.strokeWidth * 2f + 12f
                 else -> 16f
             }
-            val exactW = max(geom.bounds.width() + extraPad, 32f)
-            val exactH = max(geom.bounds.height() + extraPad, layer.fontSize.coerceAtLeast(24f))
+            val exactW = max(geom.bounds.width() * layer.textScaleX.coerceIn(0.2f, 5f) + extraPad, 32f)
+            val exactH = max(geom.bounds.height() * layer.textScaleY.coerceIn(0.2f, 5f) + extraPad, layer.fontSize.coerceAtLeast(24f))
             return layer.copy(width = exactW, height = exactH)
         }
 
@@ -968,7 +970,10 @@ fun PixelCraftCanvas(
                 onBringToFront = onBringToFront,
                 onSendToBack = onSendToBack,
                 onToggleLock = onToggleLock,
-                onDelete = onDeleteSelected
+                onDelete = onDeleteSelected,
+                canPasteLayers = state.layerClipboardCount > 0,
+                onCopyLayers = onCopyLayers,
+                onPasteLayers = onPasteLayers
             )
         }
     }

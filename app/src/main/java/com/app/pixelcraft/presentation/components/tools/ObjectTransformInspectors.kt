@@ -117,7 +117,7 @@ internal fun ColumnScope.ObjectSizeInspector(
         PrecisionSlider(
             label = stringResource(R.string.ui_height),
             value = layer.height,
-            valueRange = 40f..2400f,
+            valueRange = 4f..2400f,
             defaultValue = 320f,
             fineStep = 4f,
             unitSuffix = "px",

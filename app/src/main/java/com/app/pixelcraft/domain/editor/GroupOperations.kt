@@ -61,7 +61,7 @@ object GroupOperations {
             } else {
                 moved.copy(
                     width = (layer.width * factor).coerceIn(24f, 4096f),
-                    height = (layer.height * factor).coerceIn(24f, 4096f)
+                    height = (layer.height * factor).coerceIn(if (layer.shapeType == com.app.pixelcraft.data.model.ShapeType.LINE) 4f else 24f, 4096f)
                 )
             }
         }
@@ -117,6 +117,32 @@ object GroupOperations {
             AlignmentAction.ALIGN_BOTTOM -> 0f to (canvasHeight / 2f - b.bottom)
         }
         return translate(members, dx, dy)
+    }
+
+    /**
+     * Spreads [members] so the gaps between their bounding boxes are equal, keeping the
+     * first and last (by position) where they are. Needs at least three layers.
+     */
+    fun distribute(members: List<Layer>, horizontal: Boolean): List<Layer> {
+        val movable = members.filter { !it.isLocked }
+        if (movable.size < 3) return members
+        fun box(l: Layer) = bounds(listOf(l))
+        val sorted = movable.sortedBy { if (horizontal) it.positionX else it.positionY }
+        val first = box(sorted.first())
+        val last = box(sorted.last())
+        val span = if (horizontal) last.right - first.left else last.bottom - first.top
+        val sizes = sorted.map { val b = box(it); if (horizontal) b.right - b.left else b.bottom - b.top }
+        val gap = (span - sizes.sum()) / (sorted.size - 1)
+        var cursor = if (horizontal) first.left else first.top
+        val moved = HashMap<String, Layer>()
+        sorted.forEachIndexed { i, layer ->
+            val b = box(layer)
+            val start = if (horizontal) b.left else b.top
+            val delta = cursor - start
+            moved[layer.id] = if (horizontal) layer.copy(positionX = layer.positionX + delta) else layer.copy(positionY = layer.positionY + delta)
+            cursor += sizes[i] + gap
+        }
+        return members.map { moved[it.id] ?: it }
     }
 
     /** Moves all [memberIds] above (front = true) or below every other layer, keeping their own order. */

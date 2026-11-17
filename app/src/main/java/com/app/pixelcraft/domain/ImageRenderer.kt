@@ -123,8 +123,9 @@ object ImageRenderer {
     }
 
     /** Draws an image layer centred on `(0, 0)` with flip, crop, mask, adjustments, shadow, and border. */
-    fun drawImageLayer(canvas: Canvas, bitmap: Bitmap, layer: Layer) {
-        if (bitmap.width <= 0 || bitmap.height <= 0) return
+    fun drawImageLayer(canvas: Canvas, original: Bitmap, layer: Layer) {
+        if (original.width <= 0 || original.height <= 0) return
+        val bitmap = if (layer.imageAdjustments.hasBlur) blurredLayerBitmap(original, layer.imageAdjustments.blur) else original
         val halfW = (layer.width / 2f).coerceAtLeast(2f)
         val halfH = (layer.height / 2f).coerceAtLeast(2f)
         val dstRect = RectF(-halfW, -halfH, halfW, halfH)
@@ -280,6 +281,46 @@ object ImageRenderer {
         }
     }
 
+    /** Standard luminance-preserving hue rotation matrix. */
+    private fun hueMatrix(degrees: Float): ColorMatrix {
+        val rad = Math.toRadians(degrees.toDouble())
+        val c = cos(rad).toFloat()
+        val sn = sin(rad).toFloat()
+        val lr = 0.213f
+        val lg = 0.715f
+        val lb = 0.072f
+        return ColorMatrix(
+            floatArrayOf(
+                lr + c * (1 - lr) + sn * (-lr), lg + c * (-lg) + sn * (-lg), lb + c * (-lb) + sn * (1 - lb), 0f, 0f,
+                lr + c * (-lr) + sn * 0.143f, lg + c * (1 - lg) + sn * 0.140f, lb + c * (-lb) + sn * (-0.283f), 0f, 0f,
+                lr + c * (-lr) + sn * (-(1 - lr)), lg + c * (-lg) + sn * lg, lb + c * (1 - lb) + sn * lb, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f
+            )
+        )
+    }
+
+    private data class LayerBlurKey(val bitmapId: Int, val width: Int, val height: Int, val radiusTenths: Int)
+    private val layerBlurCache = object : LruCache<LayerBlurKey, Bitmap>(6) {}
+
+    /**
+     * Soft blur of a whole picture: shrink by a factor that grows with [radius], then scale back
+     * up in two smoothing passes. Cached per picture and radius so dragging stays smooth.
+     */
+    private fun blurredLayerBitmap(bitmap: Bitmap, radius: Float): Bitmap {
+        val r = radius.coerceIn(0.5f, 25f)
+        val key = LayerBlurKey(System.identityHashCode(bitmap), bitmap.width, bitmap.height, (r * 10f).roundToInt())
+        synchronized(layerBlurCache) { layerBlurCache.get(key)?.takeIf { !it.isRecycled }?.let { return it } }
+        val factor = (1f + r * 0.6f).coerceIn(1.5f, 16f)
+        val smallW = (bitmap.width / factor).roundToInt().coerceAtLeast(4)
+        val smallH = (bitmap.height / factor).roundToInt().coerceAtLeast(4)
+        val small = Bitmap.createScaledBitmap(bitmap, smallW, smallH, true)
+        val smaller = Bitmap.createScaledBitmap(small, (smallW / 2).coerceAtLeast(2), (smallH / 2).coerceAtLeast(2), true)
+        val back = Bitmap.createScaledBitmap(smaller, smallW, smallH, true)
+        val result = Bitmap.createScaledBitmap(back, bitmap.width.coerceAtMost(2048), bitmap.height.coerceAtMost(2048), true)
+        synchronized(layerBlurCache) { layerBlurCache.put(key, result) }
+        return result
+    }
+
     private val alphaMasks = java.util.WeakHashMap<Bitmap, Bitmap>()
 
     /** Alpha-only copy of [bitmap], cached per bitmap; drawn with a paint colour it gives the silhouette. */
@@ -339,6 +380,9 @@ object ImageRenderer {
             combined.postConcat(cbMatrix)
         }
 
+        // 2b. Hue rotation
+        if (adj.hue != 0f) combined.postConcat(hueMatrix(adj.hue.coerceIn(-180f, 180f)))
+
         // 3. Warmth
         val w = adj.warmth.coerceIn(-0.5f, 0.5f)
         if (w != 0f) {
@@ -353,6 +397,25 @@ object ImageRenderer {
                 )
             )
             combined.postConcat(warmMatrix)
+        }
+
+        // 3b. Tint: blend towards the tint colour, keeping the picture's light and shade.
+        val ts = adj.tintStrength.coerceIn(0f, 1f)
+        if (ts > 0f) {
+            val tr = ((adj.tintColor ushr 16) and 0xFF).toFloat() / 255f
+            val tg = ((adj.tintColor ushr 8) and 0xFF).toFloat() / 255f
+            val tb = (adj.tintColor and 0xFF).toFloat() / 255f
+            val k = 1f - ts
+            combined.postConcat(
+                ColorMatrix(
+                    floatArrayOf(
+                        k + ts * tr * 0.299f, ts * tr * 0.587f, ts * tr * 0.114f, 0f, 0f,
+                        ts * tg * 0.299f, k + ts * tg * 0.587f, ts * tg * 0.114f, 0f, 0f,
+                        ts * tb * 0.299f, ts * tb * 0.587f, k + ts * tb * 0.114f, 0f, 0f,
+                        0f, 0f, 0f, 1f, 0f
+                    )
+                )
+            )
         }
 
         // 4. Filter Preset

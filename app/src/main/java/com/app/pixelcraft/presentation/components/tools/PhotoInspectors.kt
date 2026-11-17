@@ -152,7 +152,7 @@ internal fun ColumnScope.PhotoAdjustInspector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(stringResource(R.string.ui_filter_presets), color = EditorColors.TextSecondary, fontSize = 12.sp)
-            if (!adj.isDefault) {
+            if (!adj.isDefault || adj.hasBlur) {
                 OutlinedButton(
                     onClick = {
                         onUpdate(false) { it.copy(imageAdjustments = ImageAdjustments()) }
@@ -232,6 +232,51 @@ internal fun ColumnScope.PhotoAdjustInspector(
             },
             onValueChangeFinished = onFinishContinuousEdit
         )
+        PrecisionSlider(
+            label = stringResource(R.string.ui_hue),
+            value = adj.hue,
+            valueRange = -180f..180f,
+            defaultValue = 0f,
+            fineStep = 2f,
+            unitSuffix = "°",
+            onValueChange = { h, cont -> onUpdate(cont) { it.copy(imageAdjustments = it.imageAdjustments.copy(hue = h)) } },
+            onValueChangeFinished = onFinishContinuousEdit
+        )
+        PrecisionSlider(
+            label = stringResource(R.string.ui_blur),
+            value = adj.blur,
+            valueRange = 0f..25f,
+            defaultValue = 0f,
+            fineStep = 1f,
+            unitSuffix = "px",
+            onValueChange = { b, cont -> onUpdate(cont) { it.copy(imageAdjustments = it.imageAdjustments.copy(blur = b)) } },
+            onValueChangeFinished = onFinishContinuousEdit
+        )
+        PrecisionSlider(
+            label = stringResource(R.string.ui_tint),
+            value = adj.tintStrength * 100f,
+            valueRange = 0f..100f,
+            defaultValue = 0f,
+            fineStep = 5f,
+            unitSuffix = "%",
+            onValueChange = { t, cont ->
+                onUpdate(cont) { it.copy(imageAdjustments = it.imageAdjustments.copy(tintStrength = t / 100f)) }
+            },
+            onValueChangeFinished = onFinishContinuousEdit
+        )
+        ColorPaletteRow(
+            colors = ObjectPalette,
+            selectedColor = adj.tintColor,
+            // Choosing a tint colour with no tint yet also turns the tint on.
+            onSelectColor = { c ->
+                onUpdate(false) {
+                    val a = it.imageAdjustments
+                    it.copy(imageAdjustments = a.copy(tintColor = c, tintStrength = if (a.tintStrength <= 0f) 0.35f else a.tintStrength))
+                }
+            },
+            allowAlpha = false,
+            pickerTitle = stringResource(R.string.ui_tint)
+        )
     }
 }
 
@@ -276,27 +321,44 @@ internal fun ColumnScope.PhotoMaskInspector(
                 onValueChangeFinished = onFinishContinuousEdit
             )
         }
-
-        PrecisionSlider(
-            label = stringResource(R.string.ui_photo_border_width),
-            value = layer.imageBorderWidth,
-            valueRange = 0f..40f,
-            defaultValue = 0f,
-            fineStep = 1f,
-            unitSuffix = "px",
-            onValueChange = { bw, cont -> onUpdate(cont) { it.copy(imageBorderWidth = bw) } },
-            onValueChangeFinished = onFinishContinuousEdit
-        )
-        if (layer.imageBorderWidth > 0f) {
-            ColorPaletteRow(
-                colors = ObjectPalette,
-                recentColors = recentColors,
-                selectedColor = layer.imageBorderColor,
-                onSelectColor = { c -> onUpdate(false) { it.copy(imageBorderColor = c) } },
-                onPickFromCanvas = { onStartEyedropper(EyedropperTarget.IMAGE_BORDER) },
-                allowAlpha = true,
-                pickerTitle = stringResource(R.string.ui_photo_border_color)
-            )
-        }
     }
+}
+
+/**
+ * Stroke for photos and merged pictures. On a merged picture (a cut-out) it outlines the
+ * shape itself, sticker style; on a photo it frames the photo or its mask shape.
+ */
+@Composable
+internal fun ColumnScope.PhotoStrokeInspector(
+    layer: Layer,
+    recentColors: List<Long>,
+    onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
+    onFinishContinuousEdit: () -> Unit,
+    onStartEyedropper: (EyedropperTarget) -> Unit
+) {
+    if (layer.type != LayerType.IMAGE) return
+    PrecisionSlider(
+        label = stringResource(R.string.ui_stroke_width),
+        value = layer.imageBorderWidth,
+        valueRange = 0f..40f,
+        defaultValue = 0f,
+        fineStep = 1f,
+        unitSuffix = "px",
+        onValueChange = { bw, cont -> onUpdate(cont) { it.copy(imageBorderWidth = bw) } },
+        onValueChangeFinished = onFinishContinuousEdit
+    )
+    ColorPaletteRow(
+        colors = ObjectPalette,
+        recentColors = recentColors,
+        selectedColor = layer.imageBorderColor,
+        // Picking a colour with no stroke yet also turns the stroke on.
+        onSelectColor = { c ->
+            onUpdate(false) {
+                it.copy(imageBorderColor = c, imageBorderWidth = if (it.imageBorderWidth < 1f) 8f else it.imageBorderWidth)
+            }
+        },
+        onPickFromCanvas = { onStartEyedropper(EyedropperTarget.IMAGE_BORDER) },
+        allowAlpha = true,
+        pickerTitle = stringResource(R.string.ui_stroke_color)
+    )
 }

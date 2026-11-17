@@ -114,6 +114,7 @@ import kotlin.math.roundToInt
 internal fun ColumnScope.TextFontInspector(
     layer: Layer,
     favoriteFontKeys: Set<String>,
+    recentFontKeys: List<String> = emptyList(),
     availableFontsCount: Int,
     onUpdate: (Boolean, (Layer) -> Layer) -> Unit,
     onToggleFavoriteFont: (String) -> Unit,
@@ -124,19 +125,27 @@ internal fun ColumnScope.TextFontInspector(
     var searchOpen by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf("All") }
     val allFonts = remember(availableFontsCount) { FontCatalog.allFonts() }
-    val categories = remember(allFonts, favoriteFontKeys) {
+    val categories = remember(allFonts, favoriteFontKeys, recentFontKeys) {
         buildList {
             add("All")
+            if (recentFontKeys.isNotEmpty()) add("Recent")
             if (favoriteFontKeys.isNotEmpty()) add("Favorites")
             if (allFonts.any { it.category == "Imported" }) add("Imported")
             if (allFonts.any { it.category == FontCatalog.DEVICE_CATEGORY }) add(FontCatalog.DEVICE_CATEGORY)
         }
     }
-    val filteredFonts = remember(allFonts, searchQuery, selectedCategory, favoriteFontKeys) {
-        allFonts.filter { font ->
+    val filteredFonts = remember(allFonts, searchQuery, selectedCategory, favoriteFontKeys, recentFontKeys) {
+        val base = if (selectedCategory == "Recent") {
+            // Most recently used first.
+            recentFontKeys.mapNotNull { key -> allFonts.firstOrNull { it.key == key } }
+        } else {
+            allFonts
+        }
+        base.filter { font ->
             val matchesCategory = when (selectedCategory) {
                 "All" -> true
                 "Favorites" -> font.key in favoriteFontKeys
+                "Recent" -> true
                 else -> font.category == selectedCategory
             }
             val matchesSearch = searchQuery.isBlank() ||
@@ -191,6 +200,7 @@ internal fun ColumnScope.TextFontInspector(
                         label = when (cat) {
                             "All" -> stringResource(R.string.ui_tab_all)
                             "Favorites" -> stringResource(R.string.ui_font_cat_favorites)
+                            "Recent" -> stringResource(R.string.ui_font_cat_recent)
                             "Imported" -> stringResource(R.string.ui_font_cat_imported)
                             FontCatalog.DEVICE_CATEGORY -> stringResource(R.string.ui_font_cat_device)
                             else -> cat
@@ -353,6 +363,7 @@ internal fun ColumnScope.TextSizeInspector(
         onValueChange = { sz, cont -> onUpdate(cont) { it.copy(fontSize = sz) } },
         onValueChangeFinished = onFinishContinuousEdit
     )
+    TextStretchAndWrapControls(layer = layer, onUpdate = onUpdate, onFinishContinuousEdit = onFinishContinuousEdit)
 }
 
 @Composable

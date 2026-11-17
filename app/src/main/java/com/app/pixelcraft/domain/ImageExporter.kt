@@ -63,8 +63,15 @@ data class ExportOptions(
     val qualityPreset: ExportQuality = ExportQuality.MEDIUM,
     val jpegQuality: Int = 95,
     val selectedLayerOnly: Boolean = false,
-    val trimTransparent: Boolean = false
-)
+    val trimTransparent: Boolean = false,
+    /** Output width in px; when set it overrides [qualityPreset] (height keeps the aspect). */
+    val customWidth: Int? = null,
+    /** Fill behind a transparent canvas for formats without transparency (JPG). */
+    val backgroundColor: Long = 0xFFFFFFFF
+) {
+    fun multiplierFor(canvasWidth: Int): Float =
+        customWidth?.takeIf { it > 0 }?.let { it.toFloat() / canvasWidth.coerceAtLeast(1) } ?: qualityPreset.multiplier
+}
 
 data class ExportDimensionEstimate(
     val requestedWidth: Int,
@@ -205,7 +212,7 @@ class ImageExporter(private val context: Context? = null) {
         val (baseOutW, baseOutH) = computeTargetDimensions(
             effectiveConfig.width,
             effectiveConfig.height,
-            options.qualityPreset.multiplier,
+            options.multiplierFor(effectiveConfig.width),
             maxPixels = pixelBudget
         )
 
@@ -221,7 +228,7 @@ class ImageExporter(private val context: Context? = null) {
                 val canvas = Canvas(bitmap)
 
                 if (!options.format.supportsTransparency && effectiveConfig.backgroundType == BackgroundType.TRANSPARENT) {
-                    canvas.drawColor(Color.WHITE)
+                    canvas.drawColor(options.backgroundColor.toInt())
                 }
 
                 val scaleRatioX = outWidth.toFloat() / effectiveConfig.width.coerceAtLeast(1).toFloat()

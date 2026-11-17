@@ -40,6 +40,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GroupWork
+import androidx.compose.material.icons.filled.HorizontalDistribute
+import androidx.compose.material.icons.filled.VerticalDistribute
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Lock
@@ -55,6 +57,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +67,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.pixelcraft.data.model.Layer
+import com.app.pixelcraft.domain.editor.GroupMerger
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.Image
 import com.app.pixelcraft.data.model.LayerType
 import com.app.pixelcraft.ui.theme.EditorColors
 
@@ -82,6 +93,7 @@ fun PixelCraftLayersSheet(
     onMoveUp: (String) -> Unit,
     onMoveDown: (String) -> Unit,
     onReorder: (List<String>) -> Unit = {},
+    onDistribute: (horizontal: Boolean) -> Unit = {},
     onDelete: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
@@ -168,6 +180,14 @@ fun PixelCraftLayersSheet(
                             Icon(Icons.Default.LinkOff, contentDescription = null, tint = EditorColors.AccentHover, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(stringResource(R.string.ui_ungroup), color = EditorColors.AccentHover, fontSize = 12.sp)
+                        }
+                    }
+                    if (selectedLayerIds.size >= 3) {
+                        IconButton(onClick = { onDistribute(true) }) {
+                            Icon(Icons.Default.HorizontalDistribute, contentDescription = stringResource(R.string.ui_distribute_h), tint = EditorColors.TextPrimary)
+                        }
+                        IconButton(onClick = { onDistribute(false) }) {
+                            Icon(Icons.Default.VerticalDistribute, contentDescription = stringResource(R.string.ui_distribute_v), tint = EditorColors.TextPrimary)
                         }
                     }
                 }
@@ -259,12 +279,7 @@ fun PixelCraftLayersSheet(
                                     modifier = Modifier.size(32.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    imageVector = typeIcon,
-                                    contentDescription = typeLabel,
-                                    tint = if (isPrimary) EditorColors.Accent else EditorColors.TextSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                LayerThumbnail(layer = layer, fallbackIcon = typeIcon, description = typeLabel)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -375,6 +390,40 @@ fun PixelCraftLayersSheet(
                     }
                 }
             }
+        }
+    }
+}
+
+/** Small preview of one layer, rendered off the main thread; shows the type icon until ready. */
+@Composable
+private fun LayerThumbnail(layer: Layer, fallbackIcon: ImageVector, description: String) {
+    val context = LocalContext.current
+    var thumb by remember(layer.id) { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(layer) {
+        thumb = runCatching {
+            GroupMerger.render(context, listOf(layer.copy(isVisible = true, opacity = 1f, rotation = 0f)), maxSide = 96f, fullQuality = false)
+                .bitmap.asImageBitmap()
+        }.getOrNull()
+    }
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(EditorColors.SurfaceElevated),
+        contentAlignment = Alignment.Center
+    ) {
+        val image = thumb
+        if (image != null) {
+            Image(
+                bitmap = image,
+                contentDescription = description,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            )
+        } else {
+            Icon(fallbackIcon, contentDescription = description, tint = EditorColors.TextSecondary, modifier = Modifier.size(18.dp))
         }
     }
 }

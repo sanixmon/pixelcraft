@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.GroupWork
+import androidx.compose.material.icons.filled.HorizontalDistribute
+import androidx.compose.material.icons.filled.VerticalDistribute
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
@@ -79,6 +81,7 @@ fun GroupToolPanel(
     onUngroup: () -> Unit,
     onEditItem: () -> Unit,
     onMerge: () -> Unit,
+    onDistribute: (horizontal: Boolean) -> Unit = {},
     recentColors: List<Long> = emptyList(),
     modifier: Modifier = Modifier
 ) {
@@ -100,6 +103,8 @@ fun GroupToolPanel(
                 onFinishContinuousEdit = onFinishContinuousEdit,
                 onAlign = onAlign,
                 recentColors = recentColors,
+                memberCount = memberCount,
+                onDistribute = onDistribute,
                 onClose = {
                     onEndRelativeSession()
                     subTool = GroupSubTool.NONE
@@ -151,6 +156,8 @@ private fun GroupSubToolInspector(
     onFinishContinuousEdit: () -> Unit,
     onAlign: (AlignmentAction) -> Unit,
     recentColors: List<Long>,
+    memberCount: Int,
+    onDistribute: (Boolean) -> Unit,
     onClose: () -> Unit
 ) {
     // Size and rotation are relative to the group as it was when this inspector opened.
@@ -254,7 +261,19 @@ private fun GroupSubToolInspector(
                     onSelect = { mode -> onUpdateMembers(false) { it.copy(blendMode = mode) } }
                 )
 
-                GroupSubTool.ALIGN -> TextAlignInspector(onAlign = onAlign)
+                GroupSubTool.ALIGN -> {
+                    TextAlignInspector(onAlign = onAlign)
+                    if (memberCount >= 3) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                            IconButton(onClick = { onDistribute(true) }) {
+                                Icon(Icons.Default.HorizontalDistribute, contentDescription = stringResource(R.string.ui_distribute_h), tint = EditorColors.TextPrimary)
+                            }
+                            IconButton(onClick = { onDistribute(false) }) {
+                                Icon(Icons.Default.VerticalDistribute, contentDescription = stringResource(R.string.ui_distribute_v), tint = EditorColors.TextPrimary)
+                            }
+                        }
+                    }
+                }
 
                 GroupSubTool.STROKE -> {
                     // One stroke for every member: text outline, shape stroke, photo border.

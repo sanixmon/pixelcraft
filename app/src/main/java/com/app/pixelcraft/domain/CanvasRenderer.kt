@@ -198,6 +198,9 @@ object CanvasRenderer {
 
             when (layer.type) {
                 LayerType.TEXT -> {
+                    if (layer.textScaleX != 1f || layer.textScaleY != 1f) {
+                        canvas.scale(layer.textScaleX.coerceIn(0.2f, 5f), layer.textScaleY.coerceIn(0.2f, 5f))
+                    }
                     if (layer.flipHorizontal || layer.flipVertical) {
                         canvas.scale(
                             if (layer.flipHorizontal) -1f else 1f,
@@ -481,6 +484,71 @@ object CanvasRenderer {
             shadowDx = layer.shadowDx,
             shadowDy = layer.shadowDy
         )
+
+        if (layer.innerShadowEnabled || layer.embossEnabled) {
+            renderInnerTextEffects(canvas, layer, textPath, paints)
+        }
+    }
+
+    // Area around the glyphs (bounds grown by a margin, letters cut out). Drawn blurred and
+    // offset while clipped to the letters, it shades their inside edges.
+    private val innerFrameCache = object : android.util.LruCache<Path, Path>(24) {}
+
+    private fun innerFrame(textPath: Path): Path {
+        synchronized(innerFrameCache) { innerFrameCache.get(textPath)?.let { return it } }
+        val b = RectF()
+        textPath.computeBounds(b, true)
+        b.inset(-120f, -120f)
+        val frame = Path().apply { addRect(b, Path.Direction.CW) }
+        frame.op(textPath, Path.Op.DIFFERENCE)
+        synchronized(innerFrameCache) { innerFrameCache.put(textPath, frame) }
+        return frame
+    }
+
+    /** Inner shadow and emboss (bevel), both clipped to the letters. */
+    private fun renderInnerTextEffects(canvas: Canvas, layer: Layer, textPath: Path, paints: RenderPaints) {
+        val frame = innerFrame(textPath)
+        canvas.save()
+        canvas.clipPath(textPath)
+        val p = paints.auxPaint
+        if (layer.innerShadowEnabled) {
+            val argb = ColorMath.scaleAlpha(layer.innerShadowColor, layer.opacity)
+            if ((argb ushr 24) > 0) {
+                p.reset()
+                p.flags = Paint.ANTI_ALIAS_FLAG
+                p.style = Paint.Style.FILL
+                p.color = argb
+                p.maskFilter = BlurMaskFilter(layer.innerShadowRadius.coerceIn(0.5f, 60f), BlurMaskFilter.Blur.NORMAL)
+                canvas.save()
+                canvas.translate(layer.innerShadowDx, layer.innerShadowDy)
+                canvas.drawPath(frame, p)
+                canvas.restore()
+            }
+        }
+        if (layer.embossEnabled) {
+            val depth = layer.embossDepth.coerceIn(0.5f, 30f)
+            val rad = (layer.embossAngle * PI / 180f).toFloat()
+            val lx = cos(rad) * depth
+            val ly = sin(rad) * depth
+            val alpha = (layer.embossIntensity.coerceIn(0f, 1f) * layer.opacity * 255f).toInt().coerceIn(0, 255)
+            p.reset()
+            p.flags = Paint.ANTI_ALIAS_FLAG
+            p.style = Paint.Style.FILL
+            p.maskFilter = BlurMaskFilter(depth, BlurMaskFilter.Blur.NORMAL)
+            // Shade: the frame pushed towards the light darkens the edges facing away from it.
+            p.color = Color.argb(alpha, 0, 0, 0)
+            canvas.save()
+            canvas.translate(lx, ly)
+            canvas.drawPath(frame, p)
+            canvas.restore()
+            // Light: the frame pushed away from the light brightens the edges facing it.
+            p.color = Color.argb(alpha, 255, 255, 255)
+            canvas.save()
+            canvas.translate(-lx, -ly)
+            canvas.drawPath(frame, p)
+            canvas.restore()
+        }
+        canvas.restore()
     }
 
     private fun renderShapeLayer(canvas: Canvas, layer: Layer, paints: RenderPaints) {

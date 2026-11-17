@@ -152,7 +152,7 @@ class LayerModelTest {
 
     @Test
     fun testAll24VectorShapesAndBundledFontsCatalog() {
-        assertEquals(24, ShapeType.entries.size)
+        assertEquals(26, ShapeType.entries.size)
         for (cat in ShapeCategory.entries) {
             assertTrue(
                 "Category $cat must contain shapes",

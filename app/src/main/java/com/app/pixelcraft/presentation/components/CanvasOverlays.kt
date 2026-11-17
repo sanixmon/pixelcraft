@@ -228,7 +228,10 @@ internal fun LayerContextMenu(
     onBringToFront: () -> Unit,
     onSendToBack: () -> Unit,
     onToggleLock: (String) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    canPasteLayers: Boolean = false,
+    onCopyLayers: () -> Unit = {},
+    onPasteLayers: () -> Unit = {}
 ) {
     DropdownMenu(
         expanded = expanded && target != null,
@@ -254,6 +257,24 @@ internal fun LayerContextMenu(
                     onClick = {
                         onDismiss()
                         onDuplicate()
+                    }
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.ui_copy_layers), color = EditorColors.TextPrimary) },
+                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = EditorColors.TextSecondary) },
+                onClick = {
+                    onDismiss()
+                    onCopyLayers()
+                }
+            )
+            if (canPasteLayers) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.ui_paste_layers), color = EditorColors.TextPrimary) },
+                    leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null, tint = EditorColors.TextSecondary) },
+                    onClick = {
+                        onDismiss()
+                        onPasteLayers()
                     }
                 )
             }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Info
@@ -62,6 +63,7 @@ fun PixelCraftTopBar(
     onToggleGrid: () -> Unit,
     onToggleSafeZone: () -> Unit,
     onToggleLayers: () -> Unit,
+    onPasteLayers: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var moreMenuExpanded by remember { mutableStateOf(false) }
@@ -153,6 +155,16 @@ fun PixelCraftTopBar(
                         onToggleSafeZone()
                     }
                 )
+                if (state.layerClipboardCount > 0) {
+                    DropdownMenuItem(
+                        leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null, tint = EditorColors.TextSecondary) },
+                        text = { Text(stringResource(R.string.ui_paste_layers)) },
+                        onClick = {
+                            moreMenuExpanded = false
+                            onPasteLayers()
+                        }
+                    )
+                }
                 DropdownMenuItem(
                     leadingIcon = { Icon(Icons.Default.Save, contentDescription = null, tint = EditorColors.TextSecondary) },
                     text = { Text(stringResource(R.string.ui_save_project)) },
