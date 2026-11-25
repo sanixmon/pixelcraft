@@ -45,9 +45,11 @@ private val WarmLightColorScheme = lightColorScheme(
     scrim = PixelCraftColors.Scrim,
     surfaceBright = PixelCraftColors.Surface,
     surfaceDim = PixelCraftColors.CanvasStage,
-    surfaceContainer = PixelCraftColors.Surface,
-    surfaceContainerHigh = PixelCraftColors.Surface,
-    surfaceContainerHighest = PixelCraftColors.SurfaceElevated,
+    // Stepped tonal ramp (light = higher is darker): dialogs, menus and
+    // snackbars read surfaceContainerHigh, so it must differ from surface.
+    surfaceContainer = PixelCraftColors.SurfaceElevated,
+    surfaceContainerHigh = Color(0xFFE9DFCC),
+    surfaceContainerHighest = PixelCraftColors.Border,
     surfaceContainerLow = PixelCraftColors.Background,
     surfaceContainerLowest = PixelCraftColors.Surface
 )
@@ -84,9 +86,10 @@ private val EditorDarkColorScheme = darkColorScheme(
     scrim = EditorColors.Scrim,
     surfaceBright = EditorColors.SurfaceElevated,
     surfaceDim = EditorColors.Background,
-    surfaceContainer = EditorColors.Surface,
+    // Stepped tonal ramp (dark = higher is lighter), reusing palette tones.
+    surfaceContainer = EditorColors.CardSurface,
     surfaceContainerHigh = EditorColors.SurfaceElevated,
-    surfaceContainerHighest = EditorColors.SurfaceElevated,
+    surfaceContainerHighest = EditorColors.Border,
     surfaceContainerLow = EditorColors.Surface,
     surfaceContainerLowest = EditorColors.Background
 )
